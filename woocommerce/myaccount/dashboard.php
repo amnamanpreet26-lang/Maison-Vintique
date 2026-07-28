@@ -125,7 +125,8 @@ $status_pill = array(
 		<a class="link-action" href="<?php echo esc_url( wc_get_endpoint_url( 'orders' ) ); ?>"><?php esc_html_e( 'View all', 'maison-vintique-elementor' ); ?> &rarr;</a>
 	</div>
 	<?php if ( $recent_orders ) : ?>
-	<table>
+	<div class="atable-wrap">
+	<table class="atable">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Order', 'maison-vintique-elementor' ); ?></th>
@@ -141,11 +142,11 @@ $status_pill = array(
 			$pill_class = isset( $status_pill[ $status ] ) ? $status_pill[ $status ] : 'p-info';
 		?>
 			<tr>
-				<td class="mono">#<?php echo esc_html( $order->get_order_number() ); ?></td>
-				<td><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></td>
-				<td class="mono"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></td>
-				<td><span class="pill <?php echo esc_attr( $pill_class ); ?>"><?php echo esc_html( wc_get_order_status_name( $status ) ); ?></span></td>
-				<td>
+				<td class="mono" data-label="<?php esc_attr_e( 'Order', 'maison-vintique-elementor' ); ?>">#<?php echo esc_html( $order->get_order_number() ); ?></td>
+				<td data-label="<?php esc_attr_e( 'Date', 'maison-vintique-elementor' ); ?>"><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></td>
+				<td class="mono" data-label="<?php esc_attr_e( 'Total', 'maison-vintique-elementor' ); ?>"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></td>
+				<td data-label="<?php esc_attr_e( 'Status', 'maison-vintique-elementor' ); ?>"><span class="pill <?php echo esc_attr( $pill_class ); ?>"><?php echo esc_html( wc_get_order_status_name( $status ) ); ?></span></td>
+				<td class="acell-action">
 					<?php if ( $order->needs_payment() ) : ?>
 						<a class="link-action" href="<?php echo esc_url( $order->get_checkout_payment_url() ); ?>"><?php esc_html_e( 'Pay', 'maison-vintique-elementor' ); ?></a>
 					<?php else : ?>
@@ -156,6 +157,7 @@ $status_pill = array(
 		<?php endforeach; ?>
 		</tbody>
 	</table>
+	</div>
 	<?php else : ?>
 		<p class="apanel-empty"><?php esc_html_e( 'No orders yet.', 'maison-vintique-elementor' ); ?></p>
 	<?php endif; ?>
@@ -166,7 +168,8 @@ $status_pill = array(
 		<h3><?php esc_html_e( 'Invoices & documents', 'maison-vintique-elementor' ); ?></h3>
 	</div>
 	<?php if ( $recent_orders ) : ?>
-	<table>
+	<div class="atable-wrap">
+	<table class="atable">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Document', 'maison-vintique-elementor' ); ?></th>
@@ -182,14 +185,15 @@ $status_pill = array(
 			$invoice_url = apply_filters( 'mve_account_invoice_url', $order->get_view_order_url(), $order );
 		?>
 			<tr>
-				<td class="mono">INV-<?php echo esc_html( $order->get_order_number() ); ?></td>
-				<td><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></td>
-				<td class="mono"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></td>
-				<td><a class="link-action" href="<?php echo esc_url( $invoice_url ); ?>"><?php esc_html_e( 'View', 'maison-vintique-elementor' ); ?></a></td>
+				<td class="mono" data-label="<?php esc_attr_e( 'Document', 'maison-vintique-elementor' ); ?>">INV-<?php echo esc_html( $order->get_order_number() ); ?></td>
+				<td data-label="<?php esc_attr_e( 'Date', 'maison-vintique-elementor' ); ?>"><?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?></td>
+				<td class="mono" data-label="<?php esc_attr_e( 'Amount', 'maison-vintique-elementor' ); ?>"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></td>
+				<td class="acell-action"><a class="link-action" href="<?php echo esc_url( $invoice_url ); ?>"><?php esc_html_e( 'View', 'maison-vintique-elementor' ); ?></a></td>
 			</tr>
 		<?php endforeach; ?>
 		</tbody>
 	</table>
+	</div>
 	<?php else : ?>
 		<p class="apanel-empty"><?php esc_html_e( 'No documents yet.', 'maison-vintique-elementor' ); ?></p>
 	<?php endif; ?>

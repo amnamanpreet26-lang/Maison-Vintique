@@ -5,6 +5,7 @@
  * Powers the sidebar/toolbar on woocommerce/archive-product.php:
  *  - "Vintage: newest" custom sort (orderby=vintage, using ACF vintage_year)
  *  - Category / price / availability filtering from template-parts/shop-filters.php
+ *  - `?producer=ID` filtering, used by the "View wines →" links on producers-grid.php
  *
  * Trade price-on-login gating stays in inc/woocommerce.php — this file only
  * touches the product query, not pricing/purchasability.
@@ -49,6 +50,16 @@ function mve_filter_shop_query( $query ) {
 	}
 
 	$meta_query = $query->get( 'meta_query' ) ?: array();
+
+	// Producer — powers the "View wines →" link on the Producers Grid page
+	// (producers-grid.php). The ACF `producer` post_object stores the producer
+	// post ID in postmeta, so a plain meta compare is all this needs.
+	if ( ! empty( $_GET['producer'] ) ) {
+		$meta_query[] = array(
+			'key'   => 'producer',
+			'value' => (int) $_GET['producer'],
+		);
+	}
 
 	// Price ceiling from the range slider.
 	if ( ! empty( $_GET['price_max'] ) ) {

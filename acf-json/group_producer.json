@@ -3,6 +3,43 @@
     "title": "Producer Details",
     "fields": [
         {
+            "key": "field_producer_tab_card",
+            "label": "Grid Card",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_producer_established_year",
+            "label": "Established Year",
+            "name": "established_year",
+            "type": "text",
+            "instructions": "e.g. 1868 — shown on the producers grid as \"Est. 1868\". Leave blank to hide.",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_producer_estate_note",
+            "label": "Estate Note",
+            "name": "estate_note",
+            "type": "text",
+            "instructions": "Short descriptor after the year, e.g. \"family estate\" or \"Hillside vines\".",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_producer_appellations",
+            "label": "Appellations",
+            "name": "appellations",
+            "type": "text",
+            "instructions": "e.g. \"Bordeaux Supérieur\" or \"Chinon · Saumur-Champigny\". Shown under the country/region line on the producers grid."
+        },
+        {
+            "key": "field_producer_tab_content",
+            "label": "Estate Story",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
             "key": "field_producer_history",
             "label": "History",
             "name": "producer_history",
@@ -58,5 +95,7 @@
     "label_placement": "top",
     "instruction_placement": "label",
     "active": true,
-    "description": "Detailed content for the single Producer page. Country/Region are set via the Countries/Regions boxes in the sidebar, not here."
+    "description": "Detailed content for the single Producer page, plus the few short fields the Producers grid card shows. Country/Region are set via the Countries/Regions boxes in the sidebar, not here.",
+    "show_in_rest": 1,
+    "modified": 1785196800
 }

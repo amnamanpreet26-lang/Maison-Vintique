@@ -1,0 +1,800 @@
+/* ==========================================================================
+   MAISON VINTIQUE — ADDITIONAL CSS
+   ==========================================================================
+
+   This file is NOT enqueued by the theme, on purpose.
+   Paste its contents into:  Appearance → Customize → Additional CSS
+   (append it below whatever is already there — nothing here is a reset).
+
+   Contents
+   --------
+   1. Tokens            — local variables, all with fallbacks
+   2. Wine card         — template-parts/wine-card.php
+                          (homepage "Curated Portfolio" + Shop archive)
+   3. Producers grid    — producers-grid.php
+   4. My Account        — responsive fixes for the account area
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   Namespaced --mv2-* so nothing here can clash with the variables already
+   defined in the theme. Each one falls back to a theme variable first, and
+   only then to a hard-coded value, so if the theme already defines --ink,
+   --taupe etc. these automatically follow the brand.
+   ========================================================================== */
+
+:root {
+	--mv2-ink:      var(--ink,    #1f1b17);
+	--mv2-taupe:    var(--taupe,  #8b7f70);
+	--mv2-line:     var(--line,   #e2d9cc);
+	--mv2-cream:    var(--cream,  #f4efe8);
+	--mv2-paper:    var(--paper,  #fffdfa);
+	--mv2-gold:     var(--gold,   #a98b4b);
+	--mv2-burgundy: var(--burg,   #6d1f2f);
+
+	--mv2-serif: var(--serif, "Cormorant Garamond", "Playfair Display", Georgia, "Times New Roman", serif);
+	--mv2-sans:  var(--sans,  "Inter", "Helvetica Neue", Arial, sans-serif);
+
+	--mv2-ok-bg:   #dfe7dc;
+	--mv2-ok-ink:  #3c5540;
+	--mv2-out-bg:  #ece7e1;
+	--mv2-out-ink: #7a6f63;
+	--mv2-alloc-bg:  #efe4d2;
+	--mv2-alloc-ink: #8a6a2f;
+}
+
+
+/* ==========================================================================
+   2. WINE CARD  —  .mvcard
+   --------------------------------------------------------------------------
+   Used by BOTH the homepage portfolio grid (.card-grid--4) and the Shop
+   archive grid (.pgrid). The card only styles itself and stretches to fill
+   whatever grid cell it lands in, so the existing grid CSS is untouched.
+   ========================================================================== */
+
+.mvcard {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--mv2-paper);
+	border: 1px solid var(--mv2-line);
+	border-radius: 2px;
+	overflow: hidden;
+	transition: box-shadow .28s ease, transform .28s ease, border-color .28s ease;
+}
+
+.mvcard:hover {
+	border-color: #d3c6b4;
+	box-shadow: 0 14px 34px -20px rgba(31, 27, 23, .45);
+	transform: translateY(-2px);
+}
+
+/* --- Media + badges ------------------------------------------------------ */
+
+.mvcard__media {
+	position: relative;
+	display: block;
+	aspect-ratio: 4 / 3;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	text-decoration: none;
+}
+
+.mvcard__media img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform .6s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvcard:hover .mvcard__media img {
+	transform: scale(1.045);
+}
+
+.mvcard__badge {
+	position: absolute;
+	top: 12px;
+	z-index: 2;
+	padding: 5px 10px;
+	border-radius: 2px;
+	font-family: var(--mv2-sans);
+	font-size: 9.5px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	line-height: 1;
+	white-space: nowrap;
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+}
+
+/* Left badge — wine colour (Red / White / Rosé) */
+.mvcard__badge--colour {
+	left: 12px;
+	background: rgba(255, 253, 250, .92);
+	color: var(--mv2-ink);
+	box-shadow: inset 0 0 0 1px rgba(31, 27, 23, .08);
+}
+
+/* Right badge — availability */
+.mvcard__badge--stock {
+	right: 12px;
+}
+
+.mvcard__badge--stock.is-in {
+	background: var(--mv2-ok-bg);
+	color: var(--mv2-ok-ink);
+}
+
+.mvcard__badge--stock.is-out {
+	background: var(--mv2-out-bg);
+	color: var(--mv2-out-ink);
+}
+
+.mvcard__badge--stock.is-alloc {
+	background: var(--mv2-alloc-bg);
+	color: var(--mv2-alloc-ink);
+}
+
+/* --- Body ---------------------------------------------------------------- */
+
+.mvcard__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	padding: 20px 20px 18px;
+	text-align: left;
+}
+
+.mvcard__title {
+	margin: 0 0 10px;
+	font-family: var(--mv2-serif);
+	font-size: 21px;
+	font-weight: 400;
+	line-height: 1.28;
+	letter-spacing: .01em;
+	color: var(--mv2-ink);
+}
+
+.mvcard__title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.mvcard__title a:hover {
+	color: var(--mv2-burgundy);
+}
+
+.mvcard__meta {
+	margin: 0 0 12px;
+	font-family: var(--mv2-sans);
+	font-size: 10.5px;
+	font-weight: 500;
+	letter-spacing: .13em;
+	text-transform: uppercase;
+	line-height: 1.6;
+	color: var(--mv2-taupe);
+}
+
+.mvcard__price {
+	margin: 0 0 16px;
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	color: var(--mv2-ink);
+}
+
+.mvcard__price .price,
+.mvcard__price ins,
+.mvcard__price bdi {
+	text-decoration: none;
+	color: var(--mv2-ink);
+}
+
+.mvcard__price del {
+	opacity: .5;
+	margin-right: 6px;
+	font-size: 13px;
+}
+
+/* "Trade pricing on login" */
+.mvcard__trade {
+	font-style: italic;
+	font-size: 13px;
+	letter-spacing: .01em;
+	color: var(--mv2-burgundy);
+}
+
+/* --- "View Wine" button --------------------------------------------------- */
+
+.mvcard__cta {
+	display: block;
+	margin-top: auto;          /* pins the CTA to the bottom on uneven cards */
+	padding: 13px 16px;
+	border: 1px solid var(--mv2-ink);
+	border-radius: 1px;
+	background: transparent;
+	color: var(--mv2-ink);
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .17em;
+	text-transform: uppercase;
+	text-align: center;
+	text-decoration: none;
+	transition: background .22s ease, color .22s ease;
+}
+
+.mvcard__cta:hover,
+.mvcard__cta:focus-visible {
+	background: var(--mv2-ink);
+	color: var(--mv2-paper);
+}
+
+/* --- The two inline links ------------------------------------------------- */
+
+.mvcard__links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 6px 22px;
+	margin-top: 14px;
+}
+
+.mvcard__link {
+	font-family: var(--mv2-sans);
+	font-size: 11.5px;
+	letter-spacing: .02em;
+	color: var(--mv2-taupe);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	text-decoration-thickness: 1px;
+	transition: color .2s ease;
+}
+
+.mvcard__link:hover,
+.mvcard__link:focus-visible {
+	color: var(--mv2-burgundy);
+}
+
+/* --- Grid safety net ------------------------------------------------------
+   The card sits inside grids the theme already owns (.card-grid--4 on the
+   homepage, .pgrid on the shop archive). If those already collapse on mobile,
+   DELETE this block — it only exists so the new card can't end up 4-across on
+   a phone. The :has() scoping means these rules can only ever touch a grid
+   that actually contains the new card, never any other grid on the site.
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+	.card-grid--4:has(.mvcard),
+	.pgrid:has(.mvcard) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 600px) {
+	.card-grid--4:has(.mvcard),
+	.pgrid:has(.mvcard) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* --- Wine card responsive ------------------------------------------------- */
+
+@media (max-width: 1024px) {
+	.mvcard__title { font-size: 20px; }
+	.mvcard__body  { padding: 18px 17px 16px; }
+}
+
+@media (max-width: 600px) {
+	.mvcard__body    { padding: 17px 16px 15px; }
+	.mvcard__title   { font-size: 19px; }
+	.mvcard__cta     { padding: 12px 14px; letter-spacing: .14em; }
+	.mvcard__links   { gap: 6px 18px; }
+	.mvcard__badge   { top: 10px; font-size: 9px; padding: 4px 8px; }
+	.mvcard__badge--colour { left: 10px; }
+	.mvcard__badge--stock  { right: 10px; }
+}
+
+
+/* ==========================================================================
+   3. PRODUCERS GRID  —  producers-grid.php
+   ========================================================================== */
+
+.producers-page .page-h {
+	max-width: 640px;
+	margin-bottom: 40px;
+}
+
+.mvprod-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 28px;
+	align-items: stretch;
+}
+
+.mvprod {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--mv2-paper);
+	border: 1px solid var(--mv2-line);
+	border-radius: 2px;
+	overflow: hidden;
+	transition: box-shadow .28s ease, transform .28s ease, border-color .28s ease;
+}
+
+.mvprod:hover {
+	border-color: #d3c6b4;
+	box-shadow: 0 14px 34px -20px rgba(31, 27, 23, .45);
+	transform: translateY(-2px);
+}
+
+.mvprod__media {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	text-decoration: none;
+}
+
+.mvprod__media img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform .6s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvprod:hover .mvprod__media img {
+	transform: scale(1.045);
+}
+
+/* Shown instead of a photo when an estate has no image yet */
+.mvprod__initials {
+	font-family: var(--mv2-serif);
+	font-size: 40px;
+	letter-spacing: .1em;
+	color: rgba(255, 253, 250, .85);
+	background: linear-gradient(140deg, #6d1f2f 0%, #4a4a3c 100%);
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.mvprod__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	padding: 22px 22px 20px;
+}
+
+.mvprod__title {
+	margin: 0 0 8px;
+	font-family: var(--mv2-serif);
+	font-size: 23px;
+	font-weight: 400;
+	line-height: 1.25;
+	color: var(--mv2-ink);
+}
+
+.mvprod__title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.mvprod__title a:hover {
+	color: var(--mv2-burgundy);
+}
+
+/* "BORDEAUX, FRANCE" */
+.mvprod__location {
+	margin: 0 0 10px;
+	font-family: var(--mv2-sans);
+	font-size: 10.5px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	color: var(--mv2-gold);
+}
+
+/* "Bordeaux Supérieur" */
+.mvprod__appellations {
+	margin: 0 0 6px;
+	font-family: var(--mv2-sans);
+	font-size: 13.5px;
+	line-height: 1.5;
+	color: var(--mv2-ink);
+}
+
+/* "Est. 1868 · family estate" */
+.mvprod__est {
+	margin: 0 0 16px;
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	line-height: 1.5;
+	color: var(--mv2-taupe);
+}
+
+.mvprod__link {
+	margin-top: auto;
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+	letter-spacing: .01em;
+	color: var(--mv2-ink);
+	text-decoration: none;
+	transition: color .2s ease;
+}
+
+.mvprod__link span {
+	display: inline-block;
+	transition: transform .22s ease;
+}
+
+.mvprod__link:hover {
+	color: var(--mv2-burgundy);
+}
+
+.mvprod__link:hover span {
+	transform: translateX(4px);
+}
+
+/* --- Producers grid responsive ------------------------------------------- */
+
+@media (max-width: 1024px) {
+	.mvprod-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+	.mvprod__title { font-size: 22px; }
+}
+
+@media (max-width: 640px) {
+	.mvprod-grid       { grid-template-columns: 1fr; gap: 20px; }
+	.mvprod__body      { padding: 20px 18px 18px; }
+	.mvprod__title     { font-size: 21px; }
+	.mvprod__initials  { font-size: 34px; }
+	.producers-page .page-h { margin-bottom: 28px; }
+}
+
+
+/* ==========================================================================
+   4. MY ACCOUNT — RESPONSIVE
+   --------------------------------------------------------------------------
+   Covers both the theme's own templates (woocommerce/myaccount/*) and
+   WooCommerce's core endpoint templates (Orders, Downloads, Addresses,
+   Account details), which the theme does not override.
+   ========================================================================== */
+
+/* --- Never let the account area cause a horizontal page scroll ----------- */
+
+.woocommerce-account .acct,
+.woocommerce-account .woocommerce-MyAccount-content {
+	min-width: 0;   /* lets grid/flex children shrink instead of overflowing */
+}
+
+.woocommerce-account .woocommerce-MyAccount-content img {
+	max-width: 100%;
+	height: auto;
+}
+
+/* --- Layout: sidebar + content stacks on tablet -------------------------- */
+
+@media (max-width: 900px) {
+	.acct {
+		display: block;
+	}
+
+	.acct-nav {
+		margin-bottom: 24px;
+	}
+}
+
+/* --- Account nav becomes a horizontal scroller on mobile ----------------- */
+
+@media (max-width: 900px) {
+	.acct-nav {
+		display: flex;
+		/* the desktop sidebar is a column — force it back to a row */
+		flex-direction: row;
+		flex-wrap: nowrap;
+		gap: 6px;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		padding-bottom: 4px;
+		border-bottom: 1px solid var(--mv2-line);
+	}
+
+	.acct-nav::-webkit-scrollbar {
+		display: none;
+	}
+
+	.acct-nav a {
+		flex: 0 0 auto;
+		white-space: nowrap;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		border-radius: 0;
+		padding: 10px 12px;
+	}
+
+	.acct-nav a.on {
+		border-bottom-color: var(--mv2-gold);
+		background: transparent;
+	}
+
+	.acct-nav a svg {
+		width: 15px;
+		height: 15px;
+		flex: 0 0 auto;
+	}
+}
+
+/* --- Welcome block ------------------------------------------------------- */
+
+@media (max-width: 600px) {
+	.acct-welcome h2 { font-size: 24px; line-height: 1.25; }
+	.acct-welcome p  { font-size: 13px; line-height: 1.6; }
+}
+
+/* --- Stat tiles: 4 → 2 → 1 ---------------------------------------------- */
+
+@media (max-width: 980px) {
+	.astats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 420px) {
+	.astats     { grid-template-columns: 1fr; }
+	.astat      { padding: 14px 16px; }
+	.astat .v   { font-size: 22px; }
+}
+
+/* --- Panels -------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+	.apanel      { padding: 18px 16px; }
+	.apanel-h    { flex-wrap: wrap; gap: 6px; }
+	.apanel-h h3 { font-size: 15px; }
+}
+
+/* --- Tables: horizontal scroll on tablet … ------------------------------- */
+
+.atable-wrap {
+	width: 100%;
+	max-width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.atable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+/* --- … and full card-stacking on phones ---------------------------------
+   The data-label attributes come from woocommerce/myaccount/dashboard.php.
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+	.atable-wrap { overflow-x: visible; }
+
+	.atable,
+	.atable thead,
+	.atable tbody,
+	.atable tr,
+	.atable td {
+		display: block;
+		width: 100%;
+	}
+
+	.atable thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.atable tr {
+		border: 1px solid var(--mv2-line);
+		border-radius: 2px;
+		padding: 6px 14px;
+		margin-bottom: 12px;
+		background: var(--mv2-paper);
+	}
+
+	.atable td {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 9px 0;
+		border: 0;
+		border-bottom: 1px solid rgba(226, 217, 204, .6);
+		text-align: right;
+		font-size: 13.5px;
+	}
+
+	.atable tr td:last-child {
+		border-bottom: 0;
+	}
+
+	.atable td[data-label]::before {
+		content: attr(data-label);
+		flex: 0 0 auto;
+		font-family: var(--mv2-sans);
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: .12em;
+		text-transform: uppercase;
+		color: var(--mv2-taupe);
+		text-align: left;
+	}
+
+	/* The action cell has no label — let the link fill the row */
+	.atable td.acell-action {
+		justify-content: flex-end;
+		padding-top: 10px;
+	}
+}
+
+/* --- Addresses ----------------------------------------------------------- */
+
+@media (max-width: 720px) {
+	.addr-grid {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+}
+
+/* ==========================================================================
+   4b. WooCommerce core account templates (not overridden by the theme)
+   ========================================================================== */
+
+/* Orders / Downloads / Order details tables — Woo already outputs
+   data-title on every cell, so the same stacking trick works. */
+
+.woocommerce-account .woocommerce-orders-table,
+.woocommerce-account .woocommerce-table--order-details,
+.woocommerce-account .woocommerce-table--downloads,
+.woocommerce-account .shop_table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+@media (max-width: 720px) {
+	.woocommerce-account .woocommerce-orders-table,
+	.woocommerce-account .woocommerce-table--order-details,
+	.woocommerce-account .woocommerce-table--downloads,
+	.woocommerce-account .shop_table,
+	.woocommerce-account .woocommerce-orders-table tbody,
+	.woocommerce-account .shop_table tbody,
+	.woocommerce-account .woocommerce-orders-table tr,
+	.woocommerce-account .shop_table tr,
+	.woocommerce-account .woocommerce-orders-table td,
+	.woocommerce-account .shop_table td {
+		display: block;
+		width: 100%;
+	}
+
+	.woocommerce-account .woocommerce-orders-table thead,
+	.woocommerce-account .shop_table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.woocommerce-account .woocommerce-orders-table tr,
+	.woocommerce-account .shop_table tr {
+		border: 1px solid var(--mv2-line);
+		border-radius: 2px;
+		padding: 6px 14px;
+		margin-bottom: 12px;
+		background: var(--mv2-paper);
+	}
+
+	.woocommerce-account .woocommerce-orders-table td,
+	.woocommerce-account .shop_table td {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 9px 0;
+		border: 0;
+		border-bottom: 1px solid rgba(226, 217, 204, .6);
+		text-align: right;
+		font-size: 13.5px;
+	}
+
+	.woocommerce-account .woocommerce-orders-table tr td:last-child,
+	.woocommerce-account .shop_table tr td:last-child {
+		border-bottom: 0;
+	}
+
+	.woocommerce-account .woocommerce-orders-table td::before,
+	.woocommerce-account .shop_table td::before {
+		content: attr(data-title);
+		flex: 0 0 auto;
+		font-family: var(--mv2-sans);
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: .12em;
+		text-transform: uppercase;
+		color: var(--mv2-taupe);
+		text-align: left;
+	}
+
+	/* Woo puts several buttons in the last cell — let them wrap */
+	.woocommerce-account .woocommerce-orders-table__cell-order-actions {
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.woocommerce-account .woocommerce-orders-table__cell-order-actions .button {
+		margin: 4px 0 0 6px;
+	}
+}
+
+/* --- Account forms (Addresses / Account details) ------------------------- */
+
+@media (max-width: 720px) {
+	.woocommerce-account .woocommerce-address-fields .form-row,
+	.woocommerce-account .woocommerce-EditAccountForm .form-row,
+	.woocommerce-account .form-row-first,
+	.woocommerce-account .form-row-last {
+		width: 100%;
+		float: none;
+		margin-right: 0;
+	}
+
+	.woocommerce-account .col2-set .col-1,
+	.woocommerce-account .col2-set .col-2 {
+		width: 100%;
+		float: none;
+	}
+
+	.woocommerce-account .woocommerce-MyAccount-content input[type="text"],
+	.woocommerce-account .woocommerce-MyAccount-content input[type="email"],
+	.woocommerce-account .woocommerce-MyAccount-content input[type="tel"],
+	.woocommerce-account .woocommerce-MyAccount-content input[type="password"],
+	.woocommerce-account .woocommerce-MyAccount-content select,
+	.woocommerce-account .woocommerce-MyAccount-content textarea,
+	.woocommerce-account .woocommerce-MyAccount-content .select2-container {
+		width: 100%;
+		max-width: 100%;
+		/* 16px stops iOS Safari zooming in when a field is focused */
+		font-size: 16px;
+	}
+
+	.woocommerce-account .woocommerce-MyAccount-content .button {
+		width: 100%;
+		text-align: center;
+	}
+}
+
+/* --- Login / register on the logged-out account page --------------------- */
+
+@media (max-width: 720px) {
+	.woocommerce-account:not(.logged-in) .u-columns.col2-set {
+		display: block;
+	}
+
+	.woocommerce-account:not(.logged-in) .u-column1,
+	.woocommerce-account:not(.logged-in) .u-column2 {
+		width: 100%;
+		float: none;
+		margin-bottom: 28px;
+	}
+}

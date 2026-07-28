@@ -7,7 +7,9 @@
  * bottom of this file.
  *
  * Uses:
- *  - template-parts/content-product-wine.php  (one wine card)
+ *  - template-parts/content-product-wine.php  (one wine card — forwards to
+ *    template-parts/wine-card.php, the SAME card the homepage
+ *    "Curated Portfolio" grid renders, so the two always match)
  *  - template-parts/shop-filters.php          (sidebar filters)
  *  - inc/shop-query.php                       (sorting + filter query logic)
  *  - inc/woocommerce.php                      (trade price gating — already in theme)
@@ -88,6 +90,8 @@ $mve_range_to   = min( $mve_paged * $mve_per_page, $mve_total );
 				if ( woocommerce_product_loop() ) :
 					while ( have_posts() ) :
 						the_post();
+						// Renders template-parts/wine-card.php — badges, "View Wine"
+						// and the two inline links, identical to the homepage grid.
 						get_template_part( 'template-parts/content', 'product-wine' );
 					endwhile;
 				else :

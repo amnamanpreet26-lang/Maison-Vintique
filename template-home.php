@@ -341,45 +341,10 @@ $mv_products = new WP_Query( array(
         global $product;
         $product = wc_get_product( get_the_ID() );
 
-        $producer      = get_field('producer');
-        $vintage_year  = get_field('vintage_year');
-        $region_terms  = $producer ? get_the_terms( $producer->ID, 'producer_region' ) : false;
-        $region        = ( $region_terms && ! is_wp_error( $region_terms ) ) ? $region_terms[0]->name : '';
-        $meta          = trim( $region . ( $region && $vintage_year ? ', ' : '' ) . $vintage_year );
-
-        $cat_terms = get_the_terms( get_the_ID(), 'product_cat' );
-        $category  = ( $cat_terms && ! is_wp_error( $cat_terms ) ) ? $cat_terms[0]->name : '';
+        // One shared card for the homepage grid and the shop archive —
+        // see template-parts/wine-card.php.
+        get_template_part( 'template-parts/wine-card' );
       ?>
-        <article class="product-card">
-          <?php if ( $product->is_on_sale() ) : ?>
-            <span class="product-card__badge">Sale</span>
-          <?php endif; ?>
-          <?php if ( has_post_thumbnail() ) : ?>
-            <figure class="product-card__media">
-              <?php the_post_thumbnail( 'medium_large' ); ?>
-            </figure>
-          <?php endif; ?>
-					<?php if ( $category ) : ?>
-            <p class="product-card__category"><?php echo esc_html( $category ); ?></p>
-          <?php endif; ?>
-          <h3 class="product-card__title"><?php the_title(); ?></h3>
-          <?php if ( $meta ) : ?>
-            <p class="product-card__meta"><?php echo esc_html( $meta ); ?></p>
-          <?php endif; ?>
-           <div class="product-card__row">
-            <span class="price"><?php echo $product->get_price_html(); ?></span>
-          </div>
-          <?php if ( $product->is_purchasable() && ( $product->is_in_stock() || $product->backorders_allowed() ) ) : ?>
-          <div class="product-act">
-            <?php echo apply_filters( 'woocommerce_loop_add_to_cart_link', sprintf(
-              '<a href="%s" data-quantity="1" class="btn btn--primary btn--small add_to_cart_button ajax_add_to_cart" data-product_id="%d">%s</a>',
-              esc_url( $product->add_to_cart_url() ),
-              esc_attr( $product->get_id() ),
-              esc_html( $product->add_to_cart_text() )
-            ), $product ); ?>
-          </div>
-          <?php endif; ?>
-        </article>
       <?php endwhile; wp_reset_postdata(); ?>
     </div>
   </div>
