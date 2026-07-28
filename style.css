@@ -1,0 +1,22 @@
+/*
+Theme Name: Maison Vintique (Elementor)
+Theme URI: https://maisonvintique.example
+Description: Maison Vintique child theme for Hello Elementor. Luxury editorial wine importer & B2B trade store built with Elementor Pro, WooCommerce and ACF Pro. Registers wine taxonomies, producers, ACF fields and trade price-on-login logic.
+Author: Development Team
+Template: hello-elementor
+Version: 1.0.0
+Requires PHP: 8.1
+Text Domain: maison-vintique-elementor
+*/
+
+:root{ --mv-ground: #F4F0E6; --mv-panel:#ECE6D8; --mv-panel-2:#F7F3EA; --mv-ink:#2B2420; --mv-ink-soft:#4A4038; --mv-burg:#6E1E2A; --mv-burg-bright:#8A2A38; --mv-gold:#A8894F; --mv-gold-soft:#BFA36B; --mv-taupe:#857A6B; --mv-line:#DCD4C4; --mv-dark:#241A1C; --mv-chalk:#EDE6DA; --mv-serif:"Cormorant Garamond",Georgia,serif; --mv-sans:"Avenir Next","Avenir",Futura,"Helvetica Neue","Segoe UI",system-ui,sans-serif; }
+
+/* Brand primitives usable inside Elementor via CSS classes */
+body{background:var(--mv-ground);color:var(--mv-ink);font-family:var(--mv-sans)}
+h1,h2,h3,h4,.mv-serif{font-family:var(--mv-serif);font-weight:400}
+.mv-eyebrow{font-family:var(--mv-sans);font-size:.75rem;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:var(--mv-gold)}
+
+/* Trade price-on-login states (rendered by inc/woocommerce.php) */
+.mv-price-login{display:inline-flex;align-items:center;gap:.6em;font-family:var(--mv-sans);font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mv-burg);border:1px solid var(--mv-burg);border-radius:2px;padding:10px 16px;text-decoration:none}
+.mv-price-login:hover{background:var(--mv-burg);color:#F6EBDD}
+.mv-trade-tag{display:inline-block;font-family:var(--mv-sans);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mv-ink-soft);background:rgba(43,36,32,.09);padding:4px 9px;border-radius:2px}

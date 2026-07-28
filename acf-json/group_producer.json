@@ -1,0 +1,62 @@
+{
+    "key": "group_producer_fields",
+    "title": "Producer Details",
+    "fields": [
+        {
+            "key": "field_producer_history",
+            "label": "History",
+            "name": "producer_history",
+            "type": "wysiwyg",
+            "toolbar": "basic",
+            "media_upload": 0
+        },
+        {
+            "key": "field_producer_philosophy",
+            "label": "Philosophy",
+            "name": "producer_philosophy",
+            "type": "wysiwyg",
+            "toolbar": "basic",
+            "media_upload": 0
+        },
+        {
+            "key": "field_producer_terroir",
+            "label": "Terroir",
+            "name": "producer_terroir",
+            "type": "wysiwyg",
+            "toolbar": "basic",
+            "media_upload": 0
+        },
+        {
+            "key": "field_producer_sustainability",
+            "label": "Sustainability",
+            "name": "producer_sustainability",
+            "type": "wysiwyg",
+            "toolbar": "basic",
+            "media_upload": 0
+        },
+        {
+            "key": "field_producer_media",
+            "label": "Media Gallery",
+            "name": "producer_media",
+            "type": "gallery",
+            "instructions": "Photos of the estate, vineyard, cellar, etc. shown on the single producer page.",
+            "return_format": "array"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "producer"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "active": true,
+    "description": "Detailed content for the single Producer page. Country/Region are set via the Countries/Regions boxes in the sidebar, not here."
+}

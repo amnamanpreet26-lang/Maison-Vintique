@@ -1,0 +1,209 @@
+{
+  "key": "group_mv_wine_details",
+  "title": "Wine Details",
+  "fields": [
+    {
+      "key": "field_mv_tab_technical",
+      "label": "General",
+      "name": "",
+      "type": "tab",
+      "placement": "top"
+    },
+    {
+      "key": "field_mv_producer",
+      "label": "Producer",
+      "name": "producer",
+      "type": "post_object",
+      "instructions": "The estate that makes this wine.",
+      "post_type": ["producer"],
+      "return_format": "object",
+      "ui": 1,
+      "allow_null": 1,
+      "multiple": 0
+    },
+	      {
+      "key": "field_mv_awards",
+      "label": "Awards",
+      "name": "awards",
+      "type": "textarea",
+      "rows": 2
+    },
+    {
+      "key": "field_mv_vintage_year",
+      "label": "Vintage",
+      "name": "vintage_year",
+      "type": "text",
+      "instructions": "e.g. 2019",
+      "wrapper": { "width": "50" }
+    },
+    {
+      "key": "field_mv_abv",
+      "label": "Alcohol (ABV %)",
+      "name": "abv",
+      "type": "number",
+      "append": "%",
+      "min": 0,
+      "max": 25,
+      "step": 0.1,
+      "wrapper": { "width": "50" }
+    },
+    {
+      "key": "field_mv_min_order_qty",
+      "label": "Minimum Order Quantity (cases)",
+      "name": "min_order_qty",
+      "type": "number",
+      "instructions": "Enforced at checkout. Leave blank or 1 for no minimum.",
+      "default_value": 1,
+      "wrapper": { "width": "50" }
+    },
+	      {
+      "key": "field_mv_bottle_size",
+      "label": "Bottle Size",
+      "name": "bottle_size",
+      "type": "text",
+      "default_value": "75cl",
+      "wrapper": { "width": "50" }
+    },
+
+	      {
+      "key": "field_mv_allergens",
+      "label": "Allergens",
+      "name": "allergens",
+      "type": "text",
+      "default_value": "Contains sulphites"
+    },
+	      {
+      "key": "field_mv_case_format",
+      "label": "Case Format",
+      "name": "case_format",
+      "type": "text",
+      "default_value": "6 x 75cl"
+    },
+    {
+      "key": "field_mv_visibility_tier",
+      "label": "Visibility Tier",
+      "name": "visibility_tier",
+      "type": "select",
+      "instructions": "Controls who can see pricing and buy.",
+      "required": 1,
+      "choices": {
+        "public": "Public — price visible to all",
+        "trade-only": "Trade only — price on login",
+        "allocation": "Allocation only — by enquiry",
+        "private": "Fully private — selected accounts"
+      },
+      "default_value": "public",
+      "ui": 1,
+      "return_format": "value",
+      "wrapper": { "width": "50" }
+    },
+
+    {
+      "key": "field_mv_tab_tasting",
+      "label": "Tasting & Story",
+      "name": "",
+      "type": "tab",
+      "placement": "top"
+    },
+    {
+      "key": "field_mv_tasting_notes",
+      "label": "Tasting Notes",
+      "name": "tasting_notes",
+      "type": "wysiwyg",
+      "tabs": "visual",
+      "toolbar": "basic",
+      "media_upload": 0
+    },
+
+    {
+      "key": "field_mv_tab_terroir",
+      "label": "Technical Info",
+      "name": "",
+      "type": "tab",
+      "placement": "top"
+    },
+	  	 
+	      {
+      "key": "field_mv_case_appellation",
+      "label": "Appellation",
+      "name": "appellation",
+      "type": "text",
+      "default_value": "Bordeaux Supérieur AOC"
+    },
+    {
+      "key": "field_mv_bottles_per_case",
+      "label": "Bottles per Case",
+      "name": "bottles_per_case",
+      "type": "number",
+      "default_value": 6,
+      "wrapper": { "width": "50" }
+    },
+     {
+      "key": "field_mv_case_closure",
+      "label": "Closure",
+      "name": "closure",
+      "type": "text",
+      "default_value": "Natural cork"
+    },
+       {
+      "key": "field_mv_sustainability",
+      "label": "Sustainability",
+      "name": "sustainability",
+      "type": "textarea",
+      "rows": 2
+    },
+	  {
+      "key": "field_mv_case_serving",
+      "label": "Serving",
+      "name": "serving",
+      "type": "text",
+      "default_value": "16–18°C, decant 1hr"
+    },
+
+
+    {
+      "key": "field_mv_tab_downloads",
+      "label": "Downloads",
+      "name": "",
+      "type": "tab",
+      "placement": "top"
+    },
+    {
+      "key": "field_mv_technical_sheet",
+      "label": "Technical Sheet (PDF)",
+      "name": "technical_sheet",
+      "type": "file",
+      "return_format": "url",
+      "library": "all",
+      "wrapper": { "width": "50" }
+    },
+    {
+      "key": "field_mv_sell_sheet",
+      "label": "Sell Sheet (PDF)",
+      "name": "sell_sheet",
+      "type": "file",
+      "return_format": "url",
+      "library": "all",
+      "wrapper": { "width": "50" }
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "product"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": "Editorial and trade attributes for wine products, organized by tab.",
+  "show_in_rest": 1,
+  "modified": 1768600000
+}

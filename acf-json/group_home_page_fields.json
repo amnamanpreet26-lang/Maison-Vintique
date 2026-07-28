@@ -1,0 +1,612 @@
+{
+    "key": "group_home_page_fields",
+    "title": "Home Page Content",
+    "fields": [
+        {
+            "key": "field_home_tab_hero",
+            "label": "Hero",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_hero_eyebrow",
+            "label": "Eyebrow",
+            "name": "hero_eyebrow",
+            "type": "text",
+            "default_value": "Wine Importer & Distributor"
+        },
+        {
+            "key": "field_home_hero_title",
+            "label": "Title",
+            "name": "hero_title",
+            "type": "text",
+            "default_value": "A house of wine, a legacy of taste."
+        },
+        {
+            "key": "field_home_hero_text",
+            "label": "Text",
+            "name": "hero_text",
+            "type": "textarea",
+            "rows": 3
+        },
+        {
+            "key": "field_home_hero_cta_primary_label",
+            "label": "Primary Button Label",
+            "name": "hero_cta_primary_label",
+            "type": "text",
+            "default_value": "Explore the Collection",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_cta_primary_link",
+            "label": "Primary Button Link",
+            "name": "hero_cta_primary_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_cta_secondary_label",
+            "label": "Secondary Button Label",
+            "name": "hero_cta_secondary_label",
+            "type": "text",
+            "default_value": "Meet our Producers",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_cta_secondary_link",
+            "label": "Secondary Button Link",
+            "name": "hero_cta_secondary_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_image",
+            "label": "Hero Image",
+            "name": "hero_image",
+            "type": "image",
+            "return_format": "array",
+            "preview_size": "medium",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_image_caption",
+            "label": "Hero Image Caption",
+            "name": "hero_image_caption",
+            "type": "text",
+            "default_value": "Bordeaux · Anjou Blanc",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_background_type",
+            "label": "Hero Background Type",
+            "name": "hero_background_type",
+            "type": "select",
+            "instructions": "Choose whether the hero section behind the title uses a still image or an autoplaying looped video.",
+            "choices": {
+                "image": "Image",
+                "video": "Video"
+            },
+            "default_value": "image",
+            "ui": 1,
+            "return_format": "value",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_background_image",
+            "label": "Hero Background Image",
+            "name": "hero_background_image",
+            "type": "image",
+            "return_format": "array",
+            "preview_size": "medium",
+            "instructions": "Used as the background when Background Type is Image. Also shown as the poster frame while the video loads/if Background Type is Video.",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_background_video",
+            "label": "Hero Background Video",
+            "name": "hero_background_video",
+            "type": "file",
+            "return_format": "url",
+            "library": "all",
+            "mime_types": "mp4,webm,mov",
+            "instructions": "MP4 recommended (H.264). Plays muted, autoplay, on loop, with no controls. Keep it short (10–20s) and under ~8MB so it loads fast — it's re-downloaded by every visitor.",
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_home_hero_background_type",
+                        "operator": "==",
+                        "value": "video"
+                    }
+                ]
+            ],
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_hero_background_opacity",
+            "label": "Hero Background Overlay Opacity",
+            "name": "hero_background_opacity",
+            "type": "number",
+            "default_value": 0.3,
+            "min": 0,
+            "max": 1,
+            "step": 0.1,
+            "instructions": "Darkens the image/video so the title text stays readable. 0 = no overlay, 1 = fully covered. Example: 0.3",
+            "wrapper": { "width": "50" }
+        },
+
+        {
+            "key": "field_home_tab_philosophy",
+            "label": "Philosophy",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_philosophy_eyebrow",
+            "label": "Eyebrow",
+            "name": "philosophy_eyebrow",
+            "type": "text",
+            "default_value": "Our Philosophy"
+        },
+        {
+            "key": "field_home_philosophy_title",
+            "label": "Title",
+            "name": "philosophy_title",
+            "type": "text",
+            "default_value": "The Maison Vintique Philosophy"
+        },
+        {
+            "key": "field_home_philosophy_text",
+            "label": "Text",
+            "name": "philosophy_text",
+            "type": "textarea",
+            "rows": 3
+        },
+
+        {
+            "key": "field_home_tab_estate",
+            "label": "Featured Estate",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_estate_eyebrow_top",
+            "label": "Eyebrow (top)",
+            "name": "estate_eyebrow_top",
+            "type": "text",
+            "default_value": "Signature Estate",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_estate_eyebrow",
+            "label": "Eyebrow",
+            "name": "estate_eyebrow",
+            "type": "text",
+            "default_value": "Featured Estate",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_estate_name",
+            "label": "Estate Name",
+            "name": "estate_name",
+            "type": "text"
+        },
+        {
+            "key": "field_home_estate_image",
+            "label": "Estate Image",
+            "name": "estate_image",
+            "type": "image",
+            "return_format": "array",
+            "preview_size": "medium"
+        },
+        {
+            "key": "field_home_estate_stats",
+            "label": "Stats",
+            "name": "estate_stats",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Add Stat",
+            "min": 0,
+            "max": 3,
+            "sub_fields": [
+                {
+                    "key": "field_home_estate_stat_value",
+                    "label": "Value",
+                    "name": "stat_value",
+                    "type": "text",
+                    "wrapper": { "width": "40" }
+                },
+                {
+                    "key": "field_home_estate_stat_label",
+                    "label": "Label",
+                    "name": "stat_label",
+                    "type": "text",
+                    "wrapper": { "width": "60" }
+                }
+            ]
+        },
+        {
+            "key": "field_home_estate_text",
+            "label": "Text",
+            "name": "estate_text",
+            "type": "textarea",
+            "rows": 3
+        },
+        {
+            "key": "field_home_estate_cta_label",
+            "label": "Link Label",
+            "name": "estate_cta_label",
+            "type": "text",
+            "default_value": "Discover the Estate",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_estate_cta_link",
+            "label": "Link URL",
+            "name": "estate_cta_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+
+        {
+            "key": "field_home_tab_partners",
+            "label": "Estate Partners",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_partners_eyebrow",
+            "label": "Eyebrow",
+            "name": "partners_eyebrow",
+            "type": "text",
+            "default_value": "Estate Partners"
+        },
+        {
+            "key": "field_home_partners_title",
+            "label": "Title",
+            "name": "partners_title",
+            "type": "text",
+            "default_value": "The families behind the wines"
+        },
+        {
+            "key": "field_home_partners_subtext",
+            "label": "Subtext",
+            "name": "partners_subtext",
+            "type": "textarea",
+            "rows": 2,
+            "instructions": "The producer cards themselves are managed under the Producers menu (custom post type), not here."
+        },
+
+        {
+            "key": "field_home_tab_spotlight",
+            "label": "Wine Spotlight",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_spotlight_eyebrow",
+            "label": "Eyebrow",
+            "name": "spotlight_eyebrow",
+            "type": "text",
+            "default_value": "Wine of the Moment"
+        },
+        {
+            "key": "field_home_spotlight_name",
+            "label": "Wine Name",
+            "name": "spotlight_name",
+            "type": "text"
+        },
+        {
+            "key": "field_home_spotlight_image",
+            "label": "Bottle Image",
+            "name": "spotlight_image",
+            "type": "image",
+            "return_format": "array",
+            "preview_size": "medium"
+        },
+        {
+            "key": "field_home_spotlight_details",
+            "label": "Details",
+            "name": "spotlight_details",
+            "type": "repeater",
+            "layout": "table",
+            "button_label": "Add Detail",
+            "min": 0,
+            "max": 4,
+            "sub_fields": [
+                {
+                    "key": "field_home_spotlight_detail_label",
+                    "label": "Label",
+                    "name": "label",
+                    "type": "text",
+                    "wrapper": { "width": "40" }
+                },
+                {
+                    "key": "field_home_spotlight_detail_value",
+                    "label": "Value",
+                    "name": "value",
+                    "type": "text",
+                    "wrapper": { "width": "60" }
+                }
+            ]
+        },
+        {
+            "key": "field_home_spotlight_text",
+            "label": "Tasting Notes",
+            "name": "spotlight_text",
+            "type": "textarea",
+            "rows": 3
+        },
+        {
+            "key": "field_home_spotlight_price",
+            "label": "Price",
+            "name": "spotlight_price",
+            "type": "text",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_spotlight_price_unit",
+            "label": "Price Unit",
+            "name": "spotlight_price_unit",
+            "type": "text",
+            "default_value": "per bottle",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_spotlight_cta_label",
+            "label": "Button Label",
+            "name": "spotlight_cta_label",
+            "type": "text",
+            "default_value": "Add to Cart",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_spotlight_cta_link",
+            "label": "Button Link",
+            "name": "spotlight_cta_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_spotlight_link_label",
+            "label": "Secondary Link Label",
+            "name": "spotlight_link_label",
+            "type": "text",
+            "default_value": "Read the Full Story",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_spotlight_link_url",
+            "label": "Secondary Link URL",
+            "name": "spotlight_link_url",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+
+        {
+            "key": "field_home_tab_portfolio",
+            "label": "Portfolio",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_portfolio_eyebrow",
+            "label": "Eyebrow",
+            "name": "portfolio_eyebrow",
+            "type": "text",
+            "default_value": "Our Collection"
+        },
+        {
+            "key": "field_home_portfolio_title",
+            "label": "Title",
+            "name": "portfolio_title",
+            "type": "text",
+            "default_value": "A curated portfolio"
+        },
+        {
+            "key": "field_home_portfolio_subtext",
+            "label": "Subtext",
+            "name": "portfolio_subtext",
+            "type": "textarea",
+            "rows": 2
+        },
+        {
+            "key": "field_home_portfolio_view_all_label",
+            "label": "View All Label",
+            "name": "portfolio_view_all_label",
+            "type": "text",
+            "default_value": "View All Wines",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_portfolio_view_all_link",
+            "label": "View All Link",
+            "name": "portfolio_view_all_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+       
+        {
+            "key": "field_home_tab_values",
+            "label": "Values",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_values_eyebrow",
+            "label": "Eyebrow",
+            "name": "values_eyebrow",
+            "type": "text",
+            "default_value": "What Guides Us"
+        },
+        {
+            "key": "field_home_values_title",
+            "label": "Title",
+            "name": "values_title",
+            "type": "text",
+            "default_value": "Provenance over volume. Craft over convention."
+        },
+        {
+            "key": "field_home_values_items",
+            "label": "Value Items",
+            "name": "values_items",
+            "type": "repeater",
+            "layout": "block",
+            "button_label": "Add Value",
+            "min": 0,
+            "sub_fields": [
+                {
+                    "key": "field_home_value_index",
+                    "label": "Index (e.g. 01)",
+                    "name": "index",
+                    "type": "text",
+                    "wrapper": { "width": "20" }
+                },
+                {
+                    "key": "field_home_value_title",
+                    "label": "Title",
+                    "name": "title",
+                    "type": "text",
+                    "wrapper": { "width": "80" }
+                },
+                {
+                    "key": "field_home_value_text",
+                    "label": "Text",
+                    "name": "text",
+                    "type": "textarea",
+                    "rows": 2
+                }
+            ]
+        },
+
+        {
+            "key": "field_home_tab_journal",
+            "label": "Journal",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_home_journal_eyebrow",
+            "label": "Eyebrow",
+            "name": "journal_eyebrow",
+            "type": "text",
+            "default_value": "The Journal"
+        },
+        {
+            "key": "field_home_journal_title",
+            "label": "Title",
+            "name": "journal_title",
+            "type": "text",
+            "default_value": "Stories from the estates"
+        },
+        {
+            "key": "field_home_journal_view_all_label",
+            "label": "View All Label",
+            "name": "journal_view_all_label",
+            "type": "text",
+            "default_value": "All Journal Entries",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_journal_view_all_link",
+            "label": "View All Link",
+            "name": "journal_view_all_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+
+
+        {
+            "key": "field_home_tab_trade",
+            "label": "Trade",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+		{
+    "key": "field_home_trade_bg_image",
+    "label": "Background Image",
+    "name": "trade_bg_image",
+    "type": "image",
+    "return_format": "array",
+    "preview_size": "medium",
+    "instructions": "Optional. Falls back to the dark solid background if left empty."
+},
+        {
+            "key": "field_home_trade_eyebrow",
+            "label": "Eyebrow",
+            "name": "trade_eyebrow",
+            "type": "text",
+            "default_value": "For the Trade"
+        },
+        {
+            "key": "field_home_trade_title",
+            "label": "Title",
+            "name": "trade_title",
+            "type": "text",
+            "default_value": "Partnering with restaurants, hotels & merchants"
+        },
+        {
+            "key": "field_home_trade_text",
+            "label": "Text",
+            "name": "trade_text",
+            "type": "textarea",
+            "rows": 3
+        },
+        {
+            "key": "field_home_trade_cta_primary_label",
+            "label": "Primary Button Label",
+            "name": "trade_cta_primary_label",
+            "type": "text",
+            "default_value": "Apply for a Trade Account",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_trade_cta_primary_link",
+            "label": "Primary Button Link",
+            "name": "trade_cta_primary_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_trade_cta_secondary_label",
+            "label": "Secondary Button Label",
+            "name": "trade_cta_secondary_label",
+            "type": "text",
+            "default_value": "Trade Login",
+            "wrapper": { "width": "50" }
+        },
+        {
+            "key": "field_home_trade_cta_secondary_link",
+            "label": "Secondary Button Link",
+            "name": "trade_cta_secondary_link",
+            "type": "url",
+            "wrapper": { "width": "50" }
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "page_template",
+                "operator": "==",
+                "value": "template-home.php"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "All editable content blocks for the custom Home Page template.",
+    "modified": 1752710400
+}

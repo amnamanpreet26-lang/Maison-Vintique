@@ -1,0 +1,107 @@
+{
+  "content": [
+    {
+      "id": "89ba54e",
+      "elType": "section",
+      "settings": {
+        "structure": "30",
+        "background_background": "classic",
+        "background_color": "#F4F0E6E6",
+        "padding": {
+          "unit": "px",
+          "top": "14",
+          "right": "40",
+          "bottom": "14",
+          "left": "40",
+          "isLinked": false
+        }
+      },
+      "elements": [
+        {
+          "id": "56debac",
+          "elType": "column",
+          "settings": {
+            "_column_size": 25,
+            "_inline_size": null
+          },
+          "elements": [
+            {
+              "id": "fb2fcca",
+              "elType": "widget",
+              "widgetType": "theme-site-logo",
+              "settings": {
+                "align": "left",
+                "width": {
+                  "unit": "px",
+                  "size": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "02d4c6c",
+          "elType": "column",
+          "settings": {
+            "_column_size": 50,
+            "_inline_size": null
+          },
+          "elements": [
+            {
+              "id": "1dbb2e8",
+              "elType": "widget",
+              "widgetType": "nav-menu",
+              "settings": {
+                "menu": "primary",
+                "layout": "horizontal",
+                "align_items": "center",
+                "menu_typography_typography": "custom",
+                "menu_typography_font_family": "\"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+                "menu_typography_font_size": {
+                  "unit": "px",
+                  "size": 13
+                },
+                "menu_typography_letter_spacing": {
+                  "unit": "px",
+                  "size": 1.5
+                },
+                "menu_typography_text_transform": "uppercase",
+                "color_menu_item": "#4A4038",
+                "color_menu_item_hover": "#6E1E2A"
+              }
+            }
+          ]
+        },
+        {
+          "id": "83d71e8",
+          "elType": "column",
+          "settings": {
+            "_column_size": 25,
+            "_inline_size": null
+          },
+          "elements": [
+            {
+              "id": "800e31d",
+              "elType": "widget",
+              "widgetType": "search-form",
+              "settings": {
+                "skin": "minimal",
+                "placeholder": "Search wines\u2026"
+              }
+            },
+            {
+              "id": "917e5d4",
+              "elType": "widget",
+              "widgetType": "woocommerce-menu-cart",
+              "settings": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "page_settings": [],
+  "version": "0.4",
+  "title": "Maison Vintique \u2014 Header",
+  "type": "header"
+}
