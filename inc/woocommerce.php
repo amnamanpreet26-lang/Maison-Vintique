@@ -1,14 +1,15 @@
 <?php
 /**
- * WooCommerce trade behaviour — price on login + trade gating.
+ * WooCommerce trade behaviour — price on login.
  *
- * Wines carry an ACF `visibility_tier` (public / trade-only / allocation / private).
- * Public wines behave as normal WooCommerce products. Trade-gated wines hide the
- * price and the add-to-cart button from guests and show a "Login to view price"
- * button instead. Approved trade users (role `mv_trade`) see price + purchase.
+ * ONE RULE, and it is the whole of it:
  *
- * In production, trade pricing itself comes from the Laravel portal via API/SSO;
- * this file provides the WooCommerce-side gating and hooks.
+ *   Logged OUT -> no prices anywhere, nothing can be bought.
+ *   Logged IN  -> prices visible, add to cart and buy work normally.
+ *
+ * There is no per-product setting and no special role: any logged-in account
+ * sees everything. If you ever need to carve out an exception, filter
+ * `mve_is_gated` rather than adding branches here.
  *
  * @package maison-vintique-elementor
  */
@@ -18,48 +19,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Is the current visitor an approved trade user?
- */
-function mve_is_trade_user() {
-	return is_user_logged_in() && current_user_can( 'mv_trade' );
-}
-
-/**
- * Get a product's visibility tier (falls back to public).
+ * Is pricing hidden from the current visitor?
  *
- * @param int $product_id
- * @return string public|trade-only|allocation|private
+ * @param int $product_id Unused by default; passed through to the filter so a
+ *                        site can still make a per-product decision if needed.
+ * @return bool
  */
-function mve_product_tier( $product_id ) {
-	$tier = function_exists( 'get_field' ) ? get_field( 'visibility_tier', $product_id ) : '';
-	return $tier ? $tier : 'public';
+function mve_is_gated( $product_id = 0 ) {
+	return (bool) apply_filters( 'mve_is_gated', ! is_user_logged_in(), $product_id );
 }
 
 /**
- * Should this product be gated for the current visitor?
- */
-function mve_is_gated( $product_id ) {
-	$tier = mve_product_tier( $product_id );
-	if ( 'public' === $tier ) {
-		return false;
-	}
-	return ! mve_is_trade_user();
-}
-
-/**
- * Replace the price HTML with a login prompt for gated products.
+ * Replace the price HTML with a login prompt while logged out.
  */
 function mve_gated_price_html( $price, $product ) {
 	if ( mve_is_gated( $product->get_id() ) ) {
 		$login = wp_login_url( get_permalink( $product->get_id() ) );
-		return '<span class="mv-trade-tag">Trade pricing on login</span> <a class="mv-price-login" href="' . esc_url( $login ) . '">Login to view price</a>';
+		return '<span class="mv-trade-tag">' . esc_html__( 'Trade pricing on login', 'maison-vintique-elementor' ) . '</span> '
+			. '<a class="mv-price-login" href="' . esc_url( $login ) . '">' . esc_html__( 'Login to view price', 'maison-vintique-elementor' ) . '</a>';
 	}
 	return $price;
 }
 add_filter( 'woocommerce_get_price_html', 'mve_gated_price_html', 10, 2 );
 
 /**
- * Prevent purchase of gated products by guests.
+ * Nothing is purchasable while logged out.
  */
 function mve_gated_is_purchasable( $purchasable, $product ) {
 	if ( mve_is_gated( $product->get_id() ) ) {
@@ -70,7 +54,7 @@ function mve_gated_is_purchasable( $purchasable, $product ) {
 add_filter( 'woocommerce_is_purchasable', 'mve_gated_is_purchasable', 10, 2 );
 
 /**
- * Swap the "Add to Cart" button text on gated products (shop/archive loop).
+ * Swap the "Add to Cart" button text while logged out.
  */
 function mve_gated_add_to_cart_text( $text, $product ) {
 	if ( $product && mve_is_gated( $product->get_id() ) ) {
@@ -80,21 +64,6 @@ function mve_gated_add_to_cart_text( $text, $product ) {
 }
 add_filter( 'woocommerce_product_add_to_cart_text', 'mve_gated_add_to_cart_text', 10, 2 );
 add_filter( 'woocommerce_product_single_add_to_cart_text', 'mve_gated_add_to_cart_text', 10, 2 );
-
-/**
- * Register the trade customer role on activation.
- */
-function mve_register_trade_role() {
-	add_role(
-		'mv_trade',
-		__( 'Trade Customer', 'maison-vintique-elementor' ),
-		array(
-			'read'     => true,
-			'mv_trade' => true,
-		)
-	);
-}
-add_action( 'after_switch_theme', 'mve_register_trade_role' );
 
 /**
  * Wine ordering is by the case — enforce minimum order quantity from ACF `min_order_qty`.
@@ -111,24 +80,29 @@ add_filter( 'woocommerce_quantity_input_args', 'mve_min_order_qty', 10, 2 );
 
 
 /**
- * Keep the single product page free of stray "Add to Cart" / "Buy Now" buttons.
+ * Hide stray "Add to Cart" / "Buy Now" buttons on the product page — but ONLY
+ * while logged out.
  *
- * woocommerce/single-product.php is a fully custom template: it renders its own
- * designed buy bar (quantity + "Add to Case" + "Enquire" for approved trade
- * accounts) and never calls woocommerce_template_single_add_to_cart(). So the
- * theme itself does not output a second button.
+ * woocommerce/single-product.php renders its own designed buy bar and never
+ * calls woocommerce_template_single_add_to_cart(). Extra buttons come from
+ * around the theme: an Elementor "Add To Cart" widget in Theme Builder, or a
+ * "Buy Now"/direct-checkout plugin hooking the standard actions. Those would
+ * otherwise offer a guest a purchase route the price is hidden on.
  *
- * What DOES put extra buttons on a product page is everything around the theme:
- * an Elementor "Single Product" / "Add To Cart" widget in Theme Builder, or a
- * "Buy Now"/"Quick Buy"/direct-checkout plugin hooking the standard actions.
- * This unhooks those so only the designed buy bar is ever shown.
+ * Once the customer is logged in nothing is stripped, so add to cart and buy
+ * now behave normally.
  *
- * To put them back:
+ * To disable entirely:
  *   add_filter( 'mve_hide_single_add_to_cart', '__return_false' );
  */
 function mve_strip_single_add_to_cart() {
 	// Product pages only — the shop loop's own buttons are untouched.
 	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+
+	// Logged-in customers keep every purchase button.
+	if ( is_user_logged_in() ) {
 		return;
 	}
 

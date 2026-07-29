@@ -71,19 +71,12 @@ function mve_filter_shop_query( $query ) {
 		);
 	}
 
-	// Availability radio: in stock vs. allocation-only (ACF visibility_tier).
-	if ( ! empty( $_GET['stock'] ) ) {
-		if ( 'instock' === $_GET['stock'] ) {
-			$meta_query[] = array(
-				'key'   => '_stock_status',
-				'value' => 'instock',
-			);
-		} elseif ( 'allocation' === $_GET['stock'] ) {
-			$meta_query[] = array(
-				'key'   => 'visibility_tier',
-				'value' => 'allocation',
-			);
-		}
+	// Availability radio.
+	if ( ! empty( $_GET['stock'] ) && 'instock' === $_GET['stock'] ) {
+		$meta_query[] = array(
+			'key'   => '_stock_status',
+			'value' => 'instock',
+		);
 	}
 
 	if ( $meta_query ) {

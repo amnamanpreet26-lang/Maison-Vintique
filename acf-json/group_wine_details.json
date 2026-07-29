@@ -80,25 +80,6 @@
       "default_value": "6 x 75cl"
     },
     {
-      "key": "field_mv_visibility_tier",
-      "label": "Visibility Tier",
-      "name": "visibility_tier",
-      "type": "select",
-      "instructions": "Controls who can see pricing and buy.",
-      "required": 1,
-      "choices": {
-        "public": "Public — price visible to all",
-        "trade-only": "Trade only — price on login",
-        "allocation": "Allocation only — by enquiry",
-        "private": "Fully private — selected accounts"
-      },
-      "default_value": "public",
-      "ui": 1,
-      "return_format": "value",
-      "wrapper": { "width": "50" }
-    },
-
-    {
       "key": "field_mv_tab_tasting",
       "label": "Tasting & Story",
       "name": "",
@@ -203,7 +184,7 @@
   "instruction_placement": "label",
   "hide_on_screen": "",
   "active": true,
-  "description": "Editorial and trade attributes for wine products, organized by tab.",
+  "description": "Editorial and trade attributes for wine products, organized by tab. Pricing visibility is not set here — prices are hidden from logged-out visitors site-wide (inc/woocommerce.php).",
   "show_in_rest": 1,
-  "modified": 1768600000
+  "modified": 1785283200
 }

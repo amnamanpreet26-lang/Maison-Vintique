@@ -26,8 +26,6 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 	return;
 }
 ?>
-
-<main>
 <section class="section checkout-page">
 <div class="wrap">
 
@@ -94,4 +92,3 @@ if ( ! $checkout->is_registration_enabled() && $checkout->is_registration_requir
 
 </div>
 </section>
-</main>

@@ -13,11 +13,11 @@ A luxury editorial wine importer & **B2B trade store** built on **Elementor Pro 
 ## 1. Install the theme
 1. Install & activate **Hello Elementor**.
 2. Copy this folder to `wp-content/themes/maison-vintique-elementor` and activate **Maison Vintique (Elementor)**.
-   - On activation it registers: the **Producer** post type, all **wine taxonomies**, two WooCommerce global attributes (Bottle Size, Case Format), and the **Trade Customer** role (`mv_trade`).
+   - On activation it registers: the **Producer** post type, all **wine taxonomies**, and two WooCommerce global attributes (Bottle Size, Case Format).
 
 ## 2. Load the ACF fields (already importable)
 The field groups live in `/acf-json` and **auto-sync** — go to **Custom Fields → Field Groups**, and if they show as "Sync available", click **Sync**. That creates:
-- **Wine Details** → shows on every WooCommerce **product** (producer, vintage, ABV, allergens, case format, MOQ, tasting notes, terroir, technical/sell sheets, **Visibility Tier**, EHD/VCIS SKU…)
+- **Wine Details** → shows on every WooCommerce **product** (producer, vintage, ABV, allergens, case format, MOQ, tasting notes, terroir, technical/sell sheets…)
 - **Producer Details** → shows on the **Producer** post type (history, philosophy, terroir, gallery, founded/hectares/generations…)
 
 *Alternative:* **Custom Fields → Tools → Import**, and upload the two files in `/acf-json`.
@@ -25,10 +25,10 @@ The field groups live in `/acf-json` and **auto-sync** — go to **Custom Fields
 ## 3. WooCommerce setup
 1. Run the WooCommerce setup wizard (currency £, UK, VAT).
 2. Add wines as **Products**. Set the price, the **product categories** (Red / White / Rosé), the **wine taxonomies** (country, region, grape, vintage, style, appellation, collection…) and fill the **Wine Details** ACF fields.
-3. Set each wine's **Visibility Tier**:
-   - `public` → price + Add to Cart for everyone
-   - `trade-only / allocation / private` → guests see **"Trade only — Login to view price"**; approved trade users (role `mv_trade`) see price + buy.
-   - This gating is handled in `inc/woocommerce.php` (no extra plugin needed for the on/off logic).
+3. Pricing visibility needs no per-product setting. There is **one rule**, in `inc/woocommerce.php`:
+   - **Logged out** → no prices anywhere, nothing can be added to the basket; cards and the product page show *"Trade pricing on login"*.
+   - **Logged in** → prices visible, add to cart and buy work normally, for any account.
+   - To carve out an exception, filter `mve_is_gated` — don't add branches.
 
 ## 4. Import the Elementor templates
 **Templates → Saved Templates → Import Templates**, then upload the files in `/elementor-templates`:
@@ -52,7 +52,7 @@ Appearance → Menus → create **Primary** (Home, Shop, Producers, Journal, Our
 | Wine catalogue | WooCommerce products + wine taxonomies (`inc/taxonomies.php`) |
 | Wine detail fields | ACF `Wine Details` (`acf-json/group_wine_details.json`) |
 | Producers | `producer` CPT + ACF `Producer Details` |
-| Price on login / trade gating | `inc/woocommerce.php` + ACF `visibility_tier` |
+| Price on login / trade gating | `inc/woocommerce.php` (`mve_is_gated` — logged in or not) |
 | Minimum order (by the case) | ACF `min_order_qty` → `mve_min_order_qty()` |
 | VCIS stock matching | ACF `sku_ehd` (the code matched against EHD's stock CSV) |
 | Brand design tokens | `style.css` + `assets/css/style.css` (CSS vars + `.mv-*` classes) |
@@ -71,11 +71,11 @@ WordPress/WooCommerce PHP template, so it's easy to edit directly in code:
 | `inc/shop-query.php` | Turns the filter form + sort dropdown into an actual WP_Query (category/price/stock filtering, "Vintage: newest" sort). | Filtering/sorting behaviour |
 | `assets/css/style.css` (bottom section) | Shop grid, product cards, filters, pagination — uses the same `--mv-*` variables as the rest of the site. | Shop page look & feel |
 
-Trade price-on-login gating is untouched — it still lives entirely in `inc/woocommerce.php`
-(`mve_is_gated`, `mve_product_tier`, the three `woocommerce_*` filters). The shop card and
-archive template just call normal WooCommerce functions (`get_price_html()`,
-`is_purchasable()`) and let those existing filters do the gating, so there's only one place
-that logic lives.
+Price-on-login gating lives entirely in `inc/woocommerce.php` — one helper
+(`mve_is_gated()`, which is just "is this visitor logged out?") plus three
+`woocommerce_*` filters. The shop card and archive template only call normal
+WooCommerce functions (`get_price_html()`, `is_purchasable()`) and let those
+filters do the gating, so there is a single place that logic lives.
 
 ## The wine card (homepage portfolio + Shop archive)
 
@@ -87,12 +87,12 @@ the "You may also like" grid on the single product page.
 | Part of the card | Comes from |
 |---|---|
 | Left badge | `wine_colour` taxonomy (falls back to the first Product Category) |
-| Right badge | ACF `visibility_tier` = `allocation` → "By allocation"; otherwise stock status → "Available" / "Out of stock" |
+| Right badge | Stock status → "Available" / "Out of stock" |
 | Title | Product title |
 | Meta line | **`wine_country` · `wine_region` taxonomy terms**, joined by a middot |
 | Price line | Normal WooCommerce price, or "Trade pricing on login" when `mve_is_gated()` says the wine is gated |
 | **View Wine** button | Links to the single product page (this replaced the old Add to Cart button) |
-| Technical Details | Single product page, Technical tab (`#tab-tech`) |
+| Technical Details | Single product page, Technical tab — links to `#tab-tech`, and the tab script opens that tab on arrival |
 | Enquire | `?enquire=<id>` on the Shop page — the same pattern the single product page uses |
 
 Every line is optional, so a product with only a title and an image still renders a valid card.
@@ -112,10 +112,12 @@ There are **two** routes to the producers grid, and both render the same card
 
 The cards **flip on hover**, the same way the homepage "Estate Partners" cards
 do — front is the estate photo, back is the crest, the estate's initials in a
-ring, and "Est. 1868" (falling back to the region when there's no year). The
-markup uses the same `estate-card__*` class names as the homepage so the two
-read as one component, but the CSS is scoped under `.mvprod`, so neither can
-break the other.
+ring, and "Est. 1868" (falling back to the region when there's no year).
+
+They use their own `mvprod__*` class names rather than the homepage's
+`estate-card__*` ones. Sharing those names meant the homepage's estate-card
+rules also landed on these cards and fought with them, which stopped the front
+photo from showing. Separate names, no collision.
 
 ### Single producer page
 

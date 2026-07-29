@@ -355,9 +355,7 @@
 
 .mvprod__media {
 	position: relative;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	display: block;
 	height: 130px;
 	flex: 0 0 130px;
 	overflow: hidden;
@@ -366,32 +364,39 @@
 }
 
 /* --- Flip -----------------------------------------------------------------
-   Same effect and same class names as the homepage "Estate Partners" cards.
-   Every rule here is scoped under .mvprod, so the homepage's own
-   `.estate-card ...` rules are neither used nor overwritten — the two
-   components stay independent.
+   Same EFFECT as the homepage "Estate Partners" cards — photo on the front,
+   crest + initials + est. year on the back — but with its own class names.
+
+   These deliberately do NOT reuse the homepage's `estate-card__*` names: when
+   they did, the homepage's own estate-card rules also landed on these cards
+   and fought with them, which is what stopped the front photo from showing.
+   Separate names means neither component can affect the other.
    ------------------------------------------------------------------------- */
 
 .mvprod__media {
 	perspective: 900px;
 }
 
-.mvprod .estate-card__flip {
+.mvprod__flip {
 	position: relative;
+	display: block;
 	width: 100%;
 	height: 100%;
 	transform-style: preserve-3d;
 	transition: transform .7s cubic-bezier(.22, .61, .36, 1);
 }
 
-.mvprod:hover .estate-card__flip,
-.mvprod:focus-within .estate-card__flip {
+.mvprod:hover .mvprod__flip,
+.mvprod:focus-within .mvprod__flip {
 	transform: rotateY(180deg);
 }
 
-.mvprod .estate-card__face {
+.mvprod__face {
 	position: absolute;
-	inset: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -400,24 +405,28 @@
 	-webkit-backface-visibility: hidden;
 }
 
-.mvprod .estate-card__face--front {
+.mvprod__face--front {
 	background: var(--mv2-cream);
+	/* Safari needs the front face nudged forward or it can win the z-fight
+	   with the back face and hide the photo. */
+	transform: translateZ(1px);
 }
 
-.mvprod .estate-card__face--front img {
+.mvprod__face--front img {
+	display: block;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	display: block;
+	max-width: none; /* beats a global `img { max-width:100% }` shrinking it */
 }
 
-.mvprod .estate-card__face--back {
-	transform: rotateY(180deg);
+.mvprod__face--back {
+	transform: rotateY(180deg) translateZ(1px);
 	background: linear-gradient(140deg, #6d1f2f 0%, #4a4a3c 100%);
 	color: #f2e6d2;
 }
 
-.mvprod .estate-card__badge {
+.mvprod__badge {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -425,13 +434,13 @@
 	padding: 8px;
 }
 
-.mvprod .estate-card__logo svg {
+.mvprod__crest svg {
 	display: block;
 	width: 26px;
 	height: 34px;
 }
 
-.mvprod .estate-card__ring {
+.mvprod__ring {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -445,7 +454,7 @@
 	text-indent: .12em; /* balances the tracking on the last letter */
 }
 
-.mvprod .estate-card__est {
+.mvprod__est-year {
 	font-family: var(--mv2-sans);
 	font-size: 9.5px;
 	font-weight: 600;
@@ -468,9 +477,9 @@
 	justify-content: center;
 }
 
-/* Respect a reduced-motion preference — show the back face instantly. */
+/* Respect a reduced-motion preference — flip instantly rather than animating. */
 @media (prefers-reduced-motion: reduce) {
-	.mvprod .estate-card__flip { transition: none; }
+	.mvprod__flip { transition: none; }
 }
 
 .mvprod__body {
@@ -1788,4 +1797,321 @@
 	.mvest-gallery__grid  { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 	.mvest-wines .pgrid   { grid-template-columns: minmax(0, 1fr); }
 	.mvest-hero .btn      { width: 100%; }
+}
+
+
+/* ==========================================================================
+   9. HEADER DROPDOWNS  —  header.php
+   --------------------------------------------------------------------------
+   WordPress nests child menu items in `<ul class="sub-menu">`. With no CSS for
+   that, the children just render as more list items in the same row — which is
+   why sub-items appeared inline next to their parent. These rules take the
+   sub-menu out of flow and show it on hover / keyboard focus.
+   ========================================================================== */
+
+.mv-nav {
+	display: flex;
+	align-items: center;
+	gap: 26px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* The anchor for the absolutely-positioned dropdown */
+.mv-nav > li {
+	position: relative;
+}
+
+.mv-nav a {
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+/* --- Caret on parents ----------------------------------------------------- */
+
+.mv-nav > li.menu-item-has-children > a::after {
+	content: "";
+	display: inline-block;
+	width: .38em;
+	height: .38em;
+	margin-left: .5em;
+	vertical-align: .12em;
+	border-right: 1px solid currentColor;
+	border-bottom: 1px solid currentColor;
+	transform: rotate(45deg);
+	transition: transform .2s ease;
+}
+
+.mv-nav > li.menu-item-has-children:hover > a::after {
+	transform: rotate(225deg);
+}
+
+/* --- The dropdown --------------------------------------------------------- */
+
+.mv-nav .sub-menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 200;
+	min-width: 220px;
+	margin: 0;
+	padding: 8px 0;
+	list-style: none;
+	background: var(--mv2-paper, #fffdfa);
+	border: 1px solid var(--mv2-line);
+	border-radius: 4px;
+	box-shadow: 0 20px 44px -24px rgba(20, 26, 22, .55);
+
+	/* Hidden but still hit-testable-free: opacity+visibility keeps the
+	   transition, and pointer-events stops it swallowing clicks while hidden. */
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	transform: translateY(6px);
+	transition: opacity .18s ease, transform .18s ease, visibility .18s;
+}
+
+/* A small invisible bridge so the menu doesn't close in the gap between the
+   parent item and the dropdown. */
+.mv-nav > li.menu-item-has-children::after {
+	content: "";
+	position: absolute;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	height: 14px;
+}
+
+.mv-nav li:hover > .sub-menu,
+.mv-nav li:focus-within > .sub-menu {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transform: translateY(0);
+}
+
+.mv-nav .sub-menu li {
+	list-style: none;
+	margin: 0;
+}
+
+.mv-nav .sub-menu a {
+	display: block;
+	padding: 9px 18px;
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+	line-height: 1.4;
+	color: var(--ink-soft, #4a4038);
+	transition: background .18s ease, color .18s ease;
+}
+
+.mv-nav .sub-menu a:hover,
+.mv-nav .sub-menu a:focus-visible {
+	background: var(--mv2-cream);
+	color: var(--mv2-burgundy);
+}
+
+/* --- Third level, if a menu ever goes that deep --------------------------- */
+
+.mv-nav .sub-menu .sub-menu {
+	top: -9px;
+	left: 100%;
+	transform: translateX(6px);
+}
+
+.mv-nav .sub-menu li:hover > .sub-menu,
+.mv-nav .sub-menu li:focus-within > .sub-menu {
+	transform: translateX(0);
+}
+
+/* Flip the dropdown back inside the viewport for the last item or two */
+.mv-nav > li:last-child .sub-menu,
+.mv-nav > li:nth-last-child(2) .sub-menu {
+	left: auto;
+	right: 0;
+}
+
+.mv-nav > li:last-child .sub-menu .sub-menu,
+.mv-nav > li:nth-last-child(2) .sub-menu .sub-menu {
+	left: auto;
+	right: 100%;
+	transform: translateX(-6px);
+}
+
+/* --- Mobile nav ------------------------------------------------------------
+   In the slide-down panel there's no room to float a dropdown, so children
+   become a normal indented list that's always open.
+   ------------------------------------------------------------------------- */
+
+.mv-nav--mobile {
+	display: block;
+}
+
+.mv-nav--mobile > li {
+	position: static;
+}
+
+.mv-nav--mobile > li.menu-item-has-children > a::after {
+	display: none;
+}
+
+.mv-nav--mobile > li.menu-item-has-children::after {
+	display: none;
+}
+
+.mv-nav--mobile .sub-menu {
+	position: static;
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transform: none;
+	min-width: 0;
+	margin: 0 0 4px;
+	padding: 0 0 0 16px;
+	border: 0;
+	border-left: 1px solid var(--mv2-line);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	transition: none;
+}
+
+.mv-nav--mobile .sub-menu a {
+	padding: 8px 0;
+	font-size: 13px;
+}
+
+.mv-nav--mobile .sub-menu a:hover {
+	background: transparent;
+}
+
+/* Below the header breakpoint the desktop nav is hidden anyway, but if the
+   theme keeps it visible, stop the dropdown escaping the screen. */
+@media (max-width: 900px) {
+	.mv-nav {
+		gap: 16px;
+	}
+}
+
+
+/* ==========================================================================
+   10. LOGIN PAGE — WooCommerce default overrides
+   --------------------------------------------------------------------------
+   woocommerce.css styles the login/register FORMS themselves:
+
+       .woocommerce form.login,
+       .woocommerce form.register {
+           border: 1px solid #d3ced2; padding: 20px;
+           margin: 2em 0; border-radius: 5px;
+       }
+
+   The form sits inside .auth-card, so that painted a second grey rounded box
+   inside each card, pushed everything down by 2em and broke the layout. These
+   rules strip it back so the card itself is the only panel.
+   ========================================================================== */
+
+.auth-card form.login,
+.auth-card form.register,
+.woocommerce .auth-card form.login,
+.woocommerce .auth-card form.register,
+.woocommerce-page .auth-card form.login,
+.woocommerce-page .auth-card form.register {
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+}
+
+/* WooCommerce's .form-row wrapper spacing, if a hooked plugin adds fields */
+.auth-card .form-row,
+.woocommerce .auth-card .form-row {
+	padding: 0;
+	margin: 0 0 16px;
+}
+
+.auth-card .form-row label,
+.woocommerce .auth-card .form-row label {
+	display: block;
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+	margin-bottom: 6px;
+	line-height: 1.4;
+}
+
+.auth-card .form-row input[type="text"],
+.auth-card .form-row input[type="email"],
+.auth-card .form-row input[type="password"],
+.woocommerce .auth-card .form-row input.input-text {
+	width: 100%;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--panel-2, #f7f3ea);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+	box-shadow: none;
+}
+
+/* The submit buttons carry .btn .btn-p / .btn-o already — stop WooCommerce's
+   grey `.button` skin winning if a plugin adds that class too. */
+.auth-card .btn,
+.woocommerce .auth-card .btn,
+.woocommerce .auth-card button.button,
+.woocommerce .auth-card input.button {
+	width: 100%;
+	border-radius: 2px;
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	font-weight: 600;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	padding: 13px 22px;
+	line-height: 1.2;
+}
+
+.auth-card .btn-p,
+.woocommerce .auth-card button.button {
+	background: var(--mv2-burgundy);
+	color: #f6ebdd;
+	border: 1px solid var(--mv2-burgundy);
+}
+
+.auth-card .btn-p:hover,
+.woocommerce .auth-card button.button:hover {
+	background: var(--burg-br, #8a2a38);
+	border-color: var(--burg-br, #8a2a38);
+	color: #f6ebdd;
+}
+
+.auth-card .btn-o {
+	background: transparent;
+	border: 1px solid var(--mv2-burgundy);
+	color: var(--mv2-burgundy);
+}
+
+.auth-card .btn-o:hover {
+	background: var(--mv2-burgundy);
+	color: #f6ebdd;
+}
+
+/* WooCommerce's notice block sits above the cards — give it room */
+.login-page .woocommerce-notices-wrapper:not(:empty) {
+	max-width: 940px;
+	margin: 0 auto 20px;
+}
+
+/* Never let the two-card grid overflow its container */
+.auth,
+.auth-card {
+	min-width: 0;
+}
+
+.auth-card form {
+	min-width: 0;
 }

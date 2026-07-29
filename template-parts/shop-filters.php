@@ -273,10 +273,6 @@ $mve_active_recognitions = array_map( 'sanitize_text_field', $mve_active_recogni
 			<input type="radio" name="stock" value="instock" <?php checked( 'instock' === $mve_stock ); ?> onchange="this.form.submit()">
 			In stock
 		</label>
-		<label>
-			<input type="radio" name="stock" value="allocation" <?php checked( 'allocation' === $mve_stock ); ?> onchange="this.form.submit()">
-			By allocation
-		</label>
 	</div>
 
 </form>

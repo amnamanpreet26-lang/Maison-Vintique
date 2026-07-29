@@ -92,16 +92,20 @@ $mvp_wines_url = function_exists( 'wc_get_page_permalink' )
 	<a class="mvprod__media" href="<?php echo esc_url( get_permalink( $mvp_id ) ); ?>" tabindex="-1" aria-hidden="true">
 		<?php
 		/*
-		 * Flip card — same structure and class names as the homepage "Estate
-		 * Partners" section in template-home.php, so the two read as one
-		 * component. The flip mechanics are styled under `.mvprod` in the
-		 * Additional CSS: the homepage rules are scoped to `.estate-card`, so
-		 * they don't reach this card and can't be broken by it either.
+		 * Flip card — same EFFECT as the homepage "Estate Partners" section
+		 * (photo on the front, crest + initials + est. year on the back), but
+		 * deliberately using its own `mvprod__*` class names rather than the
+		 * homepage's `estate-card__*` ones.
+		 *
+		 * Sharing those class names meant the homepage's own estate-card rules
+		 * also landed on this card and fought with it — which is what stopped
+		 * the front photo showing. Separate names, no collision, and neither
+		 * component can break the other.
 		 */
 		?>
-		<div class="estate-card__flip">
+		<div class="mvprod__flip">
 
-			<div class="estate-card__face estate-card__face--front">
+			<div class="mvprod__face mvprod__face--front">
 				<?php if ( $mvp_image_url ) : ?>
 					<img src="<?php echo esc_url( $mvp_image_url ); ?>" alt="<?php echo esc_attr( get_the_title( $mvp_id ) ); ?>" loading="lazy">
 				<?php else : ?>
@@ -109,9 +113,9 @@ $mvp_wines_url = function_exists( 'wc_get_page_permalink' )
 				<?php endif; ?>
 			</div>
 
-			<div class="estate-card__face estate-card__face--back">
-				<span class="estate-card__badge">
-					<span class="estate-card__logo">
+			<div class="mvprod__face mvprod__face--back">
+				<span class="mvprod__badge">
+					<span class="mvprod__crest">
 						<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="<?php echo esc_attr( get_the_title( $mvp_id ) ); ?> crest">
 							<mask id="mvCrestProd-<?php echo esc_attr( $mvp_id ); ?>">
 								<rect x="0" y="0" width="100" height="130" fill="black"></rect>
@@ -128,9 +132,9 @@ $mvp_wines_url = function_exists( 'wc_get_page_permalink' )
 							</g>
 						</svg>
 					</span>
-					<span class="estate-card__ring"><?php echo esc_html( $mvp_initials ); ?></span>
+					<span class="mvprod__ring"><?php echo esc_html( $mvp_initials ); ?></span>
 					<?php if ( $mvp_back_sub ) : ?>
-						<span class="estate-card__est"><?php echo esc_html( $mvp_back_sub ); ?></span>
+						<span class="mvprod__est-year"><?php echo esc_html( $mvp_back_sub ); ?></span>
 					<?php endif; ?>
 				</span>
 			</div>

@@ -13,8 +13,6 @@
 
 defined( 'ABSPATH' ) || exit;
 ?>
-
-<main>
 <section class="section cart-page">
 <div class="wrap">
 
@@ -43,4 +41,3 @@ defined( 'ABSPATH' ) || exit;
 
 </div>
 </section>
-</main>

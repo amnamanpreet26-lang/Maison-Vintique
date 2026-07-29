@@ -41,8 +41,8 @@ if ( ! $product || ! $product->is_visible() ) {
 
 $mvc_id        = $product->get_id();
 $mvc_permalink = get_permalink( $mvc_id );
-$mvc_tier      = function_exists( 'mve_product_tier' ) ? mve_product_tier( $mvc_id ) : 'public';
-$mvc_gated     = function_exists( 'mve_is_gated' ) ? mve_is_gated( $mvc_id ) : false;
+// Logged out = price hidden. See inc/woocommerce.php.
+$mvc_gated = function_exists( 'mve_is_gated' ) ? mve_is_gated( $mvc_id ) : ! is_user_logged_in();
 
 /* ---------------------------------------------------------------------------
  * IMAGE — ACF bottle_image first, then the featured image, then the Woo
@@ -75,13 +75,9 @@ if ( ! $mvc_colour ) {
 }
 
 /* ---------------------------------------------------------------------------
- * BADGE 2 (top right) — availability. Allocation wines are never "out of
- * stock", they're by enquiry, so that tier wins over the stock status.
+ * BADGE 2 (top right) — availability, straight from the stock status.
  * ------------------------------------------------------------------------- */
-if ( 'allocation' === $mvc_tier ) {
-	$mvc_stock_label = __( 'By allocation', 'maison-vintique-elementor' );
-	$mvc_stock_state = 'alloc';
-} elseif ( $product->is_in_stock() ) {
+if ( $product->is_in_stock() ) {
 	$mvc_stock_label = __( 'Available', 'maison-vintique-elementor' );
 	$mvc_stock_state = 'in';
 } else {

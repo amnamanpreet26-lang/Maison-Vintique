@@ -28,8 +28,6 @@ $mve_registration_enabled = 'yes' === get_option( 'woocommerce_enable_myaccount_
  */
 $mve_apply_url = apply_filters( 'mve_trade_application_url', home_url( '/trade/' ) );
 ?>
-
-<main>
 <section class="section login-page">
 <div class="wrap">
 
@@ -153,6 +151,4 @@ $mve_apply_url = apply_filters( 'mve_trade_application_url', home_url( '/trade/'
 
 </div>
 </section>
-</main>
-
 <?php do_action( 'woocommerce_after_customer_login_form' ); ?>

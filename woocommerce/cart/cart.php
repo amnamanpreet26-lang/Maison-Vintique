@@ -16,8 +16,6 @@ defined( 'ABSPATH' ) || exit;
 
 do_action( 'woocommerce_before_cart' );
 ?>
-
-<main>
 <section class="section cart-page">
 <div class="wrap">
 
@@ -270,6 +268,4 @@ do_action( 'woocommerce_before_cart' );
 
 </div>
 </section>
-</main>
-
 <?php do_action( 'woocommerce_after_cart' ); ?>

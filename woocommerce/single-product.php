@@ -5,13 +5,14 @@ defined( 'ABSPATH' ) || exit;
 get_header( 'shop' );
 
 /**
- * Whether the current visitor is an approved trade account.
- * Adjust this to match whatever role/capability/plugin you use
- * to gate trade pricing (e.g. WooCommerce B2B/Wholesale plugins).
+ * Whether the current visitor may see prices and buy.
+ *
+ * One rule, shared with inc/woocommerce.php: logged in = yes, logged out = no.
+ * No role check, no per-product setting.
  */
 if ( ! function_exists( 'mv_is_trade_account' ) ) {
 	function mv_is_trade_account() {
-		return is_user_logged_in() && current_user_can( 'trade_customer' );
+		return function_exists( 'mve_is_gated' ) ? ! mve_is_gated() : is_user_logged_in();
 	}
 }
 
@@ -152,13 +153,16 @@ while ( have_posts() ) :
 						<small><?php esc_html_e( 'per case', 'maison-vintique' ); ?></small>
 					</p>
 				<?php endif; ?>
-        
-				
-				<div class="tabpane on" id="tab-desc">
+
 				<?php
-						echo wp_kses_post( wpautop( $product->get_description() ) );
-						?>
-			</div>
+				/*
+				 * NOTE: a second <div class="tabpane on" id="tab-desc"> used to sit
+				 * here, duplicating the description that the "Tasting & Story" tab
+				 * below already shows. Two elements shared the id "tab-desc", so
+				 * getElementById() in the tab script matched THIS one instead of the
+				 * real pane — which is why switching tabs misbehaved. Removed.
+				 */
+				?>
 
 				<?php if ( $is_trade ) : ?>
 
@@ -396,15 +400,42 @@ $closure = get_field( 'closure' );
 
 		// Tabs
 		var tabButtons = document.querySelectorAll('.tabnav button');
+
+		function activateTab(name) {
+			var pane = document.getElementById('tab-' + name);
+			if (!pane) { return false; }
+
+			tabButtons.forEach(function(b){
+				b.classList.toggle('on', b.getAttribute('data-tab') === name);
+			});
+			document.querySelectorAll('.tabpane').forEach(function(p){
+				p.classList.toggle('on', p === pane);
+			});
+			return true;
+		}
+
 		tabButtons.forEach(function(btn){
 			btn.addEventListener('click', function(){
-				tabButtons.forEach(function(b){ b.classList.remove('on'); });
-				document.querySelectorAll('.tabpane').forEach(function(p){ p.classList.remove('on'); });
-				btn.classList.add('on');
-				var pane = document.getElementById('tab-' + btn.getAttribute('data-tab'));
-				if (pane) { pane.classList.add('on'); }
+				activateTab(btn.getAttribute('data-tab'));
 			});
 		});
+
+		/*
+		 * Open a tab straight from the URL, e.g. /wine/xyz/#tab-tech — this is
+		 * what the "Technical Details" link on every wine card points at. Also
+		 * handles the hash changing while already on the page.
+		 */
+		function openTabFromHash(scroll) {
+			var match = /^#tab-([\w-]+)$/.exec(window.location.hash || '');
+			if (!match) { return; }
+			if (activateTab(match[1]) && scroll) {
+				var tabs = document.querySelector('.tabs');
+				if (tabs) { tabs.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+			}
+		}
+
+		openTabFromHash(true);
+		window.addEventListener('hashchange', function(){ openTabFromHash(true); });
 
 		// Quantity stepper (WooCommerce input already renders name="quantity")
 		var qtyWrap = document.querySelector('.qty');
