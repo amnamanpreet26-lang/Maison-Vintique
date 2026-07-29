@@ -1,10 +1,10 @@
 <?php
 /**
- * Footer support: nav menu locations, asset loading, and the newsletter
- * subscribe AJAX endpoint.
+ * Footer support: asset loading and the newsletter subscribe AJAX endpoint.
  *
- * Add this line once near the top of functions.php:
- *   require_once get_template_directory() . '/inc/mv-footer.php';
+ * Loaded from functions.php. The footer MENU LOCATIONS are registered in
+ * functions.php alongside the header one (mve_setup) so every location this
+ * theme has lives in a single list — see register_nav_menus() there.
  *
  * @package maison-vintique-elementor
  */
@@ -13,32 +13,61 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Register the three footer menu locations used in footer.php.
- * (If 'footer' is already registered elsewhere for a single combined
- * menu, you can remove it — the footer template no longer uses it.)
+ * Render one footer menu column.
+ *
+ * Assign a menu in Appearance → Menus → "Display location" and it renders.
+ * Until then the column falls back to $defaults so the footer never shows an
+ * empty gap — as soon as a menu is assigned to the location, it takes over.
+ *
+ * @param string $location Registered nav menu location, e.g. 'footer-explore'.
+ * @param array  $defaults label => url pairs used when no menu is assigned.
  */
-function mve_register_footer_menus() {
-	register_nav_menus( array(
-		'footer-explore' => __( 'Footer — Explore', 'maison-vintique' ),
-		'footer-trade'   => __( 'Footer — Trade', 'maison-vintique' ),
-		'footer-legal'   => __( 'Footer — Legal (Privacy / Cookies)', 'maison-vintique' ),
-	) );
+function mve_footer_menu( $location, $defaults = array() ) {
+	if ( has_nav_menu( $location ) ) {
+		wp_nav_menu(
+			array(
+				'theme_location' => $location,
+				'container'      => false,
+				'menu_class'     => 'mv-footer-nav',
+				'items_wrap'     => '<ul id="%1$s" class="%2$s">%3$s</ul>',
+				'fallback_cb'    => false,
+				'depth'          => 1,
+			)
+		);
+		return;
+	}
+
+	if ( ! $defaults ) {
+		return;
+	}
+
+	echo '<ul class="mv-footer-nav">';
+	foreach ( $defaults as $label => $url ) {
+		printf( '<li><a href="%s">%s</a></li>', esc_url( $url ), esc_html( $label ) );
+	}
+	echo '</ul>';
 }
-add_action( 'after_setup_theme', 'mve_register_footer_menus' );
 
 /**
  * Enqueue the footer stylesheet and the newsletter form script.
+ *
+ * NOTE: paths use get_stylesheet_directory*() — this is a CHILD theme, so
+ * get_template_directory*() would point at Hello Elementor and 404.
  */
 function mve_enqueue_footer_assets() {
-	$theme_uri = get_template_directory_uri();
-	$theme_dir = get_template_directory();
+	$theme_uri = get_stylesheet_directory_uri();
+	$theme_dir = get_stylesheet_directory();
 
-	wp_enqueue_style(
-		'mve-footer',
-		$theme_uri . '/assets/css/footer.css',
-		array(),
-		file_exists( $theme_dir . '/assets/css/footer.css' ) ? filemtime( $theme_dir . '/assets/css/footer.css' ) : '1.0.0'
-	);
+	// Only enqueue the stylesheet if it actually exists — the theme currently
+	// ships its footer styles via Customizer → Additional CSS instead.
+	if ( file_exists( $theme_dir . '/assets/css/footer.css' ) ) {
+		wp_enqueue_style(
+			'mve-footer',
+			$theme_uri . '/assets/css/footer.css',
+			array(),
+			filemtime( $theme_dir . '/assets/css/footer.css' )
+		);
+	}
 
 	wp_enqueue_script(
 		'mve-footer',

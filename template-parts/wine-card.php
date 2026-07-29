@@ -90,18 +90,21 @@ if ( 'allocation' === $mvc_tier ) {
 }
 
 /* ---------------------------------------------------------------------------
- * META LINE — "Bordeaux Supérieur 2019". Appellation (ACF) with the region
- * taxonomy as a fallback, then the vintage year.
+ * META LINE — "France · Bordeaux". The Country and Region taxonomy terms,
+ * joined by a middot. Either one on its own renders fine; if a wine has
+ * several terms in a taxonomy they are all listed.
  * ------------------------------------------------------------------------- */
-$mvc_appellation = function_exists( 'get_field' ) ? get_field( 'appellation', $mvc_id ) : '';
-$mvc_vintage     = function_exists( 'get_field' ) ? get_field( 'vintage_year', $mvc_id ) : '';
+$mvc_country_terms = get_the_terms( $mvc_id, 'wine_country' );
+$mvc_region_terms  = get_the_terms( $mvc_id, 'wine_region' );
 
-if ( ! $mvc_appellation ) {
-	$mvc_region_terms = get_the_terms( $mvc_id, 'wine_region' );
-	$mvc_appellation  = ( $mvc_region_terms && ! is_wp_error( $mvc_region_terms ) ) ? $mvc_region_terms[0]->name : '';
-}
+$mvc_countries = ( $mvc_country_terms && ! is_wp_error( $mvc_country_terms ) )
+	? wp_list_pluck( $mvc_country_terms, 'name' )
+	: array();
+$mvc_regions = ( $mvc_region_terms && ! is_wp_error( $mvc_region_terms ) )
+	? wp_list_pluck( $mvc_region_terms, 'name' )
+	: array();
 
-$mvc_meta = trim( implode( ' ', array_filter( array( $mvc_appellation, $mvc_vintage ) ) ) );
+$mvc_meta = implode( ' · ', array_filter( array_merge( $mvc_countries, $mvc_regions ) ) );
 
 /* ---------------------------------------------------------------------------
  * INLINE LINKS — Technical Details deep-links to the Technical tab on the

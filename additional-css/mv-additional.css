@@ -10,9 +10,13 @@
    --------
    1. Tokens            — local variables, all with fallbacks
    2. Wine card         — template-parts/wine-card.php
-                          (homepage "Curated Portfolio" + Shop archive)
-   3. Producers grid    — producers-grid.php
+                          (homepage "Curated Portfolio", Shop archive, and the
+                          "You may also like" grid on the product page)
+   3. Producers grid    — archive-producer.php + producers-grid.php
    4. My Account        — responsive fixes for the account area
+   5. Cart              — woocommerce/cart/cart.php
+   6. Checkout          — woocommerce/checkout/form-checkout.php
+   7. Login             — woocommerce/myaccount/form-login.php
    ========================================================================== */
 
 
@@ -301,35 +305,50 @@
 
 
 /* ==========================================================================
-   3. PRODUCERS GRID  —  producers-grid.php
+   3. PRODUCERS GRID
+   --------------------------------------------------------------------------
+   Used by BOTH /producers/ (archive-producer.php) and the "Producers Grid"
+   page template. Values follow the approved prototype.
    ========================================================================== */
 
+/* The prototype's producer view is narrower than the site default — that
+   narrower measure is what makes the grid sit at a comfortable 3-up. */
+.wrap--producers {
+	max-width: 1120px;
+	margin-inline: auto;
+}
+
 .producers-page .page-h {
-	max-width: 640px;
-	margin-bottom: 40px;
+	max-width: 62ch;
+	margin-bottom: 32px;
 }
 
 .mvprod-grid {
 	display: grid;
+	/* Explicit 3-up at desktop — this is the "3 cards in a row" the design
+	   calls for. The minmax(0,1fr) stops long estate names forcing a column
+	   wider than its share. */
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 28px;
+	gap: 22px;
 	align-items: stretch;
+	padding-bottom: 60px;
 }
 
 .mvprod {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	background: var(--mv2-paper);
-	border: 1px solid var(--mv2-line);
-	border-radius: 2px;
+	background: #fff;
+	border: 1px solid #e4ddcf;
+	border-radius: 12px;
 	overflow: hidden;
+	box-shadow: 0 18px 40px -28px rgba(20, 26, 22, .4);
 	transition: box-shadow .28s ease, transform .28s ease, border-color .28s ease;
 }
 
 .mvprod:hover {
 	border-color: #d3c6b4;
-	box-shadow: 0 14px 34px -20px rgba(31, 27, 23, .45);
+	box-shadow: 0 22px 46px -26px rgba(20, 26, 22, .5);
 	transform: translateY(-2px);
 }
 
@@ -338,7 +357,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	aspect-ratio: 16 / 9;
+	height: 130px;
+	flex: 0 0 130px;
 	overflow: hidden;
 	background: var(--mv2-cream);
 	text-decoration: none;
@@ -374,13 +394,13 @@
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;
-	padding: 22px 22px 20px;
+	padding: 16px 18px 18px;
 }
 
 .mvprod__title {
-	margin: 0 0 8px;
+	margin: 0 0 3px;
 	font-family: var(--mv2-serif);
-	font-size: 23px;
+	font-size: 21px;
 	font-weight: 400;
 	line-height: 1.25;
 	color: var(--mv2-ink);
@@ -397,41 +417,50 @@
 
 /* "BORDEAUX, FRANCE" */
 .mvprod__location {
-	margin: 0 0 10px;
+	margin: 0 0 6px;
 	font-family: var(--mv2-sans);
-	font-size: 10.5px;
+	font-size: 12px;
 	font-weight: 600;
-	letter-spacing: .14em;
+	letter-spacing: .06em;
 	text-transform: uppercase;
 	color: var(--mv2-gold);
 }
 
 /* "Bordeaux Supérieur" */
 .mvprod__appellations {
-	margin: 0 0 6px;
+	margin: 0;
 	font-family: var(--mv2-sans);
-	font-size: 13.5px;
+	font-size: 13px;
 	line-height: 1.5;
-	color: var(--mv2-ink);
+	color: var(--ink-soft, #5e5a51);
 }
 
 /* "Est. 1868 · family estate" */
 .mvprod__est {
-	margin: 0 0 16px;
+	margin: 2px 0 0;
 	font-family: var(--mv2-sans);
-	font-size: 12.5px;
+	font-size: 12px;
 	line-height: 1.5;
-	color: var(--mv2-taupe);
+	color: #8a8478;
 }
 
 .mvprod__link {
-	margin-top: auto;
+	display: inline-block;
+	margin-top: 12px;
+	padding-top: 0;
 	font-family: var(--mv2-sans);
-	font-size: 13px;
+	font-size: 12px;
+	font-weight: 600;
 	letter-spacing: .01em;
-	color: var(--mv2-ink);
+	color: #7d3f43;
 	text-decoration: none;
 	transition: color .2s ease;
+}
+
+/* Pin the link to the bottom so cards of different text length stay aligned */
+.mvprod__body > .mvprod__link {
+	margin-top: auto;
+	padding-top: 12px;
 }
 
 .mvprod__link span {
@@ -450,16 +479,15 @@
 /* --- Producers grid responsive ------------------------------------------- */
 
 @media (max-width: 1024px) {
-	.mvprod-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-	.mvprod__title { font-size: 22px; }
+	.mvprod-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+	.mvprod__title { font-size: 20px; }
 }
 
 @media (max-width: 640px) {
-	.mvprod-grid       { grid-template-columns: 1fr; gap: 20px; }
-	.mvprod__body      { padding: 20px 18px 18px; }
-	.mvprod__title     { font-size: 21px; }
+	.mvprod-grid       { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+	.mvprod__body      { padding: 16px 16px 18px; }
 	.mvprod__initials  { font-size: 34px; }
-	.producers-page .page-h { margin-bottom: 28px; }
+	.producers-page .page-h { margin-bottom: 24px; }
 }
 
 
@@ -797,4 +825,684 @@
 		float: none;
 		margin-bottom: 28px;
 	}
+}
+
+
+/* ==========================================================================
+   5. CART  —  woocommerce/cart/cart.php
+   --------------------------------------------------------------------------
+   Values follow the approved prototype (.cart-wrap / .cart-line / .summary).
+   ========================================================================== */
+
+.cart-wrap {
+	display: grid;
+	grid-template-columns: 1fr 360px;
+	gap: 34px;
+	padding-bottom: 70px;
+	align-items: start;
+}
+
+.cart-main { min-width: 0; }
+
+/* --- One basket line ----------------------------------------------------- */
+
+.cart-line {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	padding: 18px 0;
+	border-bottom: 1px solid var(--mv2-line);
+}
+
+.cart-line .thumb {
+	width: 64px;
+	height: 96px;
+	flex: 0 0 auto;
+	background: var(--panel-2, #f7f3ea);
+	border: 1px solid var(--mv2-line);
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.cart-line .thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+}
+
+.cart-line .info { flex: 1 1 auto; min-width: 0; }
+
+.cart-line .info h3 {
+	font-family: var(--mv2-serif);
+	font-size: 17px;
+	font-weight: 400;
+	margin: 0 0 2px;
+	line-height: 1.3;
+}
+
+.cart-line .info h3 a {
+	color: var(--mv2-ink);
+	text-decoration: none;
+}
+
+.cart-line .info h3 a:hover { color: var(--mv2-burgundy); }
+
+.cart-line .info .appel {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	color: var(--mv2-taupe);
+}
+
+.cart-line .unit {
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	color: var(--mv2-taupe);
+	margin-top: 4px;
+}
+
+.cart-line .ln-price {
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	color: var(--mv2-burgundy);
+	min-width: 90px;
+	text-align: right;
+}
+
+.cart-line .rm {
+	background: none;
+	border: 0;
+	color: var(--mv2-taupe);
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	padding: 4px;
+	text-decoration: none;
+}
+
+.cart-line .rm:hover { color: var(--crit, #b23b3b); }
+
+/* Quantity stepper */
+.cart-line .qty,
+.mv-qty {
+	display: flex;
+	align-items: center;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: #fff;
+	flex: 0 0 auto;
+}
+
+.cart-line .qty input,
+.cart-line .quantity input {
+	width: 56px;
+	text-align: center;
+	border: 0;
+	outline: none;
+	background: transparent;
+	font-size: 15px;
+	font-variant-numeric: tabular-nums;
+	padding: 11px 0;
+}
+
+/* --- Coupon / update row -------------------------------------------------- */
+
+.cart-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	padding-top: 18px;
+}
+
+.cart-actions .coupon {
+	display: flex;
+	gap: 8px;
+	flex: 1 1 320px;
+	min-width: 0;
+}
+
+.cart-actions .coupon input {
+	flex: 1 1 auto;
+	min-width: 0;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--panel-2, #f7f3ea);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+}
+
+.cart-actions .coupon input:focus {
+	outline: none;
+	border-color: var(--mv2-burgundy);
+}
+
+.cart-continue { padding-top: 18px; }
+
+/* --- Order summary aside -------------------------------------------------- */
+
+.summary {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 22px 24px;
+	align-self: start;
+	position: sticky;
+	top: 90px;
+}
+
+.summary h3 {
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	font-weight: 400;
+	margin: 0 0 16px;
+}
+
+.summary .s-row,
+.summary .shipping th,
+.summary .shipping td {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 8px 0;
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	color: var(--ink-soft, #4a4038);
+}
+
+.summary .s-row.total {
+	border-top: 1px solid var(--mv2-line);
+	margin-top: 8px;
+	padding-top: 14px;
+	font-family: var(--mv2-serif);
+	font-size: 22px;
+	color: var(--mv2-ink);
+}
+
+.summary .note {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	color: var(--mv2-taupe);
+	margin: 14px 0 0;
+	line-height: 1.6;
+}
+
+.summary-cta { margin-top: 16px; }
+
+/* WooCommerce renders the checkout button through a hook — make it full width
+   and on-brand whichever markup it uses. */
+.summary-cta .checkout-button,
+.summary-cta .button,
+.summary-cta .btn {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+/* WooCommerce's shipping-method rows inside the summary */
+.summary .woocommerce-shipping-totals ul,
+.summary #shipping_method {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	font-size: 13.5px;
+}
+
+.summary .woocommerce-shipping-destination {
+	font-size: 12px;
+	color: var(--mv2-taupe);
+}
+
+/* --- Empty basket --------------------------------------------------------- */
+
+.cart-empty-panel {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 40px 34px;
+	text-align: center;
+	max-width: 560px;
+	margin: 0 auto 70px;
+}
+
+.cart-empty-msg {
+	font-family: var(--mv2-serif);
+	font-size: 21px;
+	margin: 0 0 8px;
+	color: var(--mv2-ink);
+}
+
+.cart-empty-panel .note {
+	font-size: 13px;
+	color: var(--mv2-taupe);
+	margin: 0 0 20px;
+	line-height: 1.6;
+}
+
+/* --- Cart responsive ------------------------------------------------------ */
+
+@media (max-width: 980px) {
+	.cart-wrap { grid-template-columns: 1fr; gap: 26px; }
+	.summary   { position: static; }
+}
+
+@media (max-width: 620px) {
+	.cart-line {
+		display: grid;
+		grid-template-columns: 64px 1fr auto;
+		grid-template-areas:
+			"thumb info   rm"
+			"thumb qty    price";
+		gap: 10px 14px;
+		align-items: center;
+	}
+
+	.cart-line .thumb    { grid-area: thumb; align-self: start; }
+	.cart-line .info     { grid-area: info; }
+	.cart-line .qty      { grid-area: qty; justify-self: start; }
+	.cart-line .ln-price { grid-area: price; text-align: right; min-width: 0; }
+	.cart-line .rm       { grid-area: rm; justify-self: end; align-self: start; }
+
+	.cart-actions .coupon { flex: 1 1 100%; }
+	.cart-actions .btn    { width: 100%; }
+}
+
+
+/* ==========================================================================
+   6. CHECKOUT  —  woocommerce/checkout/form-checkout.php
+   ========================================================================== */
+
+.co-wrap {
+	display: grid;
+	grid-template-columns: 1fr 380px;
+	gap: 34px;
+	padding-bottom: 70px;
+	align-items: start;
+}
+
+.co-main,
+.co-aside { min-width: 0; }
+
+.co-sec {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 24px 26px;
+	margin-bottom: 20px;
+}
+
+.co-sec h3 {
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	font-weight: 400;
+	margin: 0 0 16px;
+}
+
+/* --- WooCommerce's own checkout fields, restyled to the design ------------ */
+
+.co-sec .form-row {
+	display: block;
+	margin: 0 0 16px;
+	padding: 0;
+}
+
+/* Two-up rows, matching the prototype's .grid2 */
+.co-sec .form-row-first,
+.co-sec .form-row-last {
+	width: calc(50% - 7px);
+	float: none;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.co-sec .form-row-first { margin-right: 10px; }
+
+.co-sec label {
+	display: block;
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+	margin-bottom: 6px;
+}
+
+/* Checkbox labels stay sentence-case and sit beside their box */
+.co-sec label.checkbox,
+.co-sec .woocommerce-form__label-for-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	font-size: 13.5px;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--ink-soft, #4a4038);
+}
+
+.co-sec input[type="text"],
+.co-sec input[type="email"],
+.co-sec input[type="tel"],
+.co-sec input[type="password"],
+.co-sec input[type="date"],
+.co-sec input[type="number"],
+.co-sec textarea,
+.co-sec select,
+.co-sec .select2-container .select2-selection {
+	width: 100%;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--panel-2, #f7f3ea);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+	line-height: 1.4;
+}
+
+.co-sec textarea { min-height: 96px; resize: vertical; }
+
+.co-sec input:focus,
+.co-sec textarea:focus,
+.co-sec select:focus {
+	outline: none;
+	border-color: var(--mv2-burgundy);
+}
+
+.co-sec input[type="checkbox"],
+.co-sec input[type="radio"] {
+	width: auto;
+	accent-color: var(--mv2-burgundy);
+}
+
+.co-sec .required { color: var(--mv2-burgundy); border: 0; }
+
+/* --- Order review table --------------------------------------------------- */
+
+.co-aside .shop_table {
+	width: 100%;
+	border-collapse: collapse;
+	font-family: var(--mv2-sans);
+}
+
+.co-aside .shop_table th,
+.co-aside .shop_table td {
+	padding: 9px 0;
+	border-bottom: 1px solid var(--mv2-line);
+	font-size: 13.5px;
+	font-weight: 400;
+	text-align: left;
+	color: var(--ink-soft, #4a4038);
+}
+
+.co-aside .shop_table td { text-align: right; }
+
+.co-aside .shop_table thead th {
+	font-size: 10px;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+}
+
+.co-aside .shop_table .order-total th,
+.co-aside .shop_table .order-total td {
+	border-bottom: 0;
+	padding-top: 14px;
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	color: var(--mv2-ink);
+}
+
+/* --- Payment methods, styled as the design's .pay rows -------------------- */
+
+#payment ul.wc_payment_methods {
+	list-style: none;
+	margin: 0 0 14px;
+	padding: 0;
+}
+
+#payment ul.wc_payment_methods li {
+	display: block;
+	border: 1px solid var(--mv2-line);
+	border-radius: 6px;
+	padding: 14px 16px;
+	margin-bottom: 10px;
+	cursor: pointer;
+}
+
+#payment ul.wc_payment_methods li:has(input:checked) {
+	border-color: var(--mv2-burgundy);
+	background: rgba(110, 30, 42, .03);
+}
+
+#payment ul.wc_payment_methods li label {
+	display: inline;
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--mv2-ink);
+	margin: 0;
+}
+
+#payment .payment_box {
+	background: transparent;
+	color: var(--mv2-taupe);
+	font-size: 12.5px;
+	line-height: 1.6;
+	margin: 6px 0 0;
+	padding: 0;
+}
+
+#payment .payment_box::before { display: none; }
+
+#payment .woocommerce-terms-and-conditions-wrapper {
+	display: flex;
+	gap: 9px;
+	align-items: flex-start;
+	font-size: 13px;
+	color: var(--ink-soft, #4a4038);
+	margin: 14px 0 18px;
+}
+
+#payment .form-row.place-order { margin: 0; }
+
+#payment #place_order {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+/* --- Checkout responsive -------------------------------------------------- */
+
+@media (max-width: 980px) {
+	.co-wrap { grid-template-columns: 1fr; gap: 26px; }
+}
+
+@media (max-width: 620px) {
+	.co-sec { padding: 20px 18px; }
+
+	.co-sec .form-row-first,
+	.co-sec .form-row-last {
+		width: 100%;
+		display: block;
+		margin-right: 0;
+	}
+
+	/* 16px stops iOS Safari zooming when a field is focused */
+	.co-sec input,
+	.co-sec select,
+	.co-sec textarea { font-size: 16px; }
+}
+
+
+/* ==========================================================================
+   7. LOGIN  —  woocommerce/myaccount/form-login.php
+   ========================================================================== */
+
+.page-h--center {
+	text-align: center;
+	padding-top: 36px;
+	max-width: 700px;
+	margin: 0 auto;
+}
+
+.login-lede {
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	color: var(--ink-soft, #5e5a51);
+	margin: 8px 0 0;
+	line-height: 1.5;
+}
+
+.auth {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 30px;
+	max-width: 940px;
+	margin: 40px auto 80px;
+	align-items: start;
+}
+
+.auth-card {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 36px 34px;
+}
+
+.auth-card h2 {
+	font-family: var(--mv2-serif);
+	font-size: 26px;
+	font-weight: 400;
+	margin: 0 0 6px;
+	color: var(--mv2-ink);
+}
+
+.auth-card .sub {
+	font-family: var(--mv2-sans);
+	color: var(--mv2-taupe);
+	font-size: 13.5px;
+	margin: 0 0 24px;
+}
+
+.auth-alt {
+	background: var(--panel, #ece6d8);
+	border: 1px solid var(--mv2-line);
+}
+
+.auth-card .field { margin-bottom: 16px; }
+
+.auth-card .field label {
+	display: block;
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+	margin-bottom: 6px;
+}
+
+.auth-card .field input {
+	width: 100%;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--panel-2, #f7f3ea);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+}
+
+.auth-card .field input:focus {
+	outline: none;
+	border-color: var(--mv2-burgundy);
+}
+
+.auth-card .required { color: var(--mv2-burgundy); border: 0; }
+
+/* "Remember me" + "Forgot password?" row */
+.auth-card .rowbtwn {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 14px;
+	flex-wrap: wrap;
+	margin: 4px 0 18px;
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+}
+
+.auth-card .rowbtwn label {
+	display: flex;
+	gap: 7px;
+	align-items: center;
+	color: var(--ink-soft, #4a4038);
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 13px;
+	margin: 0;
+}
+
+.auth-card .rowbtwn input[type="checkbox"] { accent-color: var(--mv2-burgundy); }
+
+.auth-card .rowbtwn a {
+	color: var(--mv2-burgundy);
+	text-decoration: none;
+}
+
+.auth-card .rowbtwn a:hover { text-decoration: underline; }
+
+/* Benefits list — the tick is drawn in CSS, no icon font needed */
+.checklist {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 22px;
+}
+
+.checklist li {
+	display: flex;
+	gap: 10px;
+	font-family: var(--mv2-sans);
+	font-size: 13.5px;
+	line-height: 1.5;
+	color: var(--ink-soft, #4a4038);
+	padding: 6px 0;
+}
+
+.checklist li::before {
+	content: "";
+	flex: 0 0 auto;
+	width: 15px;
+	height: 8px;
+	margin-top: 5px;
+	border-left: 2px solid var(--ok, #2e7d5b);
+	border-bottom: 2px solid var(--ok, #2e7d5b);
+	transform: rotate(-45deg);
+}
+
+.auth-note {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	color: var(--mv2-taupe);
+	margin-top: 14px;
+	line-height: 1.6;
+}
+
+/* --- Login responsive ------------------------------------------------------ */
+
+@media (max-width: 860px) {
+	.auth { grid-template-columns: 1fr; gap: 22px; margin: 30px auto 60px; }
+}
+
+@media (max-width: 620px) {
+	.auth-card { padding: 26px 20px; }
+	.auth-card h2 { font-size: 23px; }
+	.auth-card .field input { font-size: 16px; }
+	.page-h--center { padding-top: 24px; }
 }

@@ -81,12 +81,15 @@ that logic lives.
 
 Both grids render the same file — `template-parts/wine-card.php`:
 
+It is rendered in three places: the homepage portfolio, the Shop archive, and
+the "You may also like" grid on the single product page.
+
 | Part of the card | Comes from |
 |---|---|
 | Left badge | `wine_colour` taxonomy (falls back to the first Product Category) |
 | Right badge | ACF `visibility_tier` = `allocation` → "By allocation"; otherwise stock status → "Available" / "Out of stock" |
 | Title | Product title |
-| Meta line | ACF `appellation` (falls back to the `wine_region` term) + ACF `vintage_year` |
+| Meta line | **`wine_country` · `wine_region` taxonomy terms**, joined by a middot |
 | Price line | Normal WooCommerce price, or "Trade pricing on login" when `mve_is_gated()` says the wine is gated |
 | **View Wine** button | Links to the single product page (this replaced the old Add to Cart button) |
 | Technical Details | Single product page, Technical tab (`#tab-tech`) |
@@ -94,10 +97,18 @@ Both grids render the same file — `template-parts/wine-card.php`:
 
 Every line is optional, so a product with only a title and an image still renders a valid card.
 
-## Producers Grid page
+## Producers
 
-`producers-grid.php` is a **Page Template** — create a page (e.g. "Producers"),
-then pick **Producers Grid** under Page Attributes → Template.
+There are **two** routes to the producers grid, and both render the same card
+(`template-parts/producer-card.php`):
+
+1. **`/producers/`** — served by `archive-producer.php`. The producer post type
+   is registered with `has_archive => true`, so this URL exists automatically;
+   before this file was added it fell through to the *parent* theme's generic
+   `archive.php` and came out as a plain blog-style list.
+2. **`producers-grid.php`** — a **Page Template**, if you'd rather have a real
+   editable Page. Create a page, then pick **Producers Grid** under Page
+   Attributes → Template.
 
 | Part of the card | Comes from |
 |---|---|
@@ -126,6 +137,44 @@ variables where those are defined.
 One block in that file is marked as a **safety net** — the `.card-grid--4` /
 `.pgrid` mobile column counts. Delete it if the existing grid CSS already
 collapses those grids on mobile.
+
+## Menus
+
+Every menu location this theme uses is registered in one place —
+`register_nav_menus()` inside `mve_setup()` in `functions.php`:
+
+| Location | Where it renders |
+|---|---|
+| Primary Menu (header) | `header.php` |
+| Footer — Explore (column 2) | `footer.php`, second column |
+| Footer — Trade (column 3) | `footer.php`, third column |
+| Footer — Legal (bottom bar) | `footer.php`, bottom bar |
+
+To use one: **Appearance → Menus**, build the menu, then tick its **Display
+location**. Nothing else is needed.
+
+Until a menu is assigned, the two footer columns fall back to a sensible
+default link list (see `mve_footer_menu()` in `inc/mv-footer.php`) so the
+footer never renders as an empty gap — as soon as you assign a menu, it takes
+over.
+
+## Cart / Checkout / Login
+
+| Template | Page |
+|---|---|
+| `woocommerce/cart/cart.php` | Basket |
+| `woocommerce/cart/cart-empty.php` | Empty basket |
+| `woocommerce/checkout/form-checkout.php` | Checkout |
+| `woocommerce/myaccount/form-login.php` | Trade Login (logged-out `/my-account/`) |
+
+These follow the approved prototype markup but keep WooCommerce's own fields,
+hooks and nonces, so quantity updates, coupons, shipping, gateways, validation
+and login all behave normally.
+
+The three trade extras on checkout — **PO reference**, **Requested delivery
+date** and **Delivery instructions** — are registered as real WooCommerce
+checkout fields in `inc/woocommerce.php`, saved to the order, and shown on the
+order screen in wp-admin.
 
 ## Next steps for the developer
 1. Build a **Single Product** template the same way (a `single-product.php` following this same pattern), using the Wine Details ACF tabs (Tasting, Terroir, Allergens, Awards, Downloads).

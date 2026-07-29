@@ -36,9 +36,19 @@ function mve_setup() {
 	add_image_size( 'mv-card', 760, 600, true );
 	add_image_size( 'mv-estate', 1000, 800, true );
 
+	/*
+	 * Menu locations. Everything listed here shows up as a tickable
+	 * "Display location" in Appearance → Menus, and in the Menus screen's
+	 * "Manage Locations" tab — assign a menu to one and it renders, no code.
+	 *
+	 * The three footer-* locations are the ones footer.php prints.
+	 */
 	register_nav_menus( array(
-		'primary' => __( 'Primary Menu', 'maison-vintique-elementor' ),
-		'footer'  => __( 'Footer Menu', 'maison-vintique-elementor' ),
+		'primary'        => __( 'Primary Menu (header)', 'maison-vintique-elementor' ),
+		'footer'         => __( 'Footer Menu', 'maison-vintique-elementor' ),
+		'footer-explore' => __( 'Footer — Explore (column 2)', 'maison-vintique-elementor' ),
+		'footer-trade'   => __( 'Footer — Trade (column 3)', 'maison-vintique-elementor' ),
+		'footer-legal'   => __( 'Footer — Legal (bottom bar)', 'maison-vintique-elementor' ),
 	) );
 }
 add_action( 'after_setup_theme', 'mve_setup' );
@@ -66,7 +76,9 @@ function mve_inline_svg( $filename ) {
 function mve_default_primary_menu() {
 	$links = array(
 		'Shop'      => function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' ),
-		'Producers' => home_url( '/producer/' ),
+		// Ask WordPress for the archive URL rather than hard-coding it — the
+		// producer CPT's rewrite slug is "producers", not "producer".
+		'Producers' => get_post_type_archive_link( 'producer' ) ?: home_url( '/producers/' ),
 		'Journal'   => home_url( '/journal/' ),
 		'Our Story' => home_url( '/our-story/' ),
 		'Trade'     => home_url( '/trade/' ),
@@ -89,6 +101,14 @@ require_once get_stylesheet_directory() . '/inc/woocommerce.php';
  * (category / price / availability). See woocommerce/archive-product.php.
  */
 require_once get_stylesheet_directory() . '/inc/shop-query.php';
+
+/**
+ * Footer: newsletter AJAX endpoint + footer asset loading.
+ *
+ * This was missing, which is why the footer menus never appeared — the file
+ * was in the theme but nothing ever loaded it.
+ */
+require_once get_stylesheet_directory() . '/inc/mv-footer.php';
 
 /**
  * ACF: load/save field groups from the theme's acf-json folder (version control + handover).

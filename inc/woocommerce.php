@@ -110,8 +110,131 @@ function mve_min_order_qty( $args, $product ) {
 add_filter( 'woocommerce_quantity_input_args', 'mve_min_order_qty', 10, 2 );
 
 
-add_filter( 'woocommerce_product_add_to_cart_text', 'mve_gated_add_to_cart_text', 10, 2 );
-add_filter( 'woocommerce_product_single_add_to_cart_text', 'mve_gated_add_to_cart_text', 10, 2 );
+/**
+ * Keep the single product page free of stray "Add to Cart" / "Buy Now" buttons.
+ *
+ * woocommerce/single-product.php is a fully custom template: it renders its own
+ * designed buy bar (quantity + "Add to Case" + "Enquire" for approved trade
+ * accounts) and never calls woocommerce_template_single_add_to_cart(). So the
+ * theme itself does not output a second button.
+ *
+ * What DOES put extra buttons on a product page is everything around the theme:
+ * an Elementor "Single Product" / "Add To Cart" widget in Theme Builder, or a
+ * "Buy Now"/"Quick Buy"/direct-checkout plugin hooking the standard actions.
+ * This unhooks those so only the designed buy bar is ever shown.
+ *
+ * To put them back:
+ *   add_filter( 'mve_hide_single_add_to_cart', '__return_false' );
+ */
+function mve_strip_single_add_to_cart() {
+	// Product pages only — the shop loop's own buttons are untouched.
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+
+	if ( ! apply_filters( 'mve_hide_single_add_to_cart', true ) ) {
+		return;
+	}
+
+	// WooCommerce's own add-to-cart form on the single product page.
+	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30 );
+	remove_action( 'woocommerce_simple_add_to_cart', 'woocommerce_simple_add_to_cart', 30 );
+	remove_action( 'woocommerce_grouped_add_to_cart', 'woocommerce_grouped_add_to_cart', 30 );
+	remove_action( 'woocommerce_variable_add_to_cart', 'woocommerce_variable_add_to_cart', 30 );
+	remove_action( 'woocommerce_external_add_to_cart', 'woocommerce_external_add_to_cart', 30 );
+
+	/**
+	 * Hook point for any "Buy Now" plugin that renders around the add-to-cart
+	 * button. Plugin callbacks are anonymous or namespaced differently in every
+	 * plugin, so rather than guess names this strips every callback attached to
+	 * the two actions a Buy Now button can realistically use on a product page.
+	 */
+	foreach ( array( 'woocommerce_after_add_to_cart_button', 'woocommerce_after_add_to_cart_form' ) as $mve_hook ) {
+		remove_all_actions( $mve_hook );
+	}
+}
+add_action( 'wp', 'mve_strip_single_add_to_cart' );
+
+/**
+ * Trade checkout extras from the approved design: PO reference, requested
+ * delivery date and delivery instructions.
+ *
+ * Registered as real WooCommerce checkout fields (in the "order" fieldset, so
+ * they render inside the Delivery section) rather than loose inputs in the
+ * template — that way WooCommerce validates them, saves them and they survive
+ * a failed payment attempt.
+ */
+function mve_trade_checkout_fields( $fields ) {
+	$fields['order']['po_reference'] = array(
+		'label'       => __( 'PO reference', 'maison-vintique-elementor' ),
+		'placeholder' => __( 'e.g. PO-8841', 'maison-vintique-elementor' ),
+		'required'    => false,
+		'class'       => array( 'form-row-first' ),
+		'priority'    => 5,
+	);
+
+	$fields['order']['delivery_date'] = array(
+		'type'     => 'date',
+		'label'    => __( 'Requested delivery date', 'maison-vintique-elementor' ),
+		'required' => false,
+		'class'    => array( 'form-row-last' ),
+		'priority' => 10,
+	);
+
+	$fields['order']['delivery_instructions'] = array(
+		'label'       => __( 'Delivery instructions (optional)', 'maison-vintique-elementor' ),
+		'placeholder' => __( 'e.g. deliver before noon, cellar entrance', 'maison-vintique-elementor' ),
+		'required'    => false,
+		'class'       => array( 'form-row-wide' ),
+		'priority'    => 15,
+	);
+
+	return $fields;
+}
+add_filter( 'woocommerce_checkout_fields', 'mve_trade_checkout_fields' );
+
+/**
+ * Persist the trade checkout extras onto the order.
+ */
+function mve_save_trade_checkout_fields( $order, $data ) {
+	foreach ( array( 'po_reference', 'delivery_date', 'delivery_instructions' ) as $key ) {
+		if ( ! empty( $data[ $key ] ) ) {
+			$order->update_meta_data( '_mve_' . $key, sanitize_text_field( $data[ $key ] ) );
+		}
+	}
+}
+add_action( 'woocommerce_checkout_create_order', 'mve_save_trade_checkout_fields', 10, 2 );
+
+/**
+ * Show them on the order screen in wp-admin.
+ */
+function mve_show_trade_fields_in_admin( $order ) {
+	$labels = array(
+		'po_reference'          => __( 'PO reference', 'maison-vintique-elementor' ),
+		'delivery_date'         => __( 'Requested delivery date', 'maison-vintique-elementor' ),
+		'delivery_instructions' => __( 'Delivery instructions', 'maison-vintique-elementor' ),
+	);
+
+	foreach ( $labels as $key => $label ) {
+		$value = $order->get_meta( '_mve_' . $key );
+		if ( $value ) {
+			printf( '<p><strong>%s:</strong> %s</p>', esc_html( $label ), esc_html( $value ) );
+		}
+	}
+}
+add_action( 'woocommerce_admin_order_data_after_shipping_address', 'mve_show_trade_fields_in_admin' );
+
+/**
+ * The cart template renders its own "Order summary" aside, so WooCommerce's
+ * default cart-totals block must not also print. Everything else hooked to
+ * woocommerce_cart_collaterals (cross-sells, plugins) is left alone.
+ *
+ * @see woocommerce/cart/cart.php
+ */
+function mve_unhook_default_cart_totals() {
+	remove_action( 'woocommerce_cart_collaterals', 'woocommerce_cart_totals', 10 );
+}
+add_action( 'wp_loaded', 'mve_unhook_default_cart_totals' );
 
 /**
  * Rename the catalogue "Add to Cart" button to "View Wine".

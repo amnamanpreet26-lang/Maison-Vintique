@@ -46,14 +46,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<h3 class="mv-footer__heading"><?php esc_html_e( 'Explore', 'maison-vintique' ); ?></h3>
 					<nav class="mv-footer__nav" aria-label="<?php esc_attr_e( 'Explore', 'maison-vintique' ); ?>">
 						<?php
-						wp_nav_menu( array(
-							'theme_location' => 'footer-explore',
-							'container'      => false,
-							'menu_class'     => 'mv-footer-nav',
-							'items_wrap'     => '<ul id="%1$s" class="%2$s">%3$s</ul>',
-							'fallback_cb'    => false,
-							'depth'          => 1,
-						) );
+						// Appearance → Menus → Display location: "Footer — Explore".
+						mve_footer_menu(
+							'footer-explore',
+							array(
+								__( 'Our Collection', 'maison-vintique' ) => function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' ),
+								__( 'Producers', 'maison-vintique' )      => home_url( '/producers/' ),
+								__( 'Journal', 'maison-vintique' )        => home_url( '/journal/' ),
+								__( 'Our Story', 'maison-vintique' )      => home_url( '/our-story/' ),
+							)
+						);
 						?>
 					</nav>
 				</div>
@@ -63,14 +65,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<h3 class="mv-footer__heading"><?php esc_html_e( 'Trade', 'maison-vintique' ); ?></h3>
 					<nav class="mv-footer__nav" aria-label="<?php esc_attr_e( 'Trade', 'maison-vintique' ); ?>">
 						<?php
-						wp_nav_menu( array(
-							'theme_location' => 'footer-trade',
-							'container'      => false,
-							'menu_class'     => 'mv-footer-nav',
-							'items_wrap'     => '<ul id="%1$s" class="%2$s">%3$s</ul>',
-							'fallback_cb'    => false,
-							'depth'          => 1,
-						) );
+						// Appearance → Menus → Display location: "Footer — Trade".
+						mve_footer_menu(
+							'footer-trade',
+							array(
+								__( 'Trade Login', 'maison-vintique' )         => function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' ),
+								__( 'Apply for an Account', 'maison-vintique' ) => home_url( '/trade/' ),
+								__( 'Delivery &amp; Terms', 'maison-vintique' ) => home_url( '/terms/' ),
+								__( 'Contact', 'maison-vintique' )             => home_url( '/contact/' ),
+							)
+						);
 						?>
 					</nav>
 				</div>

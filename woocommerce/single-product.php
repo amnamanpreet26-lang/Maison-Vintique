@@ -339,27 +339,44 @@ $closure = get_field( 'closure' );
 			</div>
 		</div>
 
-		<div class="related" style="padding-bottom:70px">
-			<h2><?php esc_html_e( 'You may also like', 'maison-vintique' ); ?></h2>
-			<div class="pgrid" id="related">
-				<?php
-				$related_ids = wc_get_related_products( $product->get_id(), 4 );
-				foreach ( $related_ids as $related_id ) :
-					$related = wc_get_product( $related_id );
-					if ( ! $related ) {
-						continue;
-					}
+		<?php
+		// "You may also like" — renders the SAME card as the homepage portfolio
+		// and the shop archive (template-parts/wine-card.php).
+		$related_ids = wc_get_related_products( $product->get_id(), 4 );
+
+		// Keep a handle on the wine being viewed: the shared card partial writes
+		// to $GLOBALS['product'], so it has to be restored afterwards or anything
+		// below this section would be looking at the last related wine.
+		$mve_current_product = $product;
+
+		if ( $related_ids ) :
+			?>
+			<div class="related" style="padding-bottom:70px">
+				<h2><?php esc_html_e( 'You may also like', 'maison-vintique' ); ?></h2>
+				<div class="pgrid" id="related">
+					<?php
+					foreach ( $related_ids as $related_id ) :
+						$related = wc_get_product( $related_id );
+						if ( ! $related ) {
+							continue;
+						}
+						// The partial reads the global $product and the global post.
+						$GLOBALS['post'] = get_post( $related_id ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+						setup_postdata( $GLOBALS['post'] );
+
+						$GLOBALS['product'] = $related;
+						$product            = $related;
+
+						get_template_part( 'template-parts/wine-card' );
+					endforeach;
+
+					wp_reset_postdata();
+					$GLOBALS['product'] = $mve_current_product;
+					$product            = $mve_current_product;
 					?>
-					<a class="pcard" href="<?php echo esc_url( $related->get_permalink() ); ?>">
-						<div class="pcard-media"><?php echo $related->get_image( 'medium' ); ?></div>
-						<div class="pcard-body">
-							<p class="cat"><?php echo wp_kses_post( wc_get_product_category_list( $related_id, ' · ' ) ); ?></p>
-							<h3><?php echo esc_html( $related->get_name() ); ?></h3>
-						</div>
-					</a>
-				<?php endforeach; ?>
+				</div>
 			</div>
-		</div>
+		<?php endif; ?>
 
 	</div></section>
 
