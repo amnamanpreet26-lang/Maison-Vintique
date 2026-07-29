@@ -17,6 +17,7 @@
    5. Cart              — woocommerce/cart/cart.php
    6. Checkout          — woocommerce/checkout/form-checkout.php
    7. Login             — woocommerce/myaccount/form-login.php
+   8. Single producer   — single-producer.php
    ========================================================================== */
 
 
@@ -364,19 +365,96 @@
 	text-decoration: none;
 }
 
-.mvprod__media img {
+/* --- Flip -----------------------------------------------------------------
+   Same effect and same class names as the homepage "Estate Partners" cards.
+   Every rule here is scoped under .mvprod, so the homepage's own
+   `.estate-card ...` rules are neither used nor overwritten — the two
+   components stay independent.
+   ------------------------------------------------------------------------- */
+
+.mvprod__media {
+	perspective: 900px;
+}
+
+.mvprod .estate-card__flip {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	transform-style: preserve-3d;
+	transition: transform .7s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvprod:hover .estate-card__flip,
+.mvprod:focus-within .estate-card__flip {
+	transform: rotateY(180deg);
+}
+
+.mvprod .estate-card__face {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+}
+
+.mvprod .estate-card__face--front {
+	background: var(--mv2-cream);
+}
+
+.mvprod .estate-card__face--front img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	display: block;
-	transition: transform .6s cubic-bezier(.22, .61, .36, 1);
 }
 
-.mvprod:hover .mvprod__media img {
-	transform: scale(1.045);
+.mvprod .estate-card__face--back {
+	transform: rotateY(180deg);
+	background: linear-gradient(140deg, #6d1f2f 0%, #4a4a3c 100%);
+	color: #f2e6d2;
 }
 
-/* Shown instead of a photo when an estate has no image yet */
+.mvprod .estate-card__badge {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	padding: 8px;
+}
+
+.mvprod .estate-card__logo svg {
+	display: block;
+	width: 26px;
+	height: 34px;
+}
+
+.mvprod .estate-card__ring {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 38px;
+	height: 38px;
+	border: 1px solid rgba(242, 230, 210, .5);
+	border-radius: 50%;
+	font-family: var(--mv2-serif);
+	font-size: 13px;
+	letter-spacing: .12em;
+	text-indent: .12em; /* balances the tracking on the last letter */
+}
+
+.mvprod .estate-card__est {
+	font-family: var(--mv2-sans);
+	font-size: 9.5px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	opacity: .85;
+}
+
+/* Shown on the FRONT face when an estate has no image yet */
 .mvprod__initials {
 	font-family: var(--mv2-serif);
 	font-size: 40px;
@@ -388,6 +466,11 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+/* Respect a reduced-motion preference — show the back face instantly. */
+@media (prefers-reduced-motion: reduce) {
+	.mvprod .estate-card__flip { transition: none; }
 }
 
 .mvprod__body {
@@ -1505,4 +1588,204 @@
 	.auth-card h2 { font-size: 23px; }
 	.auth-card .field input { font-size: 16px; }
 	.page-h--center { padding-top: 24px; }
+}
+
+
+/* ==========================================================================
+   8. SINGLE PRODUCER  —  single-producer.php
+   ========================================================================== */
+
+/* --- Estate header -------------------------------------------------------- */
+
+.mvest-hero {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 44px;
+	align-items: center;
+	padding: 8px 0 56px;
+}
+
+.mvest-hero__content { min-width: 0; }
+
+.mvest-hero__title {
+	font-family: var(--mv2-serif);
+	font-size: clamp(30px, 4vw, 46px);
+	font-weight: 400;
+	line-height: 1.1;
+	margin: 6px 0 8px;
+	color: var(--mv2-ink);
+}
+
+.mvest-hero__location {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	color: var(--mv2-gold);
+	margin: 0 0 22px;
+}
+
+.mvest-hero__intro {
+	font-family: var(--mv2-sans);
+	font-size: 14.5px;
+	line-height: 1.75;
+	color: var(--ink-soft, #4a4038);
+	margin-bottom: 26px;
+}
+
+.mvest-hero__intro p { margin: 0 0 1em; }
+.mvest-hero__intro p:last-child { margin-bottom: 0; }
+
+.mvest-hero__media {
+	margin: 0;
+	border-radius: 12px;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	/* The figure needs its own height: the grid is align-items:center, so
+	   without this it collapses to the image's intrinsic height (or to nothing
+	   at all while the image is still loading). */
+	aspect-ratio: 4 / 3;
+}
+
+.mvest-hero__media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* --- Facts row ------------------------------------------------------------ */
+
+.mvest-facts {
+	list-style: none;
+	margin: 0 0 26px;
+	padding: 18px 0;
+	border-top: 1px solid var(--mv2-line);
+	border-bottom: 1px solid var(--mv2-line);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px 38px;
+}
+
+.mvest-facts li {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.mvest-facts span {
+	font-family: var(--mv2-sans);
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+}
+
+.mvest-facts b {
+	font-family: var(--mv2-serif);
+	font-size: 17px;
+	font-weight: 400;
+	color: var(--mv2-ink);
+}
+
+/* --- Story ---------------------------------------------------------------- */
+
+.mvest-story {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 34px 44px;
+	padding-bottom: 56px;
+}
+
+.mvest-story__block h2,
+.mvest-gallery h2,
+.mvest-wines h2 {
+	font-family: var(--mv2-serif);
+	font-size: 24px;
+	font-weight: 400;
+	margin: 0 0 12px;
+	color: var(--mv2-ink);
+}
+
+.mvest-story__body {
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	line-height: 1.75;
+	color: var(--ink-soft, #4a4038);
+}
+
+.mvest-story__body p { margin: 0 0 1em; }
+.mvest-story__body p:last-child { margin-bottom: 0; }
+
+/* --- Gallery -------------------------------------------------------------- */
+
+.mvest-gallery { padding-bottom: 56px; }
+
+.mvest-gallery__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 18px;
+}
+
+.mvest-gallery__grid figure {
+	margin: 0;
+	border-radius: 8px;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	aspect-ratio: 4 / 3;
+}
+
+.mvest-gallery__grid img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform .6s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvest-gallery__grid figure:hover img { transform: scale(1.045); }
+
+/* --- Wines from this estate ----------------------------------------------- */
+
+.mvest-wines { padding-bottom: 70px; }
+
+.mvest-wines .section__head--split {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-bottom: 20px;
+}
+
+.mvest-wines .pgrid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 24px;
+}
+
+/* --- Single producer responsive ------------------------------------------- */
+
+@media (max-width: 980px) {
+	.mvest-hero {
+		grid-template-columns: 1fr;
+		gap: 28px;
+		padding-bottom: 40px;
+	}
+
+	/* Photo above the copy reads better once stacked */
+	.mvest-hero__media { order: -1; aspect-ratio: 16 / 9; }
+
+	.mvest-story          { grid-template-columns: 1fr; gap: 26px; }
+	.mvest-wines .pgrid   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+	.mvest-facts          { gap: 14px 26px; }
+	.mvest-gallery__grid  { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+	.mvest-wines .pgrid   { grid-template-columns: minmax(0, 1fr); }
+	.mvest-hero .btn      { width: 100%; }
 }

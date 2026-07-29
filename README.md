@@ -110,6 +110,31 @@ There are **two** routes to the producers grid, and both render the same card
    editable Page. Create a page, then pick **Producers Grid** under Page
    Attributes → Template.
 
+The cards **flip on hover**, the same way the homepage "Estate Partners" cards
+do — front is the estate photo, back is the crest, the estate's initials in a
+ring, and "Est. 1868" (falling back to the region when there's no year). The
+markup uses the same `estate-card__*` class names as the homepage so the two
+read as one component, but the CSS is scoped under `.mvprod`, so neither can
+break the other.
+
+### Single producer page
+
+`single-producer.php` renders one estate. **This was previously missing** — the
+producer post type is public, so every estate has its own URL, and without this
+file those URLs fell through to the *parent* theme's `single.php`, which shows
+only the title and editor content. Since all of an estate's content lives in
+ACF fields, the page came out essentially blank.
+
+| Section | Comes from |
+|---|---|
+| Header | Title, `producer_region` + `producer_country`, and the editor content as the intro |
+| Facts row | ACF `established_year`, `appellations`, `estate_note` |
+| Story | ACF `producer_history`, `producer_philosophy`, `producer_terroir`, `producer_sustainability` |
+| Gallery | ACF `producer_media` |
+| Wines from this estate | Products whose ACF `producer` is this estate, rendered with the shared wine card |
+
+Every section is skipped when its field is empty.
+
 | Part of the card | Comes from |
 |---|---|
 | Image | Featured image → first ACF `producer_media` gallery image → an initials crest block |

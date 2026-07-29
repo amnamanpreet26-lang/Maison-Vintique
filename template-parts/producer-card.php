@@ -57,22 +57,30 @@ if ( ! $mvp_image_url && function_exists( 'get_field' ) ) {
 	}
 }
 
-/* --- Initials for the no-image crest block ------------------------------- */
+/* --- Initials, e.g. "Château de Sancerre" -> "CS" ------------------------
+ * Always built (not just when there's no photo) because the flip side of the
+ * card shows them in the crest ring.
+ * ------------------------------------------------------------------------ */
 $mvp_initials = '';
-if ( ! $mvp_image_url ) {
-	$mvp_words = preg_split( '/\s+/', trim( wp_strip_all_tags( get_the_title() ) ) );
-	$mvp_skip  = array( 'de', 'du', 'la', 'le', 'les', 'et', 'of', 'the' );
-	foreach ( (array) $mvp_words as $mvp_word ) {
-		if ( in_array( mb_strtolower( $mvp_word ), $mvp_skip, true ) ) {
-			continue;
-		}
-		$mvp_first = mb_substr( $mvp_word, 0, 1 );
-		if ( preg_match( '/\p{L}/u', $mvp_first ) ) {
-			$mvp_initials .= mb_strtoupper( $mvp_first );
-		}
+$mvp_words    = preg_split( '/\s+/', trim( wp_strip_all_tags( get_the_title() ) ) );
+$mvp_skip     = array( 'de', 'du', 'la', 'le', 'les', 'et', 'of', 'the' );
+foreach ( (array) $mvp_words as $mvp_word ) {
+	if ( in_array( mb_strtolower( $mvp_word ), $mvp_skip, true ) ) {
+		continue;
 	}
-	$mvp_initials = mb_substr( $mvp_initials, 0, 3 );
+	$mvp_first = mb_substr( $mvp_word, 0, 1 );
+	if ( preg_match( '/\p{L}/u', $mvp_first ) ) {
+		$mvp_initials .= mb_strtoupper( $mvp_first );
+	}
 }
+$mvp_initials = mb_substr( $mvp_initials, 0, 3 );
+
+// Small line under the crest on the flip side — the founding year if we have
+// one, otherwise fall back to the region/country, same rule the homepage uses.
+$mvp_back_sub = $mvp_year
+	/* translators: %s: the year the estate was founded, e.g. 1868 */
+	? sprintf( __( 'Est. %s', 'maison-vintique-elementor' ), $mvp_year )
+	: ( $mvp_region ? $mvp_region : $mvp_country );
 
 /* --- "View wines" -> shop, filtered to this estate ----------------------- */
 $mvp_wines_url = function_exists( 'wc_get_page_permalink' )
@@ -82,11 +90,52 @@ $mvp_wines_url = function_exists( 'wc_get_page_permalink' )
 <article class="mvprod">
 
 	<a class="mvprod__media" href="<?php echo esc_url( get_permalink( $mvp_id ) ); ?>" tabindex="-1" aria-hidden="true">
-		<?php if ( $mvp_image_url ) : ?>
-			<img src="<?php echo esc_url( $mvp_image_url ); ?>" alt="<?php echo esc_attr( get_the_title( $mvp_id ) ); ?>" loading="lazy">
-		<?php else : ?>
-			<span class="mvprod__initials"><?php echo esc_html( $mvp_initials ); ?></span>
-		<?php endif; ?>
+		<?php
+		/*
+		 * Flip card — same structure and class names as the homepage "Estate
+		 * Partners" section in template-home.php, so the two read as one
+		 * component. The flip mechanics are styled under `.mvprod` in the
+		 * Additional CSS: the homepage rules are scoped to `.estate-card`, so
+		 * they don't reach this card and can't be broken by it either.
+		 */
+		?>
+		<div class="estate-card__flip">
+
+			<div class="estate-card__face estate-card__face--front">
+				<?php if ( $mvp_image_url ) : ?>
+					<img src="<?php echo esc_url( $mvp_image_url ); ?>" alt="<?php echo esc_attr( get_the_title( $mvp_id ) ); ?>" loading="lazy">
+				<?php else : ?>
+					<span class="mvprod__initials"><?php echo esc_html( $mvp_initials ); ?></span>
+				<?php endif; ?>
+			</div>
+
+			<div class="estate-card__face estate-card__face--back">
+				<span class="estate-card__badge">
+					<span class="estate-card__logo">
+						<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="<?php echo esc_attr( get_the_title( $mvp_id ) ); ?> crest">
+							<mask id="mvCrestProd-<?php echo esc_attr( $mvp_id ); ?>">
+								<rect x="0" y="0" width="100" height="130" fill="black"></rect>
+								<path d="M50 88 L21 41 L24 17 L24 7 L35 7 L35 17 L43 17 L43 7 L57 7 L57 17 L65 17 L65 7 L76 7 L76 17 L79 41 Z" fill="white"></path>
+								<rect x="48.3" y="20.5" width="3.4" height="3.6" fill="black"></rect>
+								<path d="M47.6 24 L52.4 24 L52.4 31 C52.4 32.6 56 34 56 39 L56 58 L44 58 L44 39 C44 34 47.6 32.6 47.6 31 Z" fill="black"></path>
+								<path d="M28 61 Q50 54 72 61" fill="none" stroke="black" stroke-width="3" stroke-linecap="round"></path>
+							</mask>
+							<rect x="0" y="0" width="100" height="130" fill="currentColor" mask="url(#mvCrestProd-<?php echo esc_attr( $mvp_id ); ?>)"></rect>
+							<g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M45 91 L50 98 L55 91"></path>
+								<path d="M50 98 L50 106"></path>
+								<path d="M41 108 Q50 103.5 59 108"></path>
+							</g>
+						</svg>
+					</span>
+					<span class="estate-card__ring"><?php echo esc_html( $mvp_initials ); ?></span>
+					<?php if ( $mvp_back_sub ) : ?>
+						<span class="estate-card__est"><?php echo esc_html( $mvp_back_sub ); ?></span>
+					<?php endif; ?>
+				</span>
+			</div>
+
+		</div>
 	</a>
 
 	<div class="mvprod__body">
