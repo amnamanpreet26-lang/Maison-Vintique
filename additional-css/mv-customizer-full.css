@@ -2688,6 +2688,69 @@
 
 
 /* ==========================================================================
+   0. VARIABLE COMPATIBILITY SHIM
+   --------------------------------------------------------------------------
+   The stylesheet above this point uses 20 custom properties that are never
+   declared anywhere. Two failure modes:
+
+   a) WITH a fallback — e.g. `var(--taupe, #8a7d6f)` — renders, but with the
+      hard-coded fallback rather than the brand value, so those areas (mainly
+      the My Account block) drift slightly off-palette.
+
+   b) WITHOUT a fallback — e.g. `var(--mv-ok)` — the whole declaration is
+      invalid at computed-value time and the browser DROPS it. Currently that
+      silently loses:
+        .spotlight / .values   their background   (`var(----mv-ground)`, typo)
+        .mv-header             its bottom border  (`var(---mv-burg)`,  typo)
+        .stock.available/.limited/.out            their colours
+        .mv-newsletter-form__input                its text + placeholder colour
+        .hero--video figcaption                   its colour
+
+   Declaring the names here fixes every one of them without editing a line of
+   the CSS above — a custom property can have any name, so even the two
+   mistyped ones (three and four leading dashes) resolve correctly.
+
+   If you ever correct those typos upstream, these aliases simply stop being
+   used. Nothing here overrides a value that is already declared.
+   ========================================================================== */
+
+:root {
+	/* Palette aliases — unprefixed names used by the account block */
+	--ground:    var(--mv-ground);
+	--panel:     var(--mv-panel);
+	--panel-2:   var(--mv-panel-2);
+	--surface:   #fff;
+	--ink:       var(--mv-ink);
+	--ink-soft:  var(--mv-ink-soft);
+	--burg:      var(--mv-burg);
+	--gold:      var(--mv-gold);
+	--taupe:     var(--mv-taupe);
+	--line:      var(--mv-line);
+	--serif:     var(--mv-serif);
+	--sans:      var(--mv-sans);
+
+	/* Status colours — referenced as both --x and --mv-x, never declared */
+	--ok:        #2e7d4f;
+	--warn:      #b8860b;
+	--crit:      #b23b3b;
+	--mv-ok:     #2e7d4f;
+	--mv-warn:   #b8860b;
+	--mv-crit:   #b23b3b;
+
+	/* Footer newsletter + video-hero caption */
+	--mv-surface:    #fff;
+	--mv-text:       var(--mv-ground);
+	--mv-muted-dim:  var(--mv-taupe);
+	--mv-chalk-dim:  #c6bbac;
+
+	/* The two typos above, aliased so their declarations stop being dropped.
+	   Intended: --mv-ground on .spotlight/.values, --mv-burg on .mv-header. */
+	----mv-ground: var(--mv-ground);
+	---mv-burg:    var(--mv-burg);
+}
+
+
+/* ==========================================================================
    1. TOKENS
    --------------------------------------------------------------------------
    These alias the site's OWN brand variables, which are declared at the very
