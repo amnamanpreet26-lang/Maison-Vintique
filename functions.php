@@ -54,6 +54,35 @@ function mve_setup() {
 add_action( 'after_setup_theme', 'mve_setup' );
 
 /**
+ * Read an ACF field with a fallback, safely.
+ *
+ * The editorial page templates are built entirely from ACF fields. This keeps
+ * them readable (no function_exists dance on every line) and means the site
+ * still renders if ACF is ever deactivated — every field simply falls back.
+ *
+ * @param string $name     Field name.
+ * @param mixed  $fallback Returned when ACF is missing or the field is empty.
+ * @param mixed  $post_id  Optional post ID.
+ * @return mixed
+ */
+function mve_field( $name, $fallback = '', $post_id = false ) {
+	if ( ! function_exists( 'get_field' ) ) {
+		return $fallback;
+	}
+	$value = get_field( $name, $post_id );
+	return ( '' === $value || null === $value || false === $value || array() === $value ) ? $fallback : $value;
+}
+
+/**
+ * have_rows() that doesn't fatal when ACF is inactive.
+ */
+if ( ! function_exists( 'have_rows' ) ) {
+	function have_rows( $selector, $post_id = false ) { // phpcs:ignore
+		return false;
+	}
+}
+
+/**
  * Inline an SVG from this theme's /assets/img directory (used by header.php
  * for the crest logo). Restricted to that folder and to .svg files only.
  */
@@ -109,6 +138,11 @@ require_once get_stylesheet_directory() . '/inc/shop-query.php';
  * was in the theme but nothing ever loaded it.
  */
 require_once get_stylesheet_directory() . '/inc/mv-footer.php';
+
+/**
+ * Contact page enquiry form (template-contact.php).
+ */
+require_once get_stylesheet_directory() . '/inc/contact-form.php';
 
 /**
  * ACF: load/save field groups from the theme's acf-json folder (version control + handover).

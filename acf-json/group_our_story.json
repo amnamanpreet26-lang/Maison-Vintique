@@ -1,0 +1,148 @@
+{
+  "key": "group_our_story",
+  "title": "Our Story Page",
+  "fields": [
+    {
+      "key": "field_os_eyebrow",
+      "label": "Eyebrow",
+      "name": "os_eyebrow",
+      "type": "text",
+      "instructions": "Small caps line above the heading. Defaults to \"Our Story\".",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_title",
+      "label": "Title",
+      "name": "os_title",
+      "type": "text",
+      "instructions": "Defaults to the page title.",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_intro",
+      "label": "Hero Intro",
+      "name": "os_intro",
+      "type": "textarea",
+      "instructions": "Short paragraph inside the dark banner.",
+      "rows": 3
+    },
+    {
+      "key": "field_os_lead",
+      "label": "Lead Paragraph",
+      "name": "os_lead",
+      "type": "textarea",
+      "instructions": "The larger serif line that opens the story.",
+      "rows": 3
+    },
+    {
+      "key": "field_os_body",
+      "label": "Body",
+      "name": "os_body",
+      "type": "wysiwyg",
+      "instructions": "The rest of the story. Leave blank to use the page's normal editor content instead.",
+      "toolbar": "basic",
+      "media_upload": 0
+    },
+    {
+      "key": "field_os_values_eyebrow",
+      "label": "Values Eyebrow",
+      "name": "os_values_eyebrow",
+      "type": "text",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_values_title",
+      "label": "Values Title",
+      "name": "os_values_title",
+      "type": "text",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_values",
+      "label": "Values",
+      "name": "os_values",
+      "type": "repeater",
+      "instructions": "The three cards under the story. Add as many as you like — they lay out in threes.",
+      "layout": "block",
+      "button_label": "Add value",
+      "sub_fields": [
+        {
+          "key": "field_os_v_index",
+          "label": "Number",
+          "name": "index",
+          "type": "text",
+          "instructions": "e.g. 01",
+          "wrapper": {
+            "width": "33"
+          }
+        },
+        {
+          "key": "field_os_v_title",
+          "label": "Title",
+          "name": "title",
+          "type": "text",
+          "wrapper": {
+            "width": "33"
+          }
+        },
+        {
+          "key": "field_os_v_text",
+          "label": "Text",
+          "name": "text",
+          "type": "textarea",
+          "wrapper": {
+            "width": "33"
+          },
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "key": "field_os_cta_label",
+      "label": "Button Label",
+      "name": "os_cta_label",
+      "type": "text",
+      "instructions": "Leave blank to hide the closing button.",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_cta_link",
+      "label": "Button Link",
+      "name": "os_cta_link",
+      "type": "url",
+      "instructions": "Defaults to the Shop page.",
+      "wrapper": {
+        "width": "50"
+      }
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "page_template",
+        "operator": "==",
+        "value": "template-our-story.php"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": "Content for the \"Our Story\" page template. Every field is optional.",
+  "show_in_rest": 1,
+  "modified": 1785369600
+}

@@ -1,0 +1,156 @@
+{
+  "key": "group_for_the_trade",
+  "title": "For the Trade Page",
+  "fields": [
+    {
+      "key": "field_ft_eyebrow",
+      "label": "Eyebrow",
+      "name": "ft_eyebrow",
+      "type": "text",
+      "instructions": "Defaults to \"For the Trade\".",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_title",
+      "label": "Title",
+      "name": "ft_title",
+      "type": "text",
+      "instructions": "Defaults to the page title.",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_intro",
+      "label": "Hero Intro",
+      "name": "ft_intro",
+      "type": "textarea",
+      "rows": 3
+    },
+    {
+      "key": "field_ft_steps_eyebrow",
+      "label": "Steps Eyebrow",
+      "name": "ft_steps_eyebrow",
+      "type": "text",
+      "instructions": "e.g. How it works",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_steps_title",
+      "label": "Steps Title",
+      "name": "ft_steps_title",
+      "type": "text",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_steps",
+      "label": "Steps",
+      "name": "ft_steps",
+      "type": "repeater",
+      "instructions": "The numbered cards explaining the process.",
+      "layout": "block",
+      "button_label": "Add step",
+      "sub_fields": [
+        {
+          "key": "field_ft_s_index",
+          "label": "Number",
+          "name": "index",
+          "type": "text",
+          "instructions": "e.g. 01",
+          "wrapper": {
+            "width": "33"
+          }
+        },
+        {
+          "key": "field_ft_s_title",
+          "label": "Title",
+          "name": "title",
+          "type": "text",
+          "wrapper": {
+            "width": "33"
+          }
+        },
+        {
+          "key": "field_ft_s_text",
+          "label": "Text",
+          "name": "text",
+          "type": "textarea",
+          "wrapper": {
+            "width": "33"
+          },
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "key": "field_ft_cta1_label",
+      "label": "Primary Button Label",
+      "name": "ft_cta_primary_label",
+      "type": "text",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_cta1_link",
+      "label": "Primary Button Link",
+      "name": "ft_cta_primary_link",
+      "type": "url",
+      "instructions": "Defaults to the My Account page.",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_cta2_label",
+      "label": "Secondary Button Label",
+      "name": "ft_cta_secondary_label",
+      "type": "text",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_cta2_link",
+      "label": "Secondary Button Link",
+      "name": "ft_cta_secondary_link",
+      "type": "url",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ft_closing",
+      "label": "Closing Line",
+      "name": "ft_closing",
+      "type": "textarea",
+      "instructions": "The larger serif line in the panel at the foot of the page.",
+      "rows": 3
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "page_template",
+        "operator": "==",
+        "value": "template-for-the-trade.php"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": "Content for the \"For the Trade\" page template. Every field is optional.",
+  "show_in_rest": 1,
+  "modified": 1785369600
+}

@@ -1,0 +1,94 @@
+{
+  "key": "group_faq",
+  "title": "FAQ Page",
+  "fields": [
+    {
+      "key": "field_faq_eyebrow",
+      "label": "Eyebrow",
+      "name": "faq_eyebrow",
+      "type": "text",
+      "instructions": "Defaults to \"Help\".",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_faq_title",
+      "label": "Title",
+      "name": "faq_title",
+      "type": "text",
+      "instructions": "Defaults to the page title.",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_faq_intro",
+      "label": "Hero Intro",
+      "name": "faq_intro",
+      "type": "textarea",
+      "instructions": "Basic HTML allowed, so you can link to the contact page.",
+      "rows": 3
+    },
+    {
+      "key": "field_faq_groups",
+      "label": "Question Groups",
+      "name": "faq_groups",
+      "type": "repeater",
+      "instructions": "One group per heading, e.g. \"Trade accounts\", \"Ordering\", \"Payment & delivery\".",
+      "layout": "block",
+      "button_label": "Add group",
+      "sub_fields": [
+        {
+          "key": "field_faq_g_title",
+          "label": "Group Heading",
+          "name": "group_title",
+          "type": "text"
+        },
+        {
+          "key": "field_faq_questions",
+          "label": "Questions",
+          "name": "questions",
+          "type": "repeater",
+          "layout": "block",
+          "button_label": "Add question",
+          "sub_fields": [
+            {
+              "key": "field_faq_q",
+              "label": "Question",
+              "name": "question",
+              "type": "text"
+            },
+            {
+              "key": "field_faq_a",
+              "label": "Answer",
+              "name": "answer",
+              "type": "wysiwyg",
+              "toolbar": "basic",
+              "media_upload": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "page_template",
+        "operator": "==",
+        "value": "template-faq.php"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": "Questions for the FAQ page template. Rendered as a no-JavaScript accordion.",
+  "show_in_rest": 1,
+  "modified": 1785369600
+}

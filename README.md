@@ -152,14 +152,65 @@ Sync) after deploying. Header copy for the page lives in the new
 `acf-json/group_producers_page.json` group and is entirely optional: leave the
 fields blank and the template uses the page's own title and editor content.
 
+## Editorial pages
+
+| Page | Template | Pick it under |
+|---|---|---|
+| Our Story | `template-our-story.php` | Page Attributes → Template |
+| For the Trade | `template-for-the-trade.php` | Page Attributes → Template |
+| FAQ | `template-faq.php` | Page Attributes → Template |
+| Contact | `template-contact.php` | Page Attributes → Template |
+| Journal | `archive-journal.php` | automatic, at `/journal/` |
+| One journal entry | `single-journal.php` | automatic |
+
+All the copy on these pages is ACF — see `acf-json/group_our_story.json`,
+`group_for_the_trade.json`, `group_faq.json` and `group_contact.json`. Every
+field is optional and every block is skipped when empty, so a half-filled page
+still renders cleanly; where a field is blank the template falls back to the
+page's own title and editor content.
+
+The dark banner at the top of each is one shared partial,
+`template-parts/page-hero.php`, so the five pages can't drift apart.
+
+**FAQ** is built from a two-level repeater (groups → questions) and renders as
+native `<details>`/`<summary>` — the accordion works with no JavaScript and
+stays keyboard- and screen-reader friendly.
+
+**Contact** has a real working form. It posts to `admin-post.php` (so it works
+without JavaScript), is nonce-checked, honeypot- and rate-limited, and emails
+the address in the page's *Send Enquiries To* field, falling back to the site
+admin. Hook `mve_contact_submitted` to push enquiries into a CRM. See
+`inc/contact-form.php`.
+
 ## CSS
 
-**All new styles live in `additional-css/mv-additional.css`, which the theme
-does NOT enqueue.** Paste its contents into **Appearance → Customize →
-Additional CSS**, appending it below whatever is already there. It covers the
-wine card, the producers grid, and the My Account responsive fixes, and every
-colour falls back to the theme's existing `--ink` / `--taupe` / `--gold` etc.
-variables where those are defined.
+There are three files in `additional-css/`, and **none of them is enqueued** —
+the Customizer holds the site's one stylesheet.
+
+| File | What it is |
+|---|---|
+| `mv-customizer-full.css` | **Paste this one.** The complete Additional CSS: the site's base styles plus everything this theme adds. |
+| `_site-base.css` | The styles that predate this theme's work, kept so the full file can be rebuilt. |
+| `mv-additional.css` | Only the part this theme owns — the reviewable source. |
+
+Edit `_site-base.css` or `mv-additional.css`, then regenerate:
+
+```
+php additional-css/build-full.php
+```
+
+Then paste `mv-customizer-full.css` into **Appearance → Customize → Additional
+CSS**, replacing everything there.
+
+### Colours and fonts
+
+Every component uses the site's own brand variables — `--mv-ink`, `--mv-burg`,
+`--mv-gold`, `--mv-serif`, `--mv-sans` and friends — through the `--mv2-*`
+aliases at the top of `mv-additional.css`. Nothing hard-codes a brand colour,
+so changing the `:root` block at the top of the stylesheet restyles everything.
+
+> Note `--mv-burg` is the deep green `#17251f`, not a burgundy — the name is
+> historical.
 
 One block in that file is marked as a **safety net** — the `.card-grid--4` /
 `.pgrid` mobile column counts. Delete it if the existing grid CSS already
