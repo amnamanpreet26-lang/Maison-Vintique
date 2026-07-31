@@ -1804,6 +1804,11 @@
 	border-radius: 2px;
 }
 
+.stock.available {
+	background: rgba(46, 125, 91, 0.14);
+	color: var(--mv-ok);
+}
+
 .stock.limited {
 	background: rgba(183, 121, 31, 0.16);
 	color: var(--mv-warn);
@@ -1817,6 +1822,11 @@
 .stock.alloc {
 	background: rgba(169, 136, 84, 0.16);
 	color: var(--mv-gold);
+}
+
+.stock.out {
+	background: rgba(178, 59, 59, 0.12);
+	color: var(--mv-crit);
 }
 
 .pcard-body {
@@ -2970,6 +2980,9 @@
 	overflow: hidden;
 	background: var(--mv2-cream);
 	text-decoration: none;
+}
+
+.mvprod__media {
 	perspective: 900px;
 }
 
@@ -4379,6 +4392,7 @@
 }
 
 .mv-nav a {
+	text-decoration: none;
 	white-space: nowrap;
 }
 
@@ -4567,10 +4581,13 @@
 .mv-nav--mobile .sub-menu a {
 	padding: 8px 0;
 	font-size: 13px;
+	color: var(--mv-panel, #e9e2d6);
+	background: transparent;
 }
 
-.mv-nav--mobile .sub-menu a:hover {
+.mv-nav--mobile .sub-menu a:hover,.mv-nav--mobile .sub-menu a:focus-visible {
 	background: transparent;
+	color: var(--mv2-gold);
 }
 
 @media (max-width: 900px) {
@@ -5260,52 +5277,10 @@
 
 /* ===== SPOTLIGHT — LOGGED-OUT STATE — END ===== */
 
-/* ===== PAGES USING THE SHARED HERO — START ===== */
-
-.shop-archive,.producers-page,.producer-single {
-	padding-top: 56px;
-}
-
-.shop-archive .crumb,.producers-page .crumb,.producer-single .crumb {
-	padding-top: 0;
-}
-
-.producer-single .mvest-hero {
-	padding-top: 8px;
-}
-
-@media (max-width: 640px) {
-	.shop-archive,.producers-page,.producer-single {
-		padding-top: 36px;
-	}
-}
-
-/* ===== PAGES USING THE SHARED HERO — END ===== */
-
 /* ===== PRODUCT GALLERY — START ===== */
 
 .pdp-thumbs span {
 	cursor: pointer;
-	display: block;
-	border: 1px solid transparent;
-	border-radius: 4px;
-	overflow: hidden;
-	transition: border-color .2s ease, opacity .2s ease;
-	opacity: .75;
-}
-
-.pdp-thumbs span:hover,.pdp-thumbs span:focus-visible {
-	opacity: 1;
-}
-
-.pdp-thumbs span.on {
-	opacity: 1;
-}
-
-.pdp-thumbs span img {
-	display: block;
-	width: 100%;
-	height: auto;
 }
 
 @media (hover: none) {

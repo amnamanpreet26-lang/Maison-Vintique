@@ -385,10 +385,124 @@ $closure = get_field( 'closure' );
 	</div></section>
 
 	<script>
-	/* Quantity stepper. The tab switching, the "#tab-tech" deep link and the
-	   gallery all moved to assets/js/main.js so they load on every page and
-	   can't be skipped if this inline block ever fails to print. */
-	(function(){
+	/* Product page behaviour is INLINE on purpose.
+	   It previously lived in assets/js/main.js, but that file is cached by the
+	   browser, so until the cache cleared the page had no tab script at all and
+	   the tabs stopped responding. Inline markup can never go stale. */
+	(function () {
+		'use strict';
+
+		/* ---- Tabs ---- */
+		var tabButtons = document.querySelectorAll('.tabnav button');
+		var tabPanes   = document.querySelectorAll('.tabpane');
+
+		function activateTab(name) {
+			var pane = document.getElementById('tab-' + name);
+			if (!pane) { return false; }
+			Array.prototype.forEach.call(tabButtons, function (b) {
+				b.classList.toggle('on', b.getAttribute('data-tab') === name);
+			});
+			Array.prototype.forEach.call(tabPanes, function (p) {
+				p.classList.toggle('on', p === pane);
+			});
+			return true;
+		}
+
+		Array.prototype.forEach.call(tabButtons, function (btn) {
+			btn.addEventListener('click', function () {
+				activateTab(btn.getAttribute('data-tab'));
+			});
+		});
+
+		/* Open a tab straight from the URL. Accepts both forms, because a bare
+		   #hash is easy for a plugin or a redirect to drop:
+		     /wine/xyz/#tab-tech    <- what the wine cards link to
+		     /wine/xyz/?tab=tech    <- survives anything that strips fragments */
+		function openTabFromUrl(scroll) {
+			var name = '';
+			var hash = /^#tab-([\w-]+)$/.exec(window.location.hash || '');
+			if (hash) {
+				name = hash[1];
+			} else {
+				var q = /[?&]tab=([\w-]+)/.exec(window.location.search || '');
+				if (q) { name = q[1]; }
+			}
+			if (!name || !activateTab(name)) { return; }
+			if (scroll) {
+				var tabs = document.querySelector('.tabs');
+				if (tabs) { tabs.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+			}
+		}
+
+		if (tabPanes.length) {
+			openTabFromUrl(true);
+			window.addEventListener('hashchange', function () { openTabFromUrl(true); });
+		}
+
+		/* ---- Gallery ---- */
+		var thumbs  = document.querySelectorAll('#pdpThumbs span');
+		var mainImg = document.getElementById('pdpMainImg');
+		var current = 0;
+
+		if (thumbs.length && mainImg) {
+			var showThumb = function (index) {
+				if (index < 0) { index = thumbs.length - 1; }
+				if (index >= thumbs.length) { index = 0; }
+
+				var t = thumbs[index];
+				var full = t.getAttribute('data-full');
+				if (!full) { return; }
+
+				/* WordPress renders the main image WITH srcset and sizes. Setting
+				   src alone leaves the browser free to keep the srcset candidate
+				   it already picked — which is why the image never changed. Both
+				   have to go before the new src is honoured. */
+				mainImg.removeAttribute('srcset');
+				mainImg.removeAttribute('sizes');
+				mainImg.setAttribute('src', full);
+
+				var inner = t.querySelector('img');
+				if (inner) { mainImg.setAttribute('alt', inner.getAttribute('alt') || ''); }
+
+				Array.prototype.forEach.call(thumbs, function (s) { s.classList.remove('on'); });
+				t.classList.add('on');
+				current = index;
+			};
+
+			Array.prototype.forEach.call(thumbs, function (t, i) {
+				t.setAttribute('tabindex', '0');
+				t.setAttribute('role', 'button');
+				t.addEventListener('click', function () { showThumb(i); });
+				t.addEventListener('keydown', function (e) {
+					if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showThumb(i); }
+				});
+			});
+
+			var strip = document.getElementById('pdpThumbs');
+			if (strip) {
+				strip.addEventListener('keydown', function (e) {
+					if (e.key === 'ArrowRight') { e.preventDefault(); showThumb(current + 1); }
+					if (e.key === 'ArrowLeft')  { e.preventDefault(); showThumb(current - 1); }
+				});
+			}
+
+			// Swipe the main image on touch
+			var media = document.getElementById('pdpMedia');
+			if (media) {
+				var startX = null;
+				media.addEventListener('touchstart', function (e) {
+					startX = e.changedTouches[0].clientX;
+				}, { passive: true });
+				media.addEventListener('touchend', function (e) {
+					if (startX === null) { return; }
+					var dx = e.changedTouches[0].clientX - startX;
+					if (Math.abs(dx) > 40) { showThumb(dx < 0 ? current + 1 : current - 1); }
+					startX = null;
+				}, { passive: true });
+			}
+		}
+
+		/* ---- Quantity stepper ---- */
 		var qtyWrap = document.querySelector('.qty');
 		if (!qtyWrap) { return; }
 
@@ -397,13 +511,13 @@ $closure = get_field( 'closure' );
 		var plus  = qtyWrap.querySelector('.qty-plus');
 		if (!input || !minus || !plus) { return; }
 
-		minus.addEventListener('click', function(){
+		minus.addEventListener('click', function () {
 			var val = parseInt(input.value, 10) || 1;
 			var min = parseInt(input.getAttribute('min'), 10) || 1;
 			input.value = Math.max(min, val - 1);
 			input.dispatchEvent(new Event('change'));
 		});
-		plus.addEventListener('click', function(){
+		plus.addEventListener('click', function () {
 			var val = parseInt(input.value, 10) || 1;
 			input.value = val + 1;
 			input.dispatchEvent(new Event('change'));

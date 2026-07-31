@@ -468,7 +468,6 @@
 	overflow: hidden;
 	background: var(--mv2-cream);
 	text-decoration: none;
-	perspective: 900px;
 }
 
 /* --- Flip -----------------------------------------------------------------
@@ -480,6 +479,10 @@
    and fought with them, which is what stopped the front photo from showing.
    Separate names means neither component can affect the other.
    ------------------------------------------------------------------------- */
+
+.mvprod__media {
+	perspective: 900px;
+}
 
 .mvprod__flip {
 	position: relative;
@@ -1928,6 +1931,7 @@
 }
 
 .mv-nav a {
+	text-decoration: none;
 	white-space: nowrap;
 }
 
@@ -2145,10 +2149,16 @@
 .mv-nav--mobile .sub-menu a {
 	padding: 8px 0;
 	font-size: 13px;
+	/* The desktop dropdown sits on a white panel; this one sits on the dark
+	   header, so it needs the same light colour as the parent nav links. */
+	color: var(--mv-panel, #e9e2d6);
+	background: transparent;
 }
 
-.mv-nav--mobile .sub-menu a:hover {
+.mv-nav--mobile .sub-menu a:hover,
+.mv-nav--mobile .sub-menu a:focus-visible {
 	background: transparent;
+	color: var(--mv2-gold);
 }
 
 /* Below the header breakpoint the desktop nav is hidden anyway, but if the
@@ -2854,69 +2864,17 @@
 
 
 /* ==========================================================================
-   16. PAGES USING THE SHARED HERO
-   --------------------------------------------------------------------------
-   The shop archive, producers grid and single producer page now open with the
-   same .mvp-hero banner as the editorial pages, so their old inline heading
-   block is gone and the section below the banner starts a little tighter.
-   ========================================================================== */
-
-.shop-archive,
-.producers-page,
-.producer-single {
-	padding-top: 56px;
-}
-
-.shop-archive .crumb,
-.producers-page .crumb,
-.producer-single .crumb {
-	padding-top: 0;
-}
-
-/* The estate name now lives in the banner, so the hero body is facts + intro */
-.producer-single .mvest-hero {
-	padding-top: 8px;
-}
-
-@media (max-width: 640px) {
-	.shop-archive,
-	.producers-page,
-	.producer-single {
-		padding-top: 36px;
-	}
-}
-
-
-/* ==========================================================================
    17. PRODUCT GALLERY
+   --------------------------------------------------------------------------
+   Behaviour only — the thumbnail's own look (border, active colour) is already
+   set in the shop/product styles above and is left exactly as it is.
    ========================================================================== */
 
 .pdp-thumbs span {
 	cursor: pointer;
-	display: block;
-	border: 1px solid transparent;
-	border-radius: 4px;
-	overflow: hidden;
-	transition: border-color .2s ease, opacity .2s ease;
-	opacity: .75;
 }
 
-.pdp-thumbs span:hover,
-.pdp-thumbs span:focus-visible {
-	opacity: 1;
-}
-
-.pdp-thumbs span.on {
-	opacity: 1;
-}
-
-.pdp-thumbs span img {
-	display: block;
-	width: 100%;
-	height: auto;
-}
-
-/* Hint that the main image can be swiped on touch */
+/* Let the main image be swiped horizontally on touch */
 @media (hover: none) {
 	.pdp-media {
 		touch-action: pan-y;

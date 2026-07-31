@@ -1901,6 +1901,11 @@ border-radius: 10px 0 0 10px;
  border-radius: 2px;
 }
 
+.stock.available {
+ background: rgba(46, 125, 91, 0.14);
+ color: var(--mv-ok);
+}
+
 .stock.limited {
  background: rgba(183, 121, 31, 0.16);
  color: var(--mv-warn);
@@ -1914,6 +1919,11 @@ border-radius: 10px 0 0 10px;
 .stock.alloc {
  background: rgba(169, 136, 84, 0.16);
  color: var(--mv-gold);
+}
+
+.stock.out {
+ background: rgba(178, 59, 59, 0.12);
+ color: var(--mv-crit);
 }
 
 .pcard-body {

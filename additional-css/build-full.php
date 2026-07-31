@@ -7,14 +7,14 @@
  * Reads   _site-base.css  + mv-additional.css   (both kept fully commented,
  *                                                because they are the source
  *                                                you actually edit)
- * Writes  mv-customizer-full.css                (refined: comments stripped,
- *                                                exact duplicate rules removed,
- *                                                one START/END marker per area)
+ * Writes  mv-customizer-full.css                (comments stripped, tidied
+ *                                                indentation, one START/END
+ *                                                marker per area)
  *
- * The refiner never REORDERS anything — CSS depends on source order, so rules
- * stay exactly where they were. It only removes comments and drops a rule when
- * an identical one (same selector AND same declarations) appears later in the
- * file, where the later copy already wins.
+ * ARRANGES ONLY. No rule is removed, merged, reordered or rewritten — every
+ * selector and every declaration comes out exactly as it went in, just with
+ * the comments taken off and consistent indentation. CSS depends on source
+ * order and on rules that look redundant but aren't, so nothing is dropped.
  *
  * @package maison-vintique-elementor
  */
@@ -181,21 +181,8 @@ foreach ( $sources as $file ) {
 $css   = implode( "\n\n", array_map( 'file_get_contents', $sources ) );
 $nodes = mve_css_nodes( $css );
 
-/* Pass 1 — find, for every rule, the LAST index at which that exact
-   selector+body appears. Earlier identical copies can then be dropped. */
-$last = array();
-foreach ( $nodes as $idx => $node ) {
-	if ( 'rule' !== $node['type'] && 'at' !== $node['type'] ) {
-		continue;
-	}
-	$key          = mve_norm_sel( $node['sel'] ) . '{' . mve_norm_body( $node['body'] ) . '}';
-	$last[ $key ] = $idx;
-}
-
-/* Pass 2 — emit. */
 $out        = array();
 $section    = '';
-$dupes      = 0;
 $comments   = 0;
 $rules_kept = 0;
 
@@ -223,16 +210,6 @@ foreach ( $nodes as $idx => $node ) {
 		continue;
 	}
 
-	$key = mve_norm_sel( $node['sel'] ) . '{' . mve_norm_body( $node['body'] ) . '}';
-	if ( isset( $last[ $key ] ) && $last[ $key ] !== $idx ) {
-		$dupes++;
-		continue; // an identical rule appears later; that copy wins anyway
-	}
-
-	if ( '' === mve_norm_body( $node['body'] ) ) {
-		continue; // empty rule
-	}
-
 	$rules_kept++;
 
 	if ( 'at' === $node['type'] ) {
@@ -243,13 +220,7 @@ foreach ( $nodes as $idx => $node ) {
 			if ( 'rule' !== $in['type'] && 'at' !== $in['type'] ) {
 				continue;
 			}
-			if ( '' === mve_norm_body( $in['body'] ) ) {
-				continue;
-			}
 			$lines[] = "\t" . mve_norm_sel( $in['sel'] ) . " {\n" . mve_format_body( $in['body'], "\t\t" ) . "\n\t}";
-		}
-		if ( ! $lines ) {
-			continue;
 		}
 		$out[] = mve_norm_sel( $node['sel'] ) . " {\n" . implode( "\n", $lines ) . "\n}\n";
 		continue;
@@ -265,9 +236,8 @@ $result = $header . preg_replace( "/\n{3,}/", "\n\n", implode( "\n", $out ) );
 file_put_contents( $dir . '/mv-customizer-full.css', rtrim( $result ) . "\n" );
 
 printf(
-	"mv-customizer-full.css: %d rules kept, %d duplicate rules removed, %d comments stripped (%d bytes, %d lines)\n",
+	"mv-customizer-full.css: %d rules (all kept), %d comments stripped (%d bytes, %d lines)\n",
 	$rules_kept,
-	$dupes,
 	$comments,
 	strlen( $result ),
 	substr_count( $result, "\n" )

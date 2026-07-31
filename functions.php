@@ -16,11 +16,27 @@ define( 'MVE_VERSION', '1.0.0' );
 /**
  * Enqueue parent + child styles.
  */
+/**
+ * Version an asset by its last-modified time.
+ *
+ * MVE_VERSION is a hard-coded '1.0.0' that never changes, so browsers and
+ * caching plugins held on to old copies of main.js indefinitely — edits to it
+ * simply never reached the front end. filemtime() changes every time the file
+ * is saved, so each deploy busts the cache exactly once.
+ *
+ * @param string $rel Path relative to the theme root, e.g. '/assets/js/main.js'.
+ * @return string Version string for wp_enqueue_*.
+ */
+function mve_asset_version( $rel ) {
+	$path = get_stylesheet_directory() . $rel;
+	return file_exists( $path ) ? (string) filemtime( $path ) : MVE_VERSION;
+}
+
 function mve_enqueue() {
 	wp_enqueue_style( 'hello-elementor', get_template_directory_uri() . '/style.css', array(), MVE_VERSION );
-	wp_enqueue_style( 'mve-style', get_stylesheet_uri(), array( 'hello-elementor' ), MVE_VERSION );
-	wp_enqueue_style( 'mve-main', get_stylesheet_directory_uri() . '/assets/css/style.css', array( 'mve-style' ), MVE_VERSION );
-	wp_enqueue_script( 'mve-main', get_stylesheet_directory_uri() . '/assets/js/main.js', array(), MVE_VERSION, true );
+	wp_enqueue_style( 'mve-style', get_stylesheet_uri(), array( 'hello-elementor' ), mve_asset_version( '/style.css' ) );
+	wp_enqueue_style( 'mve-main', get_stylesheet_directory_uri() . '/assets/css/style.css', array( 'mve-style' ), mve_asset_version( '/assets/css/style.css' ) );
+	wp_enqueue_script( 'mve-main', get_stylesheet_directory_uri() . '/assets/js/main.js', array(), mve_asset_version( '/assets/js/main.js' ), true );
 }
 add_action( 'wp_enqueue_scripts', 'mve_enqueue' );
 
