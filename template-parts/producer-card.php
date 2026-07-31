@@ -82,10 +82,12 @@ $mvp_back_sub = $mvp_year
 	? sprintf( __( 'Est. %s', 'maison-vintique-elementor' ), $mvp_year )
 	: ( $mvp_region ? $mvp_region : $mvp_country );
 
-/* --- "View wines" -> shop, filtered to this estate ----------------------- */
-$mvp_wines_url = function_exists( 'wc_get_page_permalink' )
-	? add_query_arg( 'producer', $mvp_id, wc_get_page_permalink( 'shop' ) )
-	: get_permalink( $mvp_id );
+/* --- "View wines" -> this estate's own page ------------------------------
+ * The single producer page already lists that estate's wines (see
+ * single-producer.php), and it carries the story and gallery too, so the card
+ * sends people there rather than to a filtered shop listing.
+ * ------------------------------------------------------------------------ */
+$mvp_wines_url = get_permalink( $mvp_id );
 ?>
 <article class="mvprod">
 

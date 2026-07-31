@@ -468,6 +468,7 @@
 	overflow: hidden;
 	background: var(--mv2-cream);
 	text-decoration: none;
+	perspective: 900px;
 }
 
 /* --- Flip -----------------------------------------------------------------
@@ -479,10 +480,6 @@
    and fought with them, which is what stopped the front photo from showing.
    Separate names means neither component can affect the other.
    ------------------------------------------------------------------------- */
-
-.mvprod__media {
-	perspective: 900px;
-}
 
 .mvprod__flip {
 	position: relative;
@@ -1931,7 +1928,6 @@
 }
 
 .mv-nav a {
-	text-decoration: none;
 	white-space: nowrap;
 }
 
@@ -1962,6 +1958,9 @@
 	left: 0;
 	z-index: 200;
 	min-width: 220px;
+	/* The base sets `.mv-nav ul { display:flex }`, which laid sub-menu items
+	   out in a ROW — the reported "goes inline with the parent". Stack them. */
+	display: block;
 	margin: 0;
 	padding: 8px 0;
 	list-style: none;
@@ -2067,21 +2066,80 @@
 	display: none;
 }
 
+/* Parent row: link on the left, caret button on the right. The caret is
+   injected by assets/js/main.js — there is no hover on touch, so the sub-menu
+   needs a real tap target rather than a :hover rule. */
+.mv-nav--mobile > li.menu-item-has-children {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.mv-nav--mobile > li.menu-item-has-children > a {
+	flex: 1 1 auto;
+}
+
+.mv-subnav-toggle {
+	flex: 0 0 auto;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	position: relative;
+}
+
+.mv-subnav-toggle::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 8px;
+	height: 8px;
+	margin: -6px 0 0 -4px;
+	border-right: 1.5px solid var(--mv2-gold);
+	border-bottom: 1.5px solid var(--mv2-gold);
+	transform: rotate(45deg);
+	transition: transform .22s ease;
+}
+
+.mv-nav--mobile > li.is-open > .mv-subnav-toggle::before {
+	transform: rotate(225deg);
+	margin-top: -2px;
+}
+
 .mv-nav--mobile .sub-menu {
 	position: static;
-	opacity: 1;
-	visibility: visible;
-	pointer-events: auto;
-	transform: none;
+	flex: 1 1 100%;
 	min-width: 0;
-	margin: 0 0 4px;
+	margin: 0;
 	padding: 0 0 0 16px;
 	border: 0;
-	border-left: 1px solid var(--mv2-line);
+	border-left: 1px solid rgba(214, 206, 193, .35);
 	border-radius: 0;
 	background: transparent;
 	box-shadow: none;
-	transition: none;
+	transform: none;
+	pointer-events: auto;
+
+	/* Closed by default; the caret opens it. */
+	display: block;
+	opacity: 0;
+	visibility: hidden;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height .28s ease, opacity .2s ease;
+}
+
+.mv-nav--mobile > li.is-open > .sub-menu {
+	opacity: 1;
+	visibility: visible;
+	max-height: 60vh;
+	overflow: auto;
+	margin: 6px 0 4px;
 }
 
 .mv-nav--mobile .sub-menu a {
@@ -2766,4 +2824,101 @@
 	.mvp-article__media { margin-bottom: 24px; aspect-ratio: 4 / 3; }
 	.mvp-article h2     { font-size: 24px; }
 	.mvp-article blockquote { font-size: 19px; }
+}
+
+
+/* ==========================================================================
+   15. SPOTLIGHT — logged-out state
+   ========================================================================== */
+
+.spotlight__trade {
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+	font-style: italic;
+	color: var(--mv2-taupe);
+}
+
+.spotlight .section__title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.spotlight .section__title a:hover {
+	color: var(--mv2-gold);
+}
+
+.spotlight__media a {
+	display: block;
+	text-decoration: none;
+}
+
+
+/* ==========================================================================
+   16. PAGES USING THE SHARED HERO
+   --------------------------------------------------------------------------
+   The shop archive, producers grid and single producer page now open with the
+   same .mvp-hero banner as the editorial pages, so their old inline heading
+   block is gone and the section below the banner starts a little tighter.
+   ========================================================================== */
+
+.shop-archive,
+.producers-page,
+.producer-single {
+	padding-top: 56px;
+}
+
+.shop-archive .crumb,
+.producers-page .crumb,
+.producer-single .crumb {
+	padding-top: 0;
+}
+
+/* The estate name now lives in the banner, so the hero body is facts + intro */
+.producer-single .mvest-hero {
+	padding-top: 8px;
+}
+
+@media (max-width: 640px) {
+	.shop-archive,
+	.producers-page,
+	.producer-single {
+		padding-top: 36px;
+	}
+}
+
+
+/* ==========================================================================
+   17. PRODUCT GALLERY
+   ========================================================================== */
+
+.pdp-thumbs span {
+	cursor: pointer;
+	display: block;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	overflow: hidden;
+	transition: border-color .2s ease, opacity .2s ease;
+	opacity: .75;
+}
+
+.pdp-thumbs span:hover,
+.pdp-thumbs span:focus-visible {
+	opacity: 1;
+}
+
+.pdp-thumbs span.on {
+	opacity: 1;
+}
+
+.pdp-thumbs span img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+/* Hint that the main image can be swiped on touch */
+@media (hover: none) {
+	.pdp-media {
+		touch-action: pan-y;
+	}
 }

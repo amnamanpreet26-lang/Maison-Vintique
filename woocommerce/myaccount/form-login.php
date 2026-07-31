@@ -20,13 +20,27 @@ defined( 'ABSPATH' ) || exit;
 
 do_action( 'woocommerce_before_customer_login_form' );
 
-$mve_registration_enabled = 'yes' === get_option( 'woocommerce_enable_myaccount_registration' );
-
 /**
- * Where "Apply for an account" points when registration is disabled.
- * Filter this to send applicants at a Gravity/Contact Form 7 page instead.
+ * The registration form is rendered here ALWAYS.
+ *
+ * It used to be gated on WooCommerce's "enable registration" setting, and when
+ * that setting is off the button fell back to linking at /trade/ — a page that
+ * doesn't exist, so "Apply for an account" 404'd. Rendering the form directly
+ * removes the dead link entirely.
+ *
+ * WooCommerce still does the actual work: WC_Form_Handler::process_registration()
+ * fires on wp_loaded whenever $_POST['register'] is set with a valid nonce, and
+ * it does not check that option — so validation, account creation, the welcome
+ * email and the automatic sign-in afterwards all behave normally.
+ *
+ * To go back to linking at a separate application page:
+ *   add_filter( 'mve_show_registration_form', '__return_false' );
+ *   add_filter( 'mve_trade_application_url', fn() => home_url( '/apply/' ) );
  */
-$mve_apply_url = apply_filters( 'mve_trade_application_url', home_url( '/trade/' ) );
+$mve_show_registration = (bool) apply_filters( 'mve_show_registration_form', true );
+
+/** Only used when the form is deliberately switched off. */
+$mve_apply_url = apply_filters( 'mve_trade_application_url', wc_get_page_permalink( 'myaccount' ) );
 ?>
 <section class="section login-page">
 <div class="wrap">
@@ -97,11 +111,17 @@ $mve_apply_url = apply_filters( 'mve_trade_application_url', home_url( '/trade/'
 				<li><?php esc_html_e( 'Invoices, statements and delivery notes in one place', 'maison-vintique-elementor' ); ?></li>
 			</ul>
 
-			<?php if ( $mve_registration_enabled ) : ?>
+			<?php if ( $mve_show_registration ) : ?>
 
 				<form method="post" class="woocommerce-form woocommerce-form-register register" <?php do_action( 'woocommerce_register_form_tag' ); ?>>
 
 					<?php do_action( 'woocommerce_register_form_start' ); ?>
+
+					<div class="field">
+						<label for="reg_business"><?php esc_html_e( 'Business name', 'maison-vintique-elementor' ); ?>&nbsp;<span class="required">*</span></label>
+						<input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="mve_business" id="reg_business" required
+							value="<?php echo ( ! empty( $_POST['mve_business'] ) ) ? esc_attr( wp_unslash( $_POST['mve_business'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification ?>" />
+					</div>
 
 					<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
 						<div class="field">
@@ -112,14 +132,24 @@ $mve_apply_url = apply_filters( 'mve_trade_application_url', home_url( '/trade/'
 
 					<div class="field">
 						<label for="reg_email"><?php esc_html_e( 'Email address', 'maison-vintique-elementor' ); ?>&nbsp;<span class="required">*</span></label>
-						<input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo ( ! empty( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification ?>" />
+						<input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" required value="<?php echo ( ! empty( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification ?>" />
+					</div>
+
+					<div class="field">
+						<label for="reg_phone"><?php esc_html_e( 'Telephone', 'maison-vintique-elementor' ); ?></label>
+						<input type="tel" class="woocommerce-Input woocommerce-Input--text input-text" name="mve_phone" id="reg_phone" autocomplete="tel"
+							value="<?php echo ( ! empty( $_POST['mve_phone'] ) ) ? esc_attr( wp_unslash( $_POST['mve_phone'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification ?>" />
 					</div>
 
 					<?php if ( 'no' === get_option( 'woocommerce_registration_generate_password' ) ) : ?>
 						<div class="field">
 							<label for="reg_password"><?php esc_html_e( 'Password', 'maison-vintique-elementor' ); ?>&nbsp;<span class="required">*</span></label>
-							<input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" />
+							<input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" required />
 						</div>
+					<?php else : ?>
+						<p class="auth-note">
+							<?php esc_html_e( 'A password will be emailed to you.', 'maison-vintique-elementor' ); ?>
+						</p>
 					<?php endif; ?>
 
 					<?php do_action( 'woocommerce_register_form' ); ?>

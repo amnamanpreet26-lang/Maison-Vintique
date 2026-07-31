@@ -42,6 +42,17 @@ if ( ! $mvp_title ) {
 if ( ! $mvp_intro ) {
 	$mvp_intro = __( 'A small circle of independent estates we represent in the UK — each tended by its own family, in its own way. Sign in for allocations and trade pricing.', 'maison-vintique-elementor' );
 }
+
+// Same dark banner as the other editorial pages.
+get_template_part(
+	'template-parts/page-hero',
+	null,
+	array(
+		'eyebrow' => $mvp_eyebrow,
+		'title'   => wp_strip_all_tags( $mvp_title ),
+		'intro'   => wp_strip_all_tags( $mvp_intro ),
+	)
+);
 ?>
 
 <main>
@@ -51,14 +62,6 @@ if ( ! $mvp_intro ) {
 	<div class="crumb">
 		<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'maison-vintique-elementor' ); ?></a>
 		/ <span><?php echo esc_html( wp_strip_all_tags( $mvp_title ) ); ?></span>
-	</div>
-
-	<div class="page-h">
-		<p class="eyebrow"><?php echo esc_html( $mvp_eyebrow ); ?></p>
-		<h1><?php echo esc_html( wp_strip_all_tags( $mvp_title ) ); ?></h1>
-		<?php if ( $mvp_intro ) : ?>
-			<p><?php echo wp_kses_post( wp_strip_all_tags( $mvp_intro ) ); ?></p>
-		<?php endif; ?>
 	</div>
 
 	<?php if ( have_posts() ) : ?>

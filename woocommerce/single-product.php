@@ -385,78 +385,29 @@ $closure = get_field( 'closure' );
 	</div></section>
 
 	<script>
+	/* Quantity stepper. The tab switching, the "#tab-tech" deep link and the
+	   gallery all moved to assets/js/main.js so they load on every page and
+	   can't be skipped if this inline block ever fails to print. */
 	(function(){
-		// Thumbnail swap
-		var thumbs = document.querySelectorAll('#pdpThumbs span');
-		var mainImg = document.getElementById('pdpMainImg');
-		thumbs.forEach(function(t){
-			t.addEventListener('click', function(){
-				thumbs.forEach(function(s){ s.classList.remove('on'); });
-				t.classList.add('on');
-				var full = t.getAttribute('data-full');
-				if (mainImg && full) { mainImg.setAttribute('src', full); }
-			});
-		});
-
-		// Tabs
-		var tabButtons = document.querySelectorAll('.tabnav button');
-
-		function activateTab(name) {
-			var pane = document.getElementById('tab-' + name);
-			if (!pane) { return false; }
-
-			tabButtons.forEach(function(b){
-				b.classList.toggle('on', b.getAttribute('data-tab') === name);
-			});
-			document.querySelectorAll('.tabpane').forEach(function(p){
-				p.classList.toggle('on', p === pane);
-			});
-			return true;
-		}
-
-		tabButtons.forEach(function(btn){
-			btn.addEventListener('click', function(){
-				activateTab(btn.getAttribute('data-tab'));
-			});
-		});
-
-		/*
-		 * Open a tab straight from the URL, e.g. /wine/xyz/#tab-tech — this is
-		 * what the "Technical Details" link on every wine card points at. Also
-		 * handles the hash changing while already on the page.
-		 */
-		function openTabFromHash(scroll) {
-			var match = /^#tab-([\w-]+)$/.exec(window.location.hash || '');
-			if (!match) { return; }
-			if (activateTab(match[1]) && scroll) {
-				var tabs = document.querySelector('.tabs');
-				if (tabs) { tabs.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-			}
-		}
-
-		openTabFromHash(true);
-		window.addEventListener('hashchange', function(){ openTabFromHash(true); });
-
-		// Quantity stepper (WooCommerce input already renders name="quantity")
 		var qtyWrap = document.querySelector('.qty');
-		if (qtyWrap) {
-			var input = qtyWrap.querySelector('input.qty');
-			var minus = qtyWrap.querySelector('.qty-minus');
-			var plus  = qtyWrap.querySelector('.qty-plus');
-			if (input && minus && plus) {
-				minus.addEventListener('click', function(){
-					var val = parseInt(input.value, 10) || 1;
-					var min = parseInt(input.getAttribute('min'), 10) || 1;
-					input.value = Math.max(min, val - 1);
-					input.dispatchEvent(new Event('change'));
-				});
-				plus.addEventListener('click', function(){
-					var val = parseInt(input.value, 10) || 1;
-					input.value = val + 1;
-					input.dispatchEvent(new Event('change'));
-				});
-			}
-		}
+		if (!qtyWrap) { return; }
+
+		var input = qtyWrap.querySelector('input.qty');
+		var minus = qtyWrap.querySelector('.qty-minus');
+		var plus  = qtyWrap.querySelector('.qty-plus');
+		if (!input || !minus || !plus) { return; }
+
+		minus.addEventListener('click', function(){
+			var val = parseInt(input.value, 10) || 1;
+			var min = parseInt(input.getAttribute('min'), 10) || 1;
+			input.value = Math.max(min, val - 1);
+			input.dispatchEvent(new Event('change'));
+		});
+		plus.addEventListener('click', function(){
+			var val = parseInt(input.value, 10) || 1;
+			input.value = val + 1;
+			input.dispatchEvent(new Event('change'));
+		});
 	})();
 	</script>
 

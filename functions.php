@@ -145,6 +145,11 @@ require_once get_stylesheet_directory() . '/inc/mv-footer.php';
 require_once get_stylesheet_directory() . '/inc/contact-form.php';
 
 /**
+ * Trade account registration on the logged-out My Account page.
+ */
+require_once get_stylesheet_directory() . '/inc/registration.php';
+
+/**
  * ACF: load/save field groups from the theme's acf-json folder (version control + handover).
  */
 function mve_acf_json_save( $path ) {

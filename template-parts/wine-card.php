@@ -106,7 +106,9 @@ $mvc_meta = implode( ' · ', array_filter( array_merge( $mvc_countries, $mvc_reg
  * INLINE LINKS — Technical Details deep-links to the Technical tab on the
  * single product page; Enquire uses the same ?enquire=ID pattern as the PDP.
  * ------------------------------------------------------------------------- */
-$mvc_tech_url    = $mvc_permalink . '#tab-tech';
+// Both forms: ?tab=tech survives anything that strips the fragment, and the
+// hash keeps the link working if JavaScript is off. main.js reads either.
+$mvc_tech_url    = add_query_arg( 'tab', 'tech', $mvc_permalink ) . '#tab-tech';
 $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 	? add_query_arg( 'enquire', $mvc_id, wc_get_page_permalink( 'shop' ) )
 	: $mvc_permalink;

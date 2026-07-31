@@ -64,6 +64,28 @@ $mvp_producers = new WP_Query(
 		),
 	)
 );
+
+// No intro field set? Fall back to the page's own editor content.
+if ( ! $mvp_intro ) {
+	ob_start();
+	while ( have_posts() ) {
+		the_post();
+		the_content();
+	}
+	wp_reset_postdata();
+	$mvp_intro = trim( wp_strip_all_tags( ob_get_clean() ) );
+}
+
+// Same dark banner as the other editorial pages.
+get_template_part(
+	'template-parts/page-hero',
+	null,
+	array(
+		'eyebrow' => $mvp_eyebrow,
+		'title'   => $mvp_title,
+		'intro'   => $mvp_intro,
+	)
+);
 ?>
 
 <main>
@@ -73,26 +95,6 @@ $mvp_producers = new WP_Query(
 	<div class="crumb">
 		<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'maison-vintique-elementor' ); ?></a>
 		/ <span><?php echo esc_html( $mvp_title ); ?></span>
-	</div>
-
-	<div class="page-h">
-		<?php if ( $mvp_eyebrow ) : ?>
-			<p class="eyebrow"><?php echo esc_html( $mvp_eyebrow ); ?></p>
-		<?php endif; ?>
-
-		<h1><?php echo esc_html( $mvp_title ); ?></h1>
-
-		<?php if ( $mvp_intro ) : ?>
-			<p><?php echo esc_html( $mvp_intro ); ?></p>
-		<?php else : ?>
-			<?php
-			while ( have_posts() ) :
-				the_post();
-				the_content();
-			endwhile;
-			wp_reset_postdata();
-			?>
-		<?php endif; ?>
 	</div>
 
 	<?php if ( $mvp_producers->have_posts() ) : ?>

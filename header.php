@@ -74,13 +74,22 @@ $mve_cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : ho
 				</svg>
 			</a>
 
-			<a class="mv-header__icon mv-header__cart" href="<?php echo esc_url( $mve_cart_url ); ?>" aria-label="Cart">
-				<svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-					<path d="M5 7h12l-1 11.2a1.5 1.5 0 0 1-1.5 1.3H7.5A1.5 1.5 0 0 1 6 18.2L5 7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-					<path d="M8 7V5.6A3 3 0 0 1 11 2.6a3 3 0 0 1 3 3V7" stroke="currentColor" stroke-width="1.4"/>
-				</svg>
-				<span class="mv-header__cart-count" data-cart-count><?php echo (int) $mve_cart_count; ?></span>
-			</a>
+			<?php
+			/*
+			 * Cart is for signed-in customers only. Nothing is purchasable while
+			 * logged out (inc/woocommerce.php), so showing a basket icon to a
+			 * guest just offers a route that dead-ends.
+			 */
+			if ( is_user_logged_in() ) :
+				?>
+				<a class="mv-header__icon mv-header__cart" href="<?php echo esc_url( $mve_cart_url ); ?>" aria-label="Cart">
+					<svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+						<path d="M5 7h12l-1 11.2a1.5 1.5 0 0 1-1.5 1.3H7.5A1.5 1.5 0 0 1 6 18.2L5 7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+						<path d="M8 7V5.6A3 3 0 0 1 11 2.6a3 3 0 0 1 3 3V7" stroke="currentColor" stroke-width="1.4"/>
+					</svg>
+					<span class="mv-header__cart-count" data-cart-count><?php echo (int) $mve_cart_count; ?></span>
+				</a>
+			<?php endif; ?>
 
 			<button class="mv-header__burger" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="site-header-mobile-nav">
 				<span></span><span></span><span></span>

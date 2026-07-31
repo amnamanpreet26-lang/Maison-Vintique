@@ -1,3 +1,4 @@
+
 :root {
  --mv-ground: #f2eee6;
  --mv-panel: #e9e2d6;
@@ -99,7 +100,7 @@
  letter-spacing: 0.18em;
  text-transform: uppercase;
  color: var(--mv-gold);
- font-weight: 400;
+ font-weight: 500;
  margin: 0 0 14px;
  position: relative;
  padding-left: 26px;
@@ -156,7 +157,7 @@
 
 .section__title--white {
  font-family: var(--mv-serif);
- font-weight: 400;
+ font-weight: 500;
  font-size: 45px;
  line-height: 1.15;
  margin: 0 0 20px;
@@ -245,11 +246,11 @@
  display: inline-block;
  font-family: var(--mv-sans);
  font-size: 13px;
- letter-spacing: 0.08em;
+ letter-spacing: 0.09em;
  text-transform: uppercase;
- font-weight: 600;
+ font-weight: 400;
  padding: 15px 28px;
- border-radius: 2px;
+ border-radius: 5px;
  text-decoration: none;
  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
  border: 1px solid transparent;
@@ -259,6 +260,28 @@
  background: var(--mv-burg);
  color: var(--mv-chalk);
 }
+
+.hero__actions .btn--primary {
+ background: var(--mv-gold);
+ color: var(--mv-chalk);
+}
+
+.hero__actions .btn--primary:hover {
+ background: var(--mv-burg);
+}
+
+.hero__actions .btn--outline {
+ background: transparent;
+ border-color: var(--mv-ground);
+ color: var(--mv-ground);
+}
+
+.hero__actions .btn--outline:hover {
+ background: var(--mv-burg);
+	border-color: var(--mv-burg);
+ color: var(--mv-ground);
+}
+
 
 .btn--primary:hover {
  background: var(--mv-burg-bright);
@@ -379,6 +402,7 @@
  font-size: 86px;
  margin: 0 0 18px;
  color: var(--mv-ground);
+	    line-height: 86px;
 }
 
 .hero__text {
@@ -388,6 +412,7 @@
  max-width: 100%;
  margin: 0 0 28px;
  line-height: 1.7;
+	font-weight: 300;
 }
 
 .hero__actions {
@@ -453,7 +478,7 @@
  width: 100%;
  height: 400px;
  object-fit: cover;
- border-radius: 2px;
+ border-radius: 10px;
  display: block;
 }
 
@@ -502,6 +527,7 @@
  font-size: 17px;
  margin: 0 0 24px;
  line-height: 26px;
+	font-weight: 300;
 }
 
 /* ---------- Card grids (shared) ---------- */
@@ -548,7 +574,7 @@
  position: relative;
  perspective: 1400px;
  margin: 0 0 16px;
- border-radius: 2px;
+ border-radius: 10px;
  overflow: hidden;
 }
 .estate-card__face {
@@ -634,6 +660,7 @@
  scroll-snap-type: x mandatory;
  gap: 24px;
  scrollbar-width: none;
+	flex-wrap: wrap;
 }
 
 @media (max-width: 767px) {
@@ -713,7 +740,7 @@
  margin: 0;
  background: var(--mv-ground);
  border: 1px solid var(--mv-line);
- border-radius: 2px;
+ border-radius: 10px;
  padding: 24px;
 }
 
@@ -909,7 +936,7 @@
 .value-card__index {
  display: block;
  font-family: var(--mv-serif);
- font-size: 15px;
+ font-size: 20px;
  color: #a98854;
  margin-bottom: 16px;
 }
@@ -946,7 +973,7 @@
 .journal-card__media {
  margin: 0 0 16px;
  overflow: hidden;
- border-radius: 2px;
+ border-radius: 10px;
 }
 
 .journal-card__media img {
@@ -1044,6 +1071,7 @@
 
  .hero__title {
   font-size: 44px;
+	 line-height: 45px;
  }
 }
 
@@ -1084,6 +1112,7 @@
 
  .hero__title {
   font-size: 34px;
+	 line-height: 35px;
  }
 
  .section__title {
@@ -1162,6 +1191,16 @@
  line-height: 1.15;
 }
 
+@media (max-width: 1024px) {
+ .mv-header__wordmark {
+ display: none;
+}
+	
+	.mv-header__inner {
+    gap: 15px;
+}
+}
+
 .mv-header__name {
  font-family: var(--mv-serif);
  font-size: 1.15rem;
@@ -1170,10 +1209,10 @@
 
 .mv-header__place {
  font-family: var(--mv-sans);
- font-size: 0.65rem;
+ font-size: 9px;
  letter-spacing: 0.22em;
  text-transform: uppercase;
- color: var(--mv-taupe);
+ color: var(--mv-gold-soft);
 }
 
 .mv-nav ul,
@@ -1212,7 +1251,7 @@
  gap: 8px;
  background: #ffffff12;
  border: 1px solid #ffffff29;
- border-radius: 0px;
+ border-radius: 10px;
  padding: 8px 16px;
 }
 
@@ -1283,7 +1322,7 @@
 .mv-header__burger span {
  display: block;
  height: 2px;
- background: var(--mv-ink);
+ background: var(--mv-ground);
 }
 
 .mv-header__mobile-nav {
@@ -1306,6 +1345,7 @@
  .mv-search__input {
   display: none;
  }
+
 
  .mv-header__burger {
   display: flex;
@@ -1475,6 +1515,7 @@
  font-size: 14px;
  outline: none;
  min-width: 0;
+border-radius: 10px 0 0 10px;
 }
 
 .mv-newsletter-form__input::placeholder {
@@ -1501,6 +1542,7 @@
  display: inline-flex;
  align-items: center;
  gap: 8px;
+	border-radius: 0px 10px 10px 0px;
 }
 
 .mv-newsletter-form__submit:hover {
@@ -1859,11 +1901,6 @@
  border-radius: 2px;
 }
 
-.stock.available {
- background: rgba(46, 125, 91, 0.14);
- color: var(--mv-ok);
-}
-
 .stock.limited {
  background: rgba(183, 121, 31, 0.16);
  color: var(--mv-warn);
@@ -1877,11 +1914,6 @@
 .stock.alloc {
  background: rgba(169, 136, 84, 0.16);
  color: var(--mv-gold);
-}
-
-.stock.out {
- background: rgba(178, 59, 59, 0.12);
- color: var(--mv-crit);
 }
 
 .pcard-body {
@@ -2089,7 +2121,7 @@
 .pdp-media {
  background: var(--mv-panel-2);
  border: 1px solid var(--mv-line);
- border-radius: 6px;
+ border-radius: 10px;
  display: flex;
  flex-direction: column;
  align-items: center;
@@ -2235,7 +2267,7 @@
  display: flex;
  align-items: center;
  border: 1px solid var(--mv-line);
- border-radius: 3px;
+ border-radius: 10px;
  background: var(--mv-panel-2);
 }
 .qty button {

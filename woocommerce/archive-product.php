@@ -31,6 +31,17 @@ $mve_total      = (int) $wp_query->found_posts;
 $mve_paged      = max( 1, (int) ( get_query_var( 'paged' ) ? get_query_var( 'paged' ) : get_query_var( 'page' ) ) );
 $mve_range_from = $mve_total ? ( ( $mve_paged - 1 ) * $mve_per_page ) + 1 : 0;
 $mve_range_to   = min( $mve_paged * $mve_per_page, $mve_total );
+
+// Same dark banner as Our Story / Producers / Journal — one shared partial.
+get_template_part(
+	'template-parts/page-hero',
+	null,
+	array(
+		'eyebrow' => __( 'The Collection', 'maison-vintique-elementor' ),
+		'title'   => woocommerce_page_title( false ),
+		'intro'   => get_theme_mod( 'mve_shop_subtitle', __( 'Curated estates, filterable by everything that matters.', 'maison-vintique-elementor' ) ),
+	)
+);
 ?>
 
 <main>
@@ -39,12 +50,6 @@ $mve_range_to   = min( $mve_paged * $mve_per_page, $mve_total );
 
 	<div class="crumb">
 		<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Home</a> / <span><?php woocommerce_page_title(); ?></span>
-	</div>
-
-	<div class="page-h">
-		<p class="eyebrow">The Collection</p>
-		<h1><?php woocommerce_page_title(); ?></h1>
-		<p><?php echo esc_html( get_theme_mod( 'mve_shop_subtitle', 'Curated estates, filterable by everything that matters.' ) ); ?></p>
 	</div>
 
 	<div class="shop">

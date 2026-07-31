@@ -252,13 +252,53 @@ $mv_producers = new WP_Query( array(
 <?php endif; ?>
 
   <!-- ============ WINE OF THE MOMENT ============ -->
+  <?php
+  /*
+   * Spotlight — now backed by a real WooCommerce product.
+   *
+   * Pick the wine in the ACF "spotlight_product" field and the image, name,
+   * price and button link all come from the product itself. Everything still
+   * has a manual ACF override, so an editor can pin any of it by hand, and if
+   * no product is chosen the section behaves exactly as it did before.
+   *
+   * The price obeys the same one rule as the rest of the site: hidden while
+   * logged out. See mve_is_gated() in inc/woocommerce.php.
+   */
+  $spot_product_field = get_field('spotlight_product');
+  $spot_product_id    = 0;
+  if ( $spot_product_field ) {
+    $spot_product_id = is_object( $spot_product_field ) ? $spot_product_field->ID : (int) $spot_product_field;
+  }
+  $spot_product = ( $spot_product_id && function_exists( 'wc_get_product' ) ) ? wc_get_product( $spot_product_id ) : null;
+  if ( $spot_product && ! $spot_product->is_visible() ) {
+    $spot_product = null;
+  }
+
+  $spot_gated = function_exists( 'mve_is_gated' ) ? mve_is_gated( $spot_product_id ) : ! is_user_logged_in();
+  ?>
   <section class="section spotlight">
     <div class="container spotlight__inner">
 
-      <?php $spotlight_image = get_field('spotlight_image'); ?>
-      <?php if ( $spotlight_image ) : ?>
+      <?php
+      $spotlight_image = get_field('spotlight_image');
+      $spot_image_url  = $spotlight_image ? $spotlight_image['url'] : '';
+      $spot_image_alt  = $spotlight_image ? $spotlight_image['alt'] : '';
+
+      // Fall back to the product's own image.
+      if ( ! $spot_image_url && $spot_product ) {
+        $spot_image_url = get_the_post_thumbnail_url( $spot_product_id, 'large' );
+        $spot_image_alt = get_the_title( $spot_product_id );
+      }
+      ?>
+      <?php if ( $spot_image_url ) : ?>
         <figure class="spotlight__media">
-          <img src="<?php echo esc_url( $spotlight_image['url'] ); ?>" alt="<?php echo esc_attr( $spotlight_image['alt'] ); ?>">
+          <?php if ( $spot_product ) : ?>
+            <a href="<?php echo esc_url( get_permalink( $spot_product_id ) ); ?>">
+              <img src="<?php echo esc_url( $spot_image_url ); ?>" alt="<?php echo esc_attr( $spot_image_alt ); ?>">
+            </a>
+          <?php else : ?>
+            <img src="<?php echo esc_url( $spot_image_url ); ?>" alt="<?php echo esc_attr( $spot_image_alt ); ?>">
+          <?php endif; ?>
         </figure>
       <?php endif; ?>
 
@@ -266,8 +306,20 @@ $mv_producers = new WP_Query( array(
         <?php if ( $val = get_field('spotlight_eyebrow') ) : ?>
           <p class="eyebrow"><?php echo esc_html( $val ); ?></p>
         <?php endif; ?>
-        <?php if ( $val = get_field('spotlight_name') ) : ?>
-          <h3 class="section__title"><?php echo esc_html( $val ); ?></h3>
+        <?php
+        $spot_name = get_field('spotlight_name');
+        if ( ! $spot_name && $spot_product ) {
+          $spot_name = get_the_title( $spot_product_id );
+        }
+        ?>
+        <?php if ( $spot_name ) : ?>
+          <h3 class="section__title">
+            <?php if ( $spot_product ) : ?>
+              <a href="<?php echo esc_url( get_permalink( $spot_product_id ) ); ?>"><?php echo esc_html( $spot_name ); ?></a>
+            <?php else : ?>
+              <?php echo esc_html( $spot_name ); ?>
+            <?php endif; ?>
+          </h3>
         <?php endif; ?>
 
         <?php if ( have_rows('spotlight_details') ) : ?>
@@ -286,14 +338,42 @@ $mv_producers = new WP_Query( array(
         <?php endif; ?>
 
         <div class="spotlight__row">
-          <?php if ( $val = get_field('spotlight_price') ) : ?>
-            <span class="price"><?php echo esc_html( $val ); ?></span>
-          <?php endif; ?>
-          <?php if ( $val = get_field('spotlight_price_unit') ) : ?>
-            <span class="price__unit"><?php echo esc_html( $val ); ?></span>
-          <?php endif; ?>
-          <?php if ( $label = get_field('spotlight_cta_label') ) : ?>
-            <a href="<?php echo esc_url( get_field('spotlight_cta_link') ?: '#' ); ?>" class="btn btn--primary btn--small"><?php echo esc_html( $label ); ?></a>
+          <?php if ( $spot_gated ) : ?>
+
+            <?php // Logged out — no price anywhere on the site. ?>
+            <span class="mv-trade-tag spotlight__trade"><?php esc_html_e( 'Trade pricing on login', 'maison-vintique' ); ?></span>
+            <a href="<?php echo esc_url( function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : wp_login_url() ); ?>" class="btn btn--primary btn--small">
+              <?php esc_html_e( 'Login to view price', 'maison-vintique' ); ?>
+            </a>
+
+          <?php else : ?>
+
+            <?php
+            // Manual price wins; otherwise take the product's own.
+            $spot_price = get_field('spotlight_price');
+            if ( ! $spot_price && $spot_product ) {
+              $spot_price = $spot_product->get_price_html();
+            }
+            ?>
+            <?php if ( $spot_price ) : ?>
+              <span class="price"><?php echo wp_kses_post( $spot_price ); ?></span>
+            <?php endif; ?>
+
+            <?php if ( $val = get_field('spotlight_price_unit') ) : ?>
+              <span class="price__unit"><?php echo esc_html( $val ); ?></span>
+            <?php endif; ?>
+
+            <?php
+            $spot_cta_label = get_field('spotlight_cta_label');
+            $spot_cta_link  = get_field('spotlight_cta_link');
+            if ( ! $spot_cta_link && $spot_product ) {
+              $spot_cta_link = get_permalink( $spot_product_id );
+            }
+            ?>
+            <?php if ( $spot_cta_label ) : ?>
+              <a href="<?php echo esc_url( $spot_cta_link ?: '#' ); ?>" class="btn btn--primary btn--small"><?php echo esc_html( $spot_cta_label ); ?></a>
+            <?php endif; ?>
+
           <?php endif; ?>
         </div>
 		  <div class="spotlight__button">

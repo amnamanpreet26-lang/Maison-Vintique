@@ -83,6 +83,17 @@ while ( have_posts() ) :
 	$mvs_shop_url = function_exists( 'wc_get_page_permalink' )
 		? add_query_arg( 'producer', $mvs_id, wc_get_page_permalink( 'shop' ) )
 		: '';
+
+	// Same dark banner as the other editorial pages.
+	get_template_part(
+		'template-parts/page-hero',
+		null,
+		array(
+			'eyebrow' => __( 'Estate Partner', 'maison-vintique-elementor' ),
+			'title'   => get_the_title(),
+			'intro'   => $mvs_location,
+		)
+	);
 	?>
 
 <main>
@@ -99,12 +110,6 @@ while ( have_posts() ) :
 	<div class="mvest-hero">
 
 		<div class="mvest-hero__content">
-			<p class="eyebrow"><?php esc_html_e( 'Estate Partner', 'maison-vintique-elementor' ); ?></p>
-			<h1 class="mvest-hero__title"><?php the_title(); ?></h1>
-
-			<?php if ( $mvs_location ) : ?>
-				<p class="mvest-hero__location"><?php echo esc_html( $mvs_location ); ?></p>
-			<?php endif; ?>
 
 			<?php if ( $mvs_year || $mvs_appellations || $mvs_note ) : ?>
 				<ul class="mvest-facts">
