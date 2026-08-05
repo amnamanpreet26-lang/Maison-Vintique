@@ -66,6 +66,9 @@ while ( have_posts() ) :
 			</section>
 		<?php endif; ?>
 
+		<!-- ============ IMAGE OR VIDEO ============ -->
+		<?php get_template_part( 'template-parts/page-media', null, array( 'prefix' => 'os' ) ); ?>
+
 		<!-- ============ WHAT GUIDES US ============ -->
 		<?php if ( have_rows( 'os_values' ) ) : ?>
 			<section class="section mvp-sec mvp-sec--panel">

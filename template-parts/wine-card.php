@@ -86,9 +86,7 @@ if ( $product->is_in_stock() ) {
 }
 
 /* ---------------------------------------------------------------------------
- * META LINE — "France · Bordeaux". The Country and Region taxonomy terms,
- * joined by a middot. Either one on its own renders fine; if a wine has
- * several terms in a taxonomy they are all listed.
+ * META ROW — "Red · Bordeaux" on the left, the country on the right.
  * ------------------------------------------------------------------------- */
 $mvc_country_terms = get_the_terms( $mvc_id, 'wine_country' );
 $mvc_region_terms  = get_the_terms( $mvc_id, 'wine_region' );
@@ -100,7 +98,34 @@ $mvc_regions = ( $mvc_region_terms && ! is_wp_error( $mvc_region_terms ) )
 	? wp_list_pluck( $mvc_region_terms, 'name' )
 	: array();
 
-$mvc_meta = implode( ' · ', array_filter( array_merge( $mvc_countries, $mvc_regions ) ) );
+// Left: colour, then region. Right: country.
+$mvc_meta_left  = implode( ' · ', array_filter( array_merge( array( $mvc_colour ), $mvc_regions ) ) );
+$mvc_meta_right = implode( ' · ', $mvc_countries );
+
+/* ---------------------------------------------------------------------------
+ * DETAIL ROWS — producer and case format.
+ * ------------------------------------------------------------------------- */
+$mvc_producer_obj = function_exists( 'get_field' ) ? get_field( 'producer', $mvc_id ) : null;
+$mvc_producer     = '';
+$mvc_producer_url = '';
+if ( $mvc_producer_obj ) {
+	$mvc_producer_id  = is_object( $mvc_producer_obj ) ? $mvc_producer_obj->ID : (int) $mvc_producer_obj;
+	$mvc_producer     = get_the_title( $mvc_producer_id );
+	$mvc_producer_url = get_permalink( $mvc_producer_id );
+}
+
+$mvc_case = function_exists( 'get_field' ) ? get_field( 'case_format', $mvc_id ) : '';
+
+/* ---------------------------------------------------------------------------
+ * AWARD — revealed over the image on hover. The ACF `awards` field is a
+ * textarea with one award per line; the first line is the headline one.
+ * ------------------------------------------------------------------------- */
+$mvc_awards_raw = function_exists( 'get_field' ) ? get_field( 'awards', $mvc_id ) : '';
+$mvc_award      = '';
+if ( $mvc_awards_raw ) {
+	$mvc_award_lines = array_filter( array_map( 'trim', preg_split( '/\R/', $mvc_awards_raw ) ) );
+	$mvc_award       = $mvc_award_lines ? reset( $mvc_award_lines ) : '';
+}
 
 /* ---------------------------------------------------------------------------
  * INLINE LINKS — Technical Details deep-links to the Technical tab on the
@@ -125,6 +150,17 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 		<span class="mvcard__badge mvcard__badge--stock is-<?php echo esc_attr( $mvc_stock_state ); ?>">
 			<?php echo esc_html( $mvc_stock_label ); ?>
 		</span>
+
+		<?php if ( $mvc_award ) : ?>
+			<?php // Slides up over the image on hover / keyboard focus. ?>
+			<span class="mvcard__award">
+				<svg class="mvcard__award-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+					<circle cx="12" cy="9" r="5.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+					<path d="M8.4 13.4 6.6 21l5.4-2.7 5.4 2.7-1.8-7.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+				</svg>
+				<span class="mvcard__award-text"><?php echo esc_html( $mvc_award ); ?></span>
+			</span>
+		<?php endif; ?>
 	</a>
 
 	<div class="mvcard__body">
@@ -133,8 +169,31 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 			<a href="<?php echo esc_url( $mvc_permalink ); ?>"><?php echo esc_html( get_the_title( $mvc_id ) ); ?></a>
 		</h3>
 
-		<?php if ( $mvc_meta ) : ?>
-			<p class="mvcard__meta"><?php echo esc_html( $mvc_meta ); ?></p>
+		<?php if ( $mvc_meta_left || $mvc_meta_right ) : ?>
+			<p class="mvcard__meta">
+				<span class="mvcard__meta-left"><?php echo esc_html( $mvc_meta_left ); ?></span>
+				<span class="mvcard__meta-right"><?php echo esc_html( $mvc_meta_right ); ?></span>
+			</p>
+		<?php endif; ?>
+
+		<?php if ( $mvc_producer || $mvc_case ) : ?>
+			<dl class="mvcard__specs">
+				<?php if ( $mvc_producer ) : ?>
+					<dt><?php esc_html_e( 'Producer', 'maison-vintique-elementor' ); ?></dt>
+					<dd>
+						<?php if ( $mvc_producer_url ) : ?>
+							<a href="<?php echo esc_url( $mvc_producer_url ); ?>"><?php echo esc_html( $mvc_producer ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( $mvc_producer ); ?>
+						<?php endif; ?>
+					</dd>
+				<?php endif; ?>
+
+				<?php if ( $mvc_case ) : ?>
+					<dt><?php esc_html_e( 'Case', 'maison-vintique-elementor' ); ?></dt>
+					<dd><?php echo esc_html( $mvc_case ); ?></dd>
+				<?php endif; ?>
+			</dl>
 		<?php endif; ?>
 
 		<p class="mvcard__price">

@@ -124,6 +124,81 @@
       "wrapper": {
         "width": "50"
       }
+    },
+    {
+      "key": "field_os_media_tab",
+      "label": "Image / Video",
+      "name": "",
+      "type": "tab",
+      "placement": "top"
+    },
+    {
+      "key": "field_os_media_type",
+      "label": "Media Type",
+      "name": "os_media_type",
+      "type": "select",
+      "instructions": "What to show in the media block on this page. Leave the fields below empty to hide the block entirely.",
+      "choices": {
+        "image": "Image",
+        "video": "Video file (uploaded)",
+        "embed": "Video embed (YouTube / Vimeo)"
+      },
+      "default_value": "image",
+      "ui": 1,
+      "return_format": "value",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_image",
+      "label": "Image",
+      "name": "os_image",
+      "type": "image",
+      "instructions": "Used when Media Type is Image.",
+      "return_format": "array",
+      "preview_size": "medium",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_video",
+      "label": "Video File",
+      "name": "os_video",
+      "type": "file",
+      "instructions": "An MP4 you have uploaded. Plays muted on loop.",
+      "return_format": "url",
+      "mime_types": "mp4,webm",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_video_poster",
+      "label": "Video Poster",
+      "name": "os_video_poster",
+      "type": "image",
+      "instructions": "Still shown before the uploaded video loads.",
+      "return_format": "array",
+      "preview_size": "medium",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_os_video_embed",
+      "label": "Video Embed URL",
+      "name": "os_video_embed",
+      "type": "url",
+      "instructions": "A YouTube or Vimeo link. Used when Media Type is Video embed."
+    },
+    {
+      "key": "field_os_media_caption",
+      "label": "Caption",
+      "name": "os_media_caption",
+      "type": "text",
+      "instructions": "Optional line under the media."
     }
   ],
   "location": [
@@ -144,5 +219,5 @@
   "active": true,
   "description": "Content for the \"Our Story\" page template. Every field is optional.",
   "show_in_rest": 1,
-  "modified": 1785369600
+  "modified": 1785628800
 }

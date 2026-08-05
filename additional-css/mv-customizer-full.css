@@ -5290,3 +5290,180 @@
 }
 
 /* ===== PRODUCT GALLERY — END ===== */
+
+/* ===== WINE CARD — AWARD BADGE, META ROW, SPECS — START ===== */
+
+.mvcard__award {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 3;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 14px;
+	background: linear-gradient(to top, rgba(23, 37, 31, .94) 0%, rgba(23, 37, 31, .78) 60%, rgba(23, 37, 31, 0) 100%);
+	color: var(--mv2-chalk);
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	line-height: 1.35;
+	opacity: 0;
+	transform: translateY(100%);
+	transition: opacity .32s ease, transform .32s cubic-bezier(.22, .61, .36, 1);
+	pointer-events: none;
+}
+
+.mvcard:hover .mvcard__award,.mvcard:focus-within .mvcard__award {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.mvcard__award-icon {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	color: var(--mv2-gold);
+}
+
+.mvcard__award-text {
+	min-width: 0;
+}
+
+@media (hover: none) {
+	.mvcard__award {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.mvcard__meta {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.mvcard__meta-left {
+	min-width: 0;
+}
+
+.mvcard__meta-right {
+	flex: 0 0 auto;
+	color: var(--mv2-gold);
+}
+
+.mvcard__specs {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 4px 12px;
+	margin: 0 0 14px;
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.mvcard__specs dt {
+	margin: 0;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+	white-space: nowrap;
+	align-self: center;
+}
+
+.mvcard__specs dd {
+	margin: 0;
+	min-width: 0;
+	color: var(--mv2-ink);
+	overflow-wrap: anywhere;
+}
+
+.mvcard__specs dd a {
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 1px solid var(--mv2-line);
+}
+
+.mvcard__specs dd a:hover {
+	color: var(--mv2-gold);
+	border-bottom-color: var(--mv2-gold);
+}
+
+@media (max-width: 600px) {
+	.mvcard__meta {
+		flex-direction: column;
+		gap: 2px;
+	}
+	.mvcard__award {
+		font-size: 10px;
+		padding: 10px 12px;
+	}
+}
+
+/* ===== WINE CARD — AWARD BADGE, META ROW, SPECS — END ===== */
+
+/* ===== PAGE MEDIA BLOCK — OUR STORY / TRADE PARTNERS — START ===== */
+
+.mvp-media {
+	margin: 0;
+	max-width: 960px;
+	margin-inline: auto;
+}
+
+.mvp-media img,.mvp-media__video {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: var(--mv2-radius);
+	background: var(--mv2-cream);
+}
+
+.mvp-media--image img,.mvp-media--video .mvp-media__video {
+	box-shadow: var(--mv2-shadow);
+}
+
+.mvp-media__embed {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border-radius: var(--mv2-radius);
+	overflow: hidden;
+	background: var(--mv2-dark);
+	box-shadow: var(--mv2-shadow);
+}
+
+.mvp-media__embed iframe,.mvp-media__embed object,.mvp-media__embed embed {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.mvp-media__caption {
+	margin-top: 14px;
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	letter-spacing: .04em;
+	color: var(--mv2-taupe);
+	text-align: center;
+}
+
+.mvp-media-sec {
+	padding-top: 0;
+}
+
+@media (max-width: 640px) {
+	.mvp-media__caption {
+		font-size: 12px;
+	}
+}
+
+/* ===== PAGE MEDIA BLOCK — OUR STORY / TRADE PARTNERS — END ===== */

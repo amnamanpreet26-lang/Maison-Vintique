@@ -1,8 +1,13 @@
 <?php
 /**
- * Template Name: For the Trade
+ * Template Name: Trade Partners
  *
- * Create a page, then pick "For the Trade" under Page Attributes → Template.
+ * Create a page, then pick "Trade Partners" under Page Attributes → Template.
+ *
+ * NOTE: the FILE NAME stays template-for-the-trade.php on purpose. WordPress
+ * stores the filename against a page, not the display name, so renaming the
+ * file would detach any page already using this template. Only the label in
+ * the Template dropdown changes.
  * Copy comes from ACF (group_for_the_trade.json); blocks with no content are
  * skipped.
  *
@@ -35,7 +40,7 @@ while ( have_posts() ) :
 		'template-parts/page-hero',
 		null,
 		array(
-			'eyebrow' => mve_field( 'ft_eyebrow', __( 'For the Trade', 'maison-vintique-elementor' ) ),
+			'eyebrow' => mve_field( 'ft_eyebrow', __( 'Trade Partners', 'maison-vintique-elementor' ) ),
 			'title'   => mve_field( 'ft_title', get_the_title() ),
 			'intro'   => mve_field( 'ft_intro' ),
 		)
@@ -99,6 +104,9 @@ while ( have_posts() ) :
 				</div>
 			</section>
 		<?php endif; ?>
+
+		<!-- ============ IMAGE OR VIDEO ============ -->
+		<?php get_template_part( 'template-parts/page-media', null, array( 'prefix' => 'ft' ) ); ?>
 
 		<!-- ============ CLOSING NOTE ============ -->
 		<?php if ( $mvt_closing || get_the_content() ) : ?>

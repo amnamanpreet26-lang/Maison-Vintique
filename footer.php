@@ -113,34 +113,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<p class="mv-footer__copy">&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php bloginfo( 'name' ); ?>. <?php esc_html_e( 'All rights reserved.', 'maison-vintique' ); ?></p>
 
 				<div class="mv-footer__bottom-right">
-					<ul class="mv-footer__social" aria-label="<?php esc_attr_e( 'Social media', 'maison-vintique' ); ?>">
-						<?php
-						/**
-						 * Filter the social links shown in the footer.
-						 * Leave a value empty ('') to hide that icon.
-						 */
-						$mve_social_links = apply_filters( 'mve_footer_social_links', array(
-							'instagram' => 'https://instagram.com/maisonvintique',
-							'facebook'  => '',
-							'twitter'   => '',
-							'pinterest' => '',
-							'linkedin'  => '',
-						) );
+					<?php
+					/*
+					 * Social links come from Appearance → Customize → Social Links.
+					 * Icons are inline SVG from inc/social.php — they used to be
+					 * loaded from assets/img/social-*.svg, files that were never
+					 * in the theme, so every icon rendered as an empty <li>.
+					 */
+					$mve_social_links = mve_social_links();
+					$mve_networks     = mve_social_networks();
 
-						foreach ( $mve_social_links as $mve_network => $mve_url ) {
-							if ( empty( $mve_url ) ) {
-								continue;
-							}
-							?>
-							<li class="mv-footer__social-item">
-								<a href="<?php echo esc_url( $mve_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( ucfirst( $mve_network ) ); ?>">
-									<?php echo mve_inline_svg( 'social-' . $mve_network . '.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
-								</a>
-							</li>
-							<?php
-						}
+					if ( $mve_social_links ) :
 						?>
-					</ul>
+						<ul class="mv-footer__social" aria-label="<?php esc_attr_e( 'Social media', 'maison-vintique' ); ?>">
+							<?php foreach ( $mve_social_links as $mve_network => $mve_url ) : ?>
+								<li class="mv-footer__social-item">
+									<a href="<?php echo esc_url( $mve_url ); ?>" target="_blank" rel="noopener noreferrer"
+										aria-label="<?php echo esc_attr( isset( $mve_networks[ $mve_network ]['label'] ) ? $mve_networks[ $mve_network ]['label'] : ucfirst( $mve_network ) ); ?>">
+										<?php echo mve_social_icon( $mve_network ); // phpcs:ignore WordPress.Security.EscapeOutput -- static inline SVG, no user input ?>
+									</a>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
 
 					<nav class="mv-footer__legal" aria-label="<?php esc_attr_e( 'Legal', 'maison-vintique' ); ?>">
 						<?php

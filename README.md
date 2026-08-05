@@ -88,14 +88,37 @@ the "You may also like" grid on the single product page.
 |---|---|
 | Left badge | `wine_colour` taxonomy (falls back to the first Product Category) |
 | Right badge | Stock status → "Available" / "Out of stock" |
+| **Award badge** | ACF `awards` — slides up over the image on hover (see below) |
 | Title | Product title |
-| Meta line | **`wine_country` · `wine_region` taxonomy terms**, joined by a middot |
+| Meta line, left | **`wine_colour` · `wine_region`** taxonomy terms, joined by a middot |
+| Meta line, right | **`wine_country`** taxonomy terms |
+| **Producer** row | ACF `producer` (post object) — the name links through to that estate's page |
+| **Case** row | ACF `case_format`, e.g. "6 x 75cl" |
 | Price line | Normal WooCommerce price, or "Trade pricing on login" when `mve_is_gated()` says the wine is gated |
 | **View Wine** button | Links to the single product page (this replaced the old Add to Cart button) |
-| Technical Details | Single product page, Technical tab — links to `#tab-tech`, and the tab script opens that tab on arrival |
+| Technical Details | Single product page, Technical tab — links to `?tab=tech#tab-tech`, and the tab script opens that tab on arrival |
 | Enquire | `?enquire=<id>` on the Shop page — the same pattern the single product page uses |
 
 Every line is optional, so a product with only a title and an image still renders a valid card.
+
+### The award badge
+
+`awards` is a textarea with **one award per line**. The card shows the **first
+line only** — put the headline award first:
+
+```
+Gold — IWC 2023
+92 pts — Decanter
+```
+
+It is hidden at rest and slides up from the bottom of the image on hover or
+keyboard focus. On touch devices there is no hover, so `@media (hover: none)`
+shows it permanently rather than hiding it forever. Wines with no award simply
+don't get a badge.
+
+All three fields the card now reads — `awards`, `producer` and `case_format` —
+already exist in `acf-json/group_wine_details.json`, on the product's **Wine
+Details** tab. Nothing new to create; just fill them in per product.
 
 ## Producers
 
@@ -157,11 +180,18 @@ fields blank and the template uses the page's own title and editor content.
 | Page | Template | Pick it under |
 |---|---|---|
 | Our Story | `template-our-story.php` | Page Attributes → Template |
-| For the Trade | `template-for-the-trade.php` | Page Attributes → Template |
+| **Trade Partners** | `template-for-the-trade.php` | Page Attributes → Template |
 | FAQ | `template-faq.php` | Page Attributes → Template |
 | Contact | `template-contact.php` | Page Attributes → Template |
 | Journal | `archive-journal.php` | automatic, at `/journal/` |
 | One journal entry | `single-journal.php` | automatic |
+
+**"For the Trade" is now "Trade Partners."** Only the label changed — in the
+Template dropdown, in the field group name, and in the page's default eyebrow.
+The **file name stays `template-for-the-trade.php` on purpose**: WordPress
+stores the *filename* against a page, not the display name, so renaming the file
+would silently detach any page already using it and drop that page back to the
+default template. Nothing to re-pick after deploying.
 
 All the copy on these pages is ACF — see `acf-json/group_our_story.json`,
 `group_for_the_trade.json`, `group_faq.json` and `group_contact.json`. Every
@@ -181,6 +211,36 @@ without JavaScript), is nonce-checked, honeypot- and rate-limited, and emails
 the address in the page's *Send Enquiries To* field, falling back to the site
 admin. Hook `mve_contact_submitted` to push enquiries into a CRM. See
 `inc/contact-form.php`.
+
+### The image / video block
+
+**Our Story** and **Trade Partners** each get a full-width media block, edited
+under an **Image / Video** tab on the page. Both use one shared partial,
+`template-parts/page-media.php`, so the two pages always behave the same.
+
+| Field | What it does |
+|---|---|
+| Media Type | *Image*, *Video file (uploaded)* or *Video embed (YouTube / Vimeo)* |
+| Image | Used when the type is Image |
+| Video File | An `.mp4` you upload to the Media Library |
+| Video Poster | Still shown before an uploaded video loads |
+| Video Embed URL | Paste a YouTube or Vimeo link — WordPress turns it into a player |
+| Caption | Optional line under the media |
+
+Field names are prefixed per page: `os_media_type`, `os_image`, … on Our Story
+and `ft_media_type`, `ft_image`, … on Trade Partners.
+
+Three things worth knowing:
+
+- **Leave everything blank and the block disappears entirely** — no empty box,
+  no gap.
+- **Uploaded videos autoplay muted and loop**, with controls, because browsers
+  refuse to autoplay anything with sound. Viewers can unmute with the controls.
+- **Embeds are locked to 16:9** whatever the provider hands back, so YouTube and
+  Vimeo sit at the same size.
+
+If the Media Type doesn't match what's actually filled in, the block falls back
+to whatever it can render rather than showing nothing.
 
 ## CSS
 
@@ -235,6 +295,41 @@ Until a menu is assigned, the two footer columns fall back to a sensible
 default link list (see `mve_footer_menu()` in `inc/mv-footer.php`) so the
 footer never renders as an empty gap — as soon as you assign a menu, it takes
 over.
+
+## Footer social icons
+
+### Where to add the links
+
+**Appearance → Customize → Social Links.**
+
+Paste the full URL into the box for each network and click Publish. The icon
+appears in the footer the moment there's a URL in the box; leave a box empty and
+that icon simply isn't rendered. Six boxes ship out of the box:
+
+**Instagram**, Facebook, X (Twitter), LinkedIn, Pinterest, YouTube.
+
+Nothing is hard-coded in `footer.php` any more — it asks `mve_social_links()`
+for whatever has a URL and draws only those. If none of the six has a URL, the
+whole social row is skipped rather than rendering an empty strip.
+
+### Adding another network later
+
+One entry in `mve_social_networks()` in `inc/social.php` — the Customizer box,
+the icon and the footer link all follow from it automatically:
+
+```php
+'tiktok' => array(
+    'label' => __( 'TikTok', 'maison-vintique-elementor' ),
+    'path'  => '<path d="…" fill="currentColor"/>',   // 24 × 24 viewBox
+),
+```
+
+The `path` is the *inside* of a `<svg viewBox="0 0 24 24">` — copy it straight
+out of any icon set. Icons are inlined rather than loaded from a font or a CDN,
+so they inherit the footer's colour and cost no extra request.
+
+If you'd rather not touch PHP at all, the same list is filterable — add to it
+from a plugin or a snippet with `add_filter( 'mve_social_networks', … )`.
 
 ## Cart / Checkout / Login
 

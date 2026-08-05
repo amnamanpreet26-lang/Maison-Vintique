@@ -166,6 +166,11 @@ require_once get_stylesheet_directory() . '/inc/contact-form.php';
 require_once get_stylesheet_directory() . '/inc/registration.php';
 
 /**
+ * Footer social links — icons + the Customizer panel that holds the URLs.
+ */
+require_once get_stylesheet_directory() . '/inc/social.php';
+
+/**
  * ACF: load/save field groups from the theme's acf-json folder (version control + handover).
  */
 function mve_acf_json_save( $path ) {
