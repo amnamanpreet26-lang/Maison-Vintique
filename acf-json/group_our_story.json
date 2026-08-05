@@ -1,223 +1,397 @@
 {
-  "key": "group_our_story",
-  "title": "Our Story Page",
-  "fields": [
-    {
-      "key": "field_os_eyebrow",
-      "label": "Eyebrow",
-      "name": "os_eyebrow",
-      "type": "text",
-      "instructions": "Small caps line above the heading. Defaults to \"Our Story\".",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_title",
-      "label": "Title",
-      "name": "os_title",
-      "type": "text",
-      "instructions": "Defaults to the page title.",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_intro",
-      "label": "Hero Intro",
-      "name": "os_intro",
-      "type": "textarea",
-      "instructions": "Short paragraph inside the dark banner.",
-      "rows": 3
-    },
-    {
-      "key": "field_os_lead",
-      "label": "Lead Paragraph",
-      "name": "os_lead",
-      "type": "textarea",
-      "instructions": "The larger serif line that opens the story.",
-      "rows": 3
-    },
-    {
-      "key": "field_os_body",
-      "label": "Body",
-      "name": "os_body",
-      "type": "wysiwyg",
-      "instructions": "The rest of the story. Leave blank to use the page's normal editor content instead.",
-      "toolbar": "basic",
-      "media_upload": 0
-    },
-    {
-      "key": "field_os_values_eyebrow",
-      "label": "Values Eyebrow",
-      "name": "os_values_eyebrow",
-      "type": "text",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_values_title",
-      "label": "Values Title",
-      "name": "os_values_title",
-      "type": "text",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_values",
-      "label": "Values",
-      "name": "os_values",
-      "type": "repeater",
-      "instructions": "The three cards under the story. Add as many as you like — they lay out in threes.",
-      "layout": "block",
-      "button_label": "Add value",
-      "sub_fields": [
+    "key": "group_our_story",
+    "title": "Our Story Page",
+    "fields": [
         {
-          "key": "field_os_v_index",
-          "label": "Number",
-          "name": "index",
-          "type": "text",
-          "instructions": "e.g. 01",
-          "wrapper": {
-            "width": "33"
-          }
+            "key": "field_os_eyebrow",
+            "label": "Eyebrow",
+            "name": "os_eyebrow",
+            "type": "text",
+            "instructions": "Small caps line above the heading. Defaults to \"Our Story\".",
+            "wrapper": {
+                "width": "50"
+            }
         },
         {
-          "key": "field_os_v_title",
-          "label": "Title",
-          "name": "title",
-          "type": "text",
-          "wrapper": {
-            "width": "33"
-          }
+            "key": "field_os_title",
+            "label": "Title",
+            "name": "os_title",
+            "type": "text",
+            "instructions": "Defaults to the page title.",
+            "wrapper": {
+                "width": "50"
+            }
         },
         {
-          "key": "field_os_v_text",
-          "label": "Text",
-          "name": "text",
-          "type": "textarea",
-          "wrapper": {
-            "width": "33"
-          },
-          "rows": 3
+            "key": "field_os_intro",
+            "label": "Hero Intro",
+            "name": "os_intro",
+            "type": "textarea",
+            "instructions": "Short paragraph inside the dark banner.",
+            "rows": 3
+        },
+        {
+            "key": "field_os_lead",
+            "label": "Lead Paragraph",
+            "name": "os_lead",
+            "type": "textarea",
+            "instructions": "The larger serif line that opens the story.",
+            "rows": 3
+        },
+        {
+            "key": "field_os_body",
+            "label": "Body",
+            "name": "os_body",
+            "type": "wysiwyg",
+            "instructions": "The rest of the story. Leave blank to use the page's normal editor content instead.",
+            "toolbar": "basic",
+            "media_upload": 0
+        },
+        {
+            "key": "field_os_values_eyebrow",
+            "label": "Values Eyebrow",
+            "name": "os_values_eyebrow",
+            "type": "text",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_values_title",
+            "label": "Values Title",
+            "name": "os_values_title",
+            "type": "text",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_values",
+            "label": "Values",
+            "name": "os_values",
+            "type": "repeater",
+            "instructions": "The three cards under the story. Add as many as you like — they lay out in threes.",
+            "layout": "block",
+            "button_label": "Add value",
+            "sub_fields": [
+                {
+                    "key": "field_os_v_index",
+                    "label": "Number",
+                    "name": "index",
+                    "type": "text",
+                    "instructions": "e.g. 01",
+                    "wrapper": {
+                        "width": "33"
+                    }
+                },
+                {
+                    "key": "field_os_v_title",
+                    "label": "Title",
+                    "name": "title",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "33"
+                    }
+                },
+                {
+                    "key": "field_os_v_text",
+                    "label": "Text",
+                    "name": "text",
+                    "type": "textarea",
+                    "wrapper": {
+                        "width": "33"
+                    },
+                    "rows": 3
+                }
+            ]
+        },
+        {
+            "key": "field_os_cta_label",
+            "label": "Button Label",
+            "name": "os_cta_label",
+            "type": "text",
+            "instructions": "Leave blank to hide the closing button.",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_cta_link",
+            "label": "Button Link",
+            "name": "os_cta_link",
+            "type": "url",
+            "instructions": "Defaults to the Shop page.",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_hero_tab",
+            "label": "Hero Background",
+            "name": "",
+            "type": "tab",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "placement": "top",
+            "endpoint": 0
+        },
+        {
+            "key": "field_os_hero_bg_image",
+            "label": "Hero Background Image",
+            "name": "os_hero_bg_image",
+            "type": "image",
+            "instructions": "Sits behind the page title. Leave empty for the plain dark banner. Use a wide image — at least 1920px.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        },
+        {
+            "key": "field_os_hero_bg_video",
+            "label": "Hero Background Video",
+            "name": "os_hero_bg_video",
+            "type": "file",
+            "instructions": "An MP4 that plays behind the title. It is muted and looped so browsers allow it to autoplay. The image above is used as its poster.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array",
+            "library": "all",
+            "mime_types": "mp4"
+        },
+        {
+            "key": "field_os_hero_bg_overlay",
+            "label": "Background Darkness",
+            "name": "os_hero_bg_overlay",
+            "type": "number",
+            "instructions": "0-100. How dark the tint over the image/video is, so the white text stays readable. Leave empty for the default (55).",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "min": 0,
+            "max": 100,
+            "step": 5,
+            "placeholder": "55",
+            "append": "%"
+        },
+        {
+            "key": "field_os_split_tab",
+            "label": "Text + Image / Video",
+            "name": "",
+            "type": "tab",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "placement": "top",
+            "endpoint": 0
+        },
+        {
+            "key": "field_os_split_eyebrow",
+            "label": "Eyebrow",
+            "name": "os_split_eyebrow",
+            "type": "text",
+            "instructions": "Small gold line above the heading.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_os_split_title",
+            "label": "Heading",
+            "name": "os_split_title",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_os_split_body",
+            "label": "Text",
+            "name": "os_split_body",
+            "type": "wysiwyg",
+            "instructions": "The copy that sits beside the image or video.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "tabs": "all",
+            "toolbar": "basic",
+            "media_upload": 0
+        },
+        {
+            "key": "field_os_split_cta_label",
+            "label": "Button Label",
+            "name": "os_split_cta_label",
+            "type": "text",
+            "instructions": "Leave empty for no button.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_os_split_cta_link",
+            "label": "Button Link",
+            "name": "os_split_cta_link",
+            "type": "url",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_os_split_side",
+            "label": "Media Side",
+            "name": "os_split_side",
+            "type": "select",
+            "instructions": "Which side of the text the image or video sits on.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "right": "Right",
+                "left": "Left"
+            },
+            "default_value": "right",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0
+        },
+        {
+            "key": "field_os_media_type",
+            "label": "Media Type",
+            "name": "os_media_type",
+            "type": "select",
+            "instructions": "What sits beside the text above.",
+            "choices": {
+                "image": "Image",
+                "video": "Video file (uploaded)",
+                "embed": "Video embed (YouTube / Vimeo)"
+            },
+            "default_value": "image",
+            "ui": 1,
+            "return_format": "value",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_image",
+            "label": "Image",
+            "name": "os_image",
+            "type": "image",
+            "instructions": "Used when Media Type is Image.",
+            "return_format": "array",
+            "preview_size": "medium",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_video",
+            "label": "Video File",
+            "name": "os_video",
+            "type": "file",
+            "instructions": "An MP4 you have uploaded. Plays muted on loop.",
+            "return_format": "url",
+            "mime_types": "mp4,webm",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_video_poster",
+            "label": "Video Poster",
+            "name": "os_video_poster",
+            "type": "image",
+            "instructions": "Still shown before the uploaded video loads.",
+            "return_format": "array",
+            "preview_size": "medium",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_os_video_embed",
+            "label": "Video Embed URL",
+            "name": "os_video_embed",
+            "type": "url",
+            "instructions": "A YouTube or Vimeo link. Used when Media Type is Video embed."
+        },
+        {
+            "key": "field_os_media_caption",
+            "label": "Caption",
+            "name": "os_media_caption",
+            "type": "text",
+            "instructions": "Optional line under the image or video."
         }
-      ]
-    },
-    {
-      "key": "field_os_cta_label",
-      "label": "Button Label",
-      "name": "os_cta_label",
-      "type": "text",
-      "instructions": "Leave blank to hide the closing button.",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_cta_link",
-      "label": "Button Link",
-      "name": "os_cta_link",
-      "type": "url",
-      "instructions": "Defaults to the Shop page.",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_media_tab",
-      "label": "Image / Video",
-      "name": "",
-      "type": "tab",
-      "placement": "top"
-    },
-    {
-      "key": "field_os_media_type",
-      "label": "Media Type",
-      "name": "os_media_type",
-      "type": "select",
-      "instructions": "What to show in the media block on this page. Leave the fields below empty to hide the block entirely.",
-      "choices": {
-        "image": "Image",
-        "video": "Video file (uploaded)",
-        "embed": "Video embed (YouTube / Vimeo)"
-      },
-      "default_value": "image",
-      "ui": 1,
-      "return_format": "value",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_image",
-      "label": "Image",
-      "name": "os_image",
-      "type": "image",
-      "instructions": "Used when Media Type is Image.",
-      "return_format": "array",
-      "preview_size": "medium",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_video",
-      "label": "Video File",
-      "name": "os_video",
-      "type": "file",
-      "instructions": "An MP4 you have uploaded. Plays muted on loop.",
-      "return_format": "url",
-      "mime_types": "mp4,webm",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_video_poster",
-      "label": "Video Poster",
-      "name": "os_video_poster",
-      "type": "image",
-      "instructions": "Still shown before the uploaded video loads.",
-      "return_format": "array",
-      "preview_size": "medium",
-      "wrapper": {
-        "width": "50"
-      }
-    },
-    {
-      "key": "field_os_video_embed",
-      "label": "Video Embed URL",
-      "name": "os_video_embed",
-      "type": "url",
-      "instructions": "A YouTube or Vimeo link. Used when Media Type is Video embed."
-    },
-    {
-      "key": "field_os_media_caption",
-      "label": "Caption",
-      "name": "os_media_caption",
-      "type": "text",
-      "instructions": "Optional line under the media."
-    }
-  ],
-  "location": [
-    [
-      {
-        "param": "page_template",
-        "operator": "==",
-        "value": "template-our-story.php"
-      }
-    ]
-  ],
-  "menu_order": 0,
-  "position": "normal",
-  "style": "default",
-  "label_placement": "top",
-  "instruction_placement": "label",
-  "hide_on_screen": "",
-  "active": true,
-  "description": "Content for the \"Our Story\" page template. Every field is optional.",
-  "show_in_rest": 1,
-  "modified": 1785628800
+    ],
+    "location": [
+        [
+            {
+                "param": "page_template",
+                "operator": "==",
+                "value": "template-our-story.php"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "Content for the \"Our Story\" page template. Every field is optional.",
+    "show_in_rest": 1,
+    "modified": 1754000000
 }

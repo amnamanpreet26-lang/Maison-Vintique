@@ -143,7 +143,7 @@ while ( have_posts() ) :
 						<?php echo $product->is_in_stock() ? esc_html__( 'Available', 'maison-vintique' ) : esc_html__( 'Out of stock', 'maison-vintique' ); ?>
 					</span>
 					<?php if ( ! $is_trade ) : ?>
-						<span class="trade-note" style="margin:0"><?php esc_html_e( 'Trade pricing on login', 'maison-vintique' ); ?></span>
+						<span class="trade-note" style="margin:0"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique' ); ?></span>
 					<?php endif; ?>
 				</div>
 

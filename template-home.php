@@ -341,7 +341,7 @@ $mv_producers = new WP_Query( array(
           <?php if ( $spot_gated ) : ?>
 
             <?php // Logged out — no price anywhere on the site. ?>
-            <span class="mv-trade-tag spotlight__trade"><?php esc_html_e( 'Trade pricing on login', 'maison-vintique' ); ?></span>
+            <span class="mv-trade-tag spotlight__trade"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique' ); ?></span>
             <a href="<?php echo esc_url( function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : wp_login_url() ); ?>" class="btn btn--primary btn--small">
               <?php esc_html_e( 'Login to view price', 'maison-vintique' ); ?>
             </a>

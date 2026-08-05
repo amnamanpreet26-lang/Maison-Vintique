@@ -2727,7 +2727,8 @@
 .mvcard__media img {
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	object-fit: contain;
+	padding: 16px 16px 0;
 	display: block;
 	transition: transform .6s cubic-bezier(.22, .61, .36, 1);
 }
@@ -5291,52 +5292,65 @@
 
 /* ===== PRODUCT GALLERY — END ===== */
 
-/* ===== WINE CARD — AWARD BADGE, META ROW, SPECS — START ===== */
+/* ===== WINE CARD — AWARD MEDALLION, META ROW, SUB LINE — START ===== */
+
+:root {
+	--mv2-card-meta: var(--mv2-burgundy);
+}
 
 .mvcard__award {
 	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
+	left: 18px;
+	top: 50%;
 	z-index: 3;
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 12px 14px;
-	background: linear-gradient(to top, rgba(23, 37, 31, .94) 0%, rgba(23, 37, 31, .78) 60%, rgba(23, 37, 31, 0) 100%);
-	color: var(--mv2-chalk);
-	font-family: var(--mv2-sans);
-	font-size: 11px;
-	font-weight: 600;
-	letter-spacing: .08em;
-	text-transform: uppercase;
-	line-height: 1.35;
-	opacity: 0;
-	transform: translateY(100%);
-	transition: opacity .32s ease, transform .32s cubic-bezier(.22, .61, .36, 1);
+	justify-content: center;
+	width: 84px;
+	height: 84px;
+	border-radius: 50%;
+	background: rgba(250, 248, 243, .94);
+	box-shadow: inset 0 0 0 1px var(--mv2-gold), 0 10px 26px -14px rgba(31, 27, 23, .55);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	color: var(--mv2-ink);
+	text-align: center;
 	pointer-events: none;
+	opacity: 0;
+	transform: translateY(-50%) scale(.88);
+	transition: opacity .3s ease, transform .3s cubic-bezier(.22, .61, .36, 1);
 }
 
 .mvcard:hover .mvcard__award,.mvcard:focus-within .mvcard__award {
 	opacity: 1;
-	transform: translateY(0);
+	transform: translateY(-50%) scale(1);
 }
 
-.mvcard__award-icon {
-	flex: 0 0 auto;
-	width: 16px;
-	height: 16px;
-	color: var(--mv2-gold);
+.mvcard__award-label {
+	font-family: var(--mv2-serif);
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.25;
+	letter-spacing: .01em;
 }
 
-.mvcard__award-text {
-	min-width: 0;
+.mvcard__award-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
 }
 
 @media (hover: none) {
 	.mvcard__award {
 		opacity: 1;
-		transform: translateY(0);
+		transform: translateY(-50%) scale(1);
 	}
 }
 
@@ -5345,6 +5359,9 @@
 	align-items: baseline;
 	justify-content: space-between;
 	gap: 10px;
+	margin: 0 0 8px;
+	padding-top: 2px;
+	color: var(--mv2-card-meta);
 }
 
 .mvcard__meta-left {
@@ -5353,44 +5370,27 @@
 
 .mvcard__meta-right {
 	flex: 0 0 auto;
-	color: var(--mv2-gold);
 }
 
-.mvcard__specs {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 4px 12px;
+.mvcard__sub {
 	margin: 0 0 14px;
 	font-family: var(--mv2-sans);
-	font-size: 12px;
-	line-height: 1.5;
-}
-
-.mvcard__specs dt {
-	margin: 0;
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: .12em;
-	text-transform: uppercase;
+	font-size: 13px;
+	line-height: 1.55;
 	color: var(--mv2-taupe);
-	white-space: nowrap;
-	align-self: center;
 }
 
-.mvcard__specs dd {
-	margin: 0;
-	min-width: 0;
-	color: var(--mv2-ink);
-	overflow-wrap: anywhere;
+.mvcard__sub-sep {
+	opacity: .7;
 }
 
-.mvcard__specs dd a {
+.mvcard__sub-link {
 	color: inherit;
 	text-decoration: none;
 	border-bottom: 1px solid var(--mv2-line);
 }
 
-.mvcard__specs dd a:hover {
+.mvcard__sub-link:hover {
 	color: var(--mv2-gold);
 	border-bottom-color: var(--mv2-gold);
 }
@@ -5401,14 +5401,18 @@
 		gap: 2px;
 	}
 	.mvcard__award {
-		font-size: 10px;
-		padding: 10px 12px;
+		left: 12px;
+		width: 70px;
+		height: 70px;
+	}
+	.mvcard__award-label {
+		font-size: 12px;
 	}
 }
 
-/* ===== WINE CARD — AWARD BADGE, META ROW, SPECS — END ===== */
+/* ===== WINE CARD — AWARD MEDALLION, META ROW, SUB LINE — END ===== */
 
-/* ===== PAGE MEDIA BLOCK — OUR STORY / TRADE PARTNERS — START ===== */
+/* ===== PAGE MEDIA — FULL-WIDTH BLOCK, SPLIT SECTION, HERO BACKGROUND — START ===== */
 
 .mvp-media {
 	margin: 0;
@@ -5460,10 +5464,126 @@
 	padding-top: 0;
 }
 
+.mvp-split {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	align-items: center;
+	gap: clamp(28px, 5vw, 64px);
+}
+
+.mvp-split--single {
+	grid-template-columns: 1fr;
+}
+
+.mvp-split--single .mvp-split__copy {
+	max-width: 72ch;
+}
+
+.mvp-split--media-left .mvp-split__copy {
+	grid-column: 2;
+	grid-row: 1;
+}
+
+.mvp-split--media-left .mvp-split__media {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+.mvp-split__title {
+	margin: 10px 0 0;
+	font-family: var(--mv2-serif);
+	font-size: clamp(26px, 3.4vw, 38px);
+	font-weight: 400;
+	line-height: 1.2;
+	color: var(--mv2-ink);
+}
+
+.mvp-split__body {
+	margin-top: 16px;
+	font-family: var(--mv2-sans);
+	font-size: 15px;
+	line-height: 1.85;
+	color: var(--mv2-ink-soft);
+}
+
+.mvp-split__body > *:first-child {
+	margin-top: 0;
+}
+
+.mvp-split__body > *:last-child {
+	margin-bottom: 0;
+}
+
+.mvp-split__cta {
+	margin-top: 24px;
+}
+
+.mvp-split__media .mvp-media {
+	max-width: none;
+}
+
+@media (max-width: 900px) {
+	.mvp-split,.mvp-split--media-left {
+		grid-template-columns: 1fr;
+	}
+	.mvp-split--media-left .mvp-split__copy,.mvp-split--media-left .mvp-split__media {
+		grid-column: 1;
+		grid-row: auto;
+	}
+}
+
+.mvp-hero--bg {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+}
+
+.mvp-hero__bg {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background-color: var(--mv2-dark);
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.mvp-hero__bg-image,.mvp-hero__bg-video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.mvp-hero__scrim {
+	position: absolute;
+	inset: 0;
+	display: block;
+	background: linear-gradient(180deg, rgba(23, 37, 31, .92) 0%, rgba(23, 37, 31, .74) 45%, rgba(23, 37, 31, .92) 100%);
+}
+
+.mvp-hero--bg .wrap {
+	position: relative;
+	z-index: 1;
+}
+
+@media (min-width: 901px) {
+	.mvp-hero--bg {
+		padding-top: clamp(90px, 9vw, 140px);
+		padding-bottom: clamp(90px, 9vw, 140px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mvp-hero__bg-video {
+		display: none;
+	}
+}
+
 @media (max-width: 640px) {
 	.mvp-media__caption {
 		font-size: 12px;
 	}
 }
 
-/* ===== PAGE MEDIA BLOCK — OUR STORY / TRADE PARTNERS — END ===== */
+/* ===== PAGE MEDIA — FULL-WIDTH BLOCK, SPLIT SECTION, HERO BACKGROUND — END ===== */

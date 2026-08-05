@@ -41,6 +41,8 @@ while ( have_posts() ) :
 			'eyebrow' => $mvs_eyebrow,
 			'title'   => $mvs_title,
 			'intro'   => $mvs_intro,
+			// Optional hero background image / video — see the Hero tab.
+			'prefix'  => 'os',
 		)
 	);
 	?>
@@ -66,8 +68,9 @@ while ( have_posts() ) :
 			</section>
 		<?php endif; ?>
 
-		<!-- ============ IMAGE OR VIDEO ============ -->
-		<?php get_template_part( 'template-parts/page-media', null, array( 'prefix' => 'os' ) ); ?>
+		<!-- ============ TEXT + IMAGE / VIDEO ============ -->
+		<?php // Copy one side, media the other. Skipped when both halves are empty. ?>
+		<?php get_template_part( 'template-parts/page-split', null, array( 'prefix' => 'os' ) ); ?>
 
 		<!-- ============ WHAT GUIDES US ============ -->
 		<?php if ( have_rows( 'os_values' ) ) : ?>

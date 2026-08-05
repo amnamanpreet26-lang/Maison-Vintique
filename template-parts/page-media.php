@@ -8,7 +8,11 @@
  * Usage:
  *   get_template_part( 'template-parts/page-media', null, array(
  *       'prefix' => 'os',   // reads os_media_type / os_image / os_video / …
+ *       'bare'   => true,   // optional: emit only the <figure>, no <section>
  *   ) );
+ *
+ * Pass 'bare' when the media is going inside another layout — the split
+ * text-and-image section uses it for its media half.
  *
  * Fields, all optional — the whole block is skipped when nothing is set:
  *   {prefix}_media_type     select: image | video | embed
@@ -29,6 +33,8 @@ $mvm_prefix = isset( $args['prefix'] ) ? $args['prefix'] : '';
 if ( ! $mvm_prefix ) {
 	return;
 }
+
+$mvm_bare = ! empty( $args['bare'] );
 
 $mvm_type    = mve_field( $mvm_prefix . '_media_type', 'image' );
 $mvm_image   = mve_field( $mvm_prefix . '_image' );
@@ -67,8 +73,10 @@ if ( $mvm_poster ) {
 }
 $mvm_video_url = is_array( $mvm_video ) ? ( isset( $mvm_video['url'] ) ? $mvm_video['url'] : '' ) : $mvm_video;
 ?>
+	<?php if ( ! $mvm_bare ) : ?>
 <section class="section mvp-sec mvp-media-sec">
 	<div class="wrap">
+	<?php endif; ?>
 		<figure class="mvp-media mvp-media--<?php echo esc_attr( $mvm_render ); ?>">
 
 			<?php if ( 'image' === $mvm_render ) : ?>
@@ -115,5 +123,7 @@ $mvm_video_url = is_array( $mvm_video ) ? ( isset( $mvm_video['url'] ) ? $mvm_vi
 			<?php endif; ?>
 
 		</figure>
+	<?php if ( ! $mvm_bare ) : ?>
 	</div>
 </section>
+	<?php endif; ?>

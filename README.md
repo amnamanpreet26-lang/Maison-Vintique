@@ -26,7 +26,7 @@ The field groups live in `/acf-json` and **auto-sync** — go to **Custom Fields
 1. Run the WooCommerce setup wizard (currency £, UK, VAT).
 2. Add wines as **Products**. Set the price, the **product categories** (Red / White / Rosé), the **wine taxonomies** (country, region, grape, vintage, style, appellation, collection…) and fill the **Wine Details** ACF fields.
 3. Pricing visibility needs no per-product setting. There is **one rule**, in `inc/woocommerce.php`:
-   - **Logged out** → no prices anywhere, nothing can be added to the basket; cards and the product page show *"Trade pricing on login"*.
+   - **Logged out** → no prices anywhere, nothing can be added to the basket; cards and the product page show *"Sign in to view trade pricing"*.
    - **Logged in** → prices visible, add to cart and buy work normally, for any account.
    - To carve out an exception, filter `mve_is_gated` — don't add branches.
 
@@ -65,7 +65,7 @@ WordPress/WooCommerce PHP template, so it's easy to edit directly in code:
 | File | What it does | Edit this to change… |
 |---|---|---|
 | `woocommerce/archive-product.php` | The whole Shop page: breadcrumb, heading, sort dropdown, grid, pagination. WooCommerce loads this automatically for the shop page — nothing else needs to call it. | Page layout, sort options, "Showing X of Y" text |
-| `template-parts/wine-card.php` | **The wine card itself** — badges, title, appellation/vintage, price (or "Trade pricing on login"), the "View Wine" button and the two inline links. Used by BOTH the Shop grid and the homepage "Curated Portfolio" grid, so the two can never drift apart. | Card design, which fields show on a card |
+| `template-parts/wine-card.php` | **The wine card itself** — badges, award medallion, meta row, title, sub line, price (or "Sign in to view trade pricing"), the "View Wine" button and the two inline links. Used by BOTH the Shop grid and the homepage "Curated Portfolio" grid, so the two can never drift apart. | Card design, which fields show on a card |
 | `template-parts/content-product-wine.php` | Thin wrapper kept so `archive-product.php` keeps working — it just forwards to `wine-card.php`. | Nothing; edit `wine-card.php` instead |
 | `template-parts/shop-filters.php` | Sidebar: Search, Category, Price, Availability. Filters by **Product Category** only (see note in `inc/taxonomies.php` on why Country/Region/Grape aren't separate boxes). | Filter options shown in the sidebar |
 | `inc/shop-query.php` | Turns the filter form + sort dropdown into an actual WP_Query (category/price/stock filtering, "Vintage: newest" sort). | Filtering/sorting behaviour |
@@ -88,37 +88,54 @@ the "You may also like" grid on the single product page.
 |---|---|
 | Left badge | `wine_colour` taxonomy (falls back to the first Product Category) |
 | Right badge | Stock status → "Available" / "Out of stock" |
-| **Award badge** | ACF `awards` — slides up over the image on hover (see below) |
-| Title | Product title |
+| **Award medallion** | ACF `awards` — fades in over the bottle on hover (see below) |
 | Meta line, left | **`wine_colour` · `wine_region`** taxonomy terms, joined by a middot |
 | Meta line, right | **`wine_country`** taxonomy terms |
-| **Producer** row | ACF `producer` (post object) — the name links through to that estate's page |
-| **Case** row | ACF `case_format`, e.g. "6 x 75cl" |
-| Price line | Normal WooCommerce price, or "Trade pricing on login" when `mve_is_gated()` says the wine is gated |
+| Title | Product title |
+| **Sub line** | ACF `producer` · `appellation` `vintage_year` · `case_format` (see below) |
+| Price line | Normal WooCommerce price, or "Sign in to view trade pricing" when `mve_is_gated()` says the wine is gated |
 | **View Wine** button | Links to the single product page (this replaced the old Add to Cart button) |
 | Technical Details | Single product page, Technical tab — links to `?tab=tech#tab-tech`, and the tab script opens that tab on arrival |
 | Enquire | `?enquire=<id>` on the Shop page — the same pattern the single product page uses |
 
 Every line is optional, so a product with only a title and an image still renders a valid card.
 
-### The award badge
+### The award medallion
 
-`awards` is a textarea with **one award per line**. The card shows the **first
-line only** — put the headline award first:
+`awards` is a textarea with **one award per line**:
 
 ```
 Gold — IWC 2023
 92 pts — Decanter
 ```
 
-It is hidden at rest and slides up from the bottom of the image on hover or
-keyboard focus. On touch devices there is no hover, so `@media (hover: none)`
-shows it permanently rather than hiding it forever. Wines with no award simply
-don't get a badge.
+Fill in anything at all and the card gets the round **Award Winning** medallion,
+faded in over the bottle on hover or keyboard focus. The medallion always reads
+"Award Winning" (as designed) so a wine with four awards still gets one clean
+mark; the first line becomes its tooltip and is what a screen reader announces.
+Wines with no award simply don't get a medallion. On touch devices there is no
+hover, so `@media (hover: none)` shows it permanently rather than hiding it
+forever.
 
-All three fields the card now reads — `awards`, `producer` and `case_format` —
-already exist in `acf-json/group_wine_details.json`, on the product's **Wine
-Details** tab. Nothing new to create; just fill them in per product.
+### The sub line
+
+The line under the title is built from up to three parts, joined by a middot,
+each dropped when its field is empty:
+
+**producer · appellation vintage · case format** — e.g. *Bordeaux Supérieur 2019 · 6 × 75cl*
+
+The producer is **skipped when the title already contains it**, so a wine titled
+*Château Toulouse-Lautrec* doesn't read "Château Toulouse-Lautrec · Château
+Toulouse-Lautrec · …". When it is shown it links through to that estate's page.
+
+All the fields the card reads — `awards`, `producer`, `case_format`,
+`appellation`, `vintage_year` — already exist on the product's **Wine Details**
+tab. Nothing new to create; just fill them in per product.
+
+> The design shows the *RED · BORDEAUX / FRANCE* line in a wine red. This site's
+> accent token (`--mv-burg`) is the deep green `#17251f`, so that line is driven
+> by its own variable — change `--mv2-card-meta` at the top of section 18 to
+> recolour both halves of the row in one place.
 
 ## Producers
 
@@ -212,14 +229,41 @@ the address in the page's *Send Enquiries To* field, falling back to the site
 admin. Hook `mve_contact_submitted` to push enquiries into a CRM. See
 `inc/contact-form.php`.
 
-### The image / video block
+### The hero background (image or video)
 
-**Our Story** and **Trade Partners** each get a full-width media block, edited
-under an **Image / Video** tab on the page. Both use one shared partial,
-`template-parts/page-media.php`, so the two pages always behave the same.
+Both pages can put a photo or a video behind the banner at the top. Under a
+**Hero Background** tab on the page:
 
 | Field | What it does |
 |---|---|
+| Hero Background Image | The still behind the title. Use a wide file, 1920px or more |
+| Hero Background Video | An MP4 that plays behind the title, muted and looped |
+| Background Darkness | 0–100, how dark the tint over it is. Blank = 55 |
+
+Leave all three empty and the hero renders exactly as before — the flat dark
+panel. Nothing to change on the pages that don't use it.
+
+The darkness control matters: white text over an untinted photo is unreadable,
+and how much tint a photo needs depends entirely on the photo. 55 is a safe
+default; a bright or busy image wants more, a dark one less.
+
+Set **both** an image and a video and the image becomes the video's poster —
+what shows while the video buffers, on the phones that decline to autoplay at
+all, and for anyone browsing with reduced motion turned on (the video is hidden
+for them, the still is not).
+
+### The text + image / video section
+
+The "about us" style section — copy on one side, media on the other. Both pages
+have one, under a **Text + Image / Video** tab.
+
+| Field | What it does |
+|---|---|
+| Eyebrow | Small gold line above the heading |
+| Heading | |
+| Text | The copy beside the media |
+| Button Label / Link | Optional; no label means no button |
+| Media Side | Which side the image or video sits on — Right (default) or Left |
 | Media Type | *Image*, *Video file (uploaded)* or *Video embed (YouTube / Vimeo)* |
 | Image | Used when the type is Image |
 | Video File | An `.mp4` you upload to the Media Library |
@@ -227,20 +271,25 @@ under an **Image / Video** tab on the page. Both use one shared partial,
 | Video Embed URL | Paste a YouTube or Vimeo link — WordPress turns it into a player |
 | Caption | Optional line under the media |
 
-Field names are prefixed per page: `os_media_type`, `os_image`, … on Our Story
-and `ft_media_type`, `ft_image`, … on Trade Partners.
+Field names are prefixed per page: `os_split_title`, `os_image`, … on Our Story
+and `ft_split_title`, `ft_image`, … on Trade Partners.
 
-Three things worth knowing:
+Four things worth knowing:
 
-- **Leave everything blank and the block disappears entirely** — no empty box,
-  no gap.
+- **Fill in only one half and it runs the full width** — text with no image
+  doesn't leave a blank column, and vice versa.
+- **Leave the whole thing blank and the section disappears** — no empty box, no
+  gap.
+- **On mobile it stacks with the copy first**, whichever side you picked. Media
+  Side is a desktop choice; on a phone, text-then-picture always reads better.
 - **Uploaded videos autoplay muted and loop**, with controls, because browsers
-  refuse to autoplay anything with sound. Viewers can unmute with the controls.
-- **Embeds are locked to 16:9** whatever the provider hands back, so YouTube and
-  Vimeo sit at the same size.
+  refuse to autoplay anything with sound. Embeds are locked to 16:9 whatever the
+  provider hands back.
 
-If the Media Type doesn't match what's actually filled in, the block falls back
-to whatever it can render rather than showing nothing.
+The media half is `template-parts/page-media.php` in "bare" mode — the same file
+that renders the full-width block — so the two can't drift apart. If the Media
+Type doesn't match what's actually filled in, it falls back to whatever it can
+render rather than showing nothing.
 
 ## CSS
 

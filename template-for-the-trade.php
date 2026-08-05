@@ -43,6 +43,8 @@ while ( have_posts() ) :
 			'eyebrow' => mve_field( 'ft_eyebrow', __( 'Trade Partners', 'maison-vintique-elementor' ) ),
 			'title'   => mve_field( 'ft_title', get_the_title() ),
 			'intro'   => mve_field( 'ft_intro' ),
+			// Optional hero background image / video — see the Hero tab.
+			'prefix'  => 'ft',
 		)
 	);
 	?>
@@ -105,8 +107,9 @@ while ( have_posts() ) :
 			</section>
 		<?php endif; ?>
 
-		<!-- ============ IMAGE OR VIDEO ============ -->
-		<?php get_template_part( 'template-parts/page-media', null, array( 'prefix' => 'ft' ) ); ?>
+		<!-- ============ TEXT + IMAGE / VIDEO ============ -->
+		<?php // Copy one side, media the other. Skipped when both halves are empty. ?>
+		<?php get_template_part( 'template-parts/page-split', null, array( 'prefix' => 'ft' ) ); ?>
 
 		<!-- ============ CLOSING NOTE ============ -->
 		<?php if ( $mvt_closing || get_the_content() ) : ?>

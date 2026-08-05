@@ -12,10 +12,13 @@
  *
  * Card anatomy (matches the approved design):
  *   [ colour badge ]            [ availability badge ]   <- overlaid on image
+ *        (  Award  )                                     <- medallion, on hover
+ *        ( Winning )
  *   ------------------------------------------------
+ *   RED · BORDEAUX                            FRANCE
  *   Title
- *   Appellation · Vintage
- *   Price  (or "Trade pricing on login" when gated)
+ *   Bordeaux Supérieur 2019 · 6 × 75cl        <- producer / appellation / case
+ *   Price  (or "Sign in to view trade pricing" when gated)
  *   [        VIEW WINE        ]  -> single product page
  *   Technical Details        Enquire   <- two inline links
  *
@@ -103,7 +106,9 @@ $mvc_meta_left  = implode( ' · ', array_filter( array_merge( array( $mvc_colour
 $mvc_meta_right = implode( ' · ', $mvc_countries );
 
 /* ---------------------------------------------------------------------------
- * DETAIL ROWS — producer and case format.
+ * SUB LINE — "Château Toulouse-Lautrec · Bordeaux Supérieur 2019 · 6 × 75cl".
+ * Producer, then appellation + vintage, then case format, joined by a middot.
+ * Each part is dropped when its field is empty.
  * ------------------------------------------------------------------------- */
 $mvc_producer_obj = function_exists( 'get_field' ) ? get_field( 'producer', $mvc_id ) : null;
 $mvc_producer     = '';
@@ -114,11 +119,31 @@ if ( $mvc_producer_obj ) {
 	$mvc_producer_url = get_permalink( $mvc_producer_id );
 }
 
-$mvc_case = function_exists( 'get_field' ) ? get_field( 'case_format', $mvc_id ) : '';
+$mvc_case        = function_exists( 'get_field' ) ? get_field( 'case_format', $mvc_id ) : '';
+$mvc_appellation = function_exists( 'get_field' ) ? get_field( 'appellation', $mvc_id ) : '';
+$mvc_vintage     = function_exists( 'get_field' ) ? get_field( 'vintage_year', $mvc_id ) : '';
+
+// Wines are usually titled "<Estate> <Cuvée> <Year>", which would repeat the
+// producer straight back at the reader. Drop it when the title already says it.
+$mvc_show_producer = ( '' !== $mvc_producer )
+	&& ( false === stripos( get_the_title( $mvc_id ), $mvc_producer ) );
+
+// "Bordeaux Supérieur 2019" — one part, so the middots fall in the right places.
+$mvc_appellation_line = trim( $mvc_appellation . ' ' . $mvc_vintage );
+
+$mvc_sub_parts = array_filter(
+	array(
+		$mvc_show_producer ? $mvc_producer : '',
+		$mvc_appellation_line,
+		$mvc_case,
+	)
+);
 
 /* ---------------------------------------------------------------------------
- * AWARD — revealed over the image on hover. The ACF `awards` field is a
- * textarea with one award per line; the first line is the headline one.
+ * AWARD — the medallion revealed over the image on hover. The ACF `awards`
+ * field is a textarea with one award per line; the medallion itself always
+ * reads "Award Winning" (as designed) and the first line becomes its tooltip,
+ * so a wine with three awards still gets one clean mark.
  * ------------------------------------------------------------------------- */
 $mvc_awards_raw = function_exists( 'get_field' ) ? get_field( 'awards', $mvc_id ) : '';
 $mvc_award      = '';
@@ -152,23 +177,20 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 		</span>
 
 		<?php if ( $mvc_award ) : ?>
-			<?php // Slides up over the image on hover / keyboard focus. ?>
-			<span class="mvcard__award">
-				<svg class="mvcard__award-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-					<circle cx="12" cy="9" r="5.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
-					<path d="M8.4 13.4 6.6 21l5.4-2.7 5.4 2.7-1.8-7.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-				</svg>
-				<span class="mvcard__award-text"><?php echo esc_html( $mvc_award ); ?></span>
+			<?php // Medallion, faded in over the image on hover / keyboard focus. ?>
+			<span class="mvcard__award" title="<?php echo esc_attr( $mvc_award ); ?>">
+				<span class="mvcard__award-label">
+					<?php esc_html_e( 'Award', 'maison-vintique-elementor' ); ?><br>
+					<?php esc_html_e( 'Winning', 'maison-vintique-elementor' ); ?>
+				</span>
+				<span class="mvcard__award-sr"><?php echo esc_html( $mvc_award ); ?></span>
 			</span>
 		<?php endif; ?>
 	</a>
 
 	<div class="mvcard__body">
 
-		<h3 class="mvcard__title">
-			<a href="<?php echo esc_url( $mvc_permalink ); ?>"><?php echo esc_html( get_the_title( $mvc_id ) ); ?></a>
-		</h3>
-
+		<?php // Colour · region on the left, country on the right. ?>
 		<?php if ( $mvc_meta_left || $mvc_meta_right ) : ?>
 			<p class="mvcard__meta">
 				<span class="mvcard__meta-left"><?php echo esc_html( $mvc_meta_left ); ?></span>
@@ -176,29 +198,37 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 			</p>
 		<?php endif; ?>
 
-		<?php if ( $mvc_producer || $mvc_case ) : ?>
-			<dl class="mvcard__specs">
-				<?php if ( $mvc_producer ) : ?>
-					<dt><?php esc_html_e( 'Producer', 'maison-vintique-elementor' ); ?></dt>
-					<dd>
-						<?php if ( $mvc_producer_url ) : ?>
-							<a href="<?php echo esc_url( $mvc_producer_url ); ?>"><?php echo esc_html( $mvc_producer ); ?></a>
-						<?php else : ?>
-							<?php echo esc_html( $mvc_producer ); ?>
-						<?php endif; ?>
-					</dd>
-				<?php endif; ?>
+		<h3 class="mvcard__title">
+			<a href="<?php echo esc_url( $mvc_permalink ); ?>"><?php echo esc_html( get_the_title( $mvc_id ) ); ?></a>
+		</h3>
 
-				<?php if ( $mvc_case ) : ?>
-					<dt><?php esc_html_e( 'Case', 'maison-vintique-elementor' ); ?></dt>
-					<dd><?php echo esc_html( $mvc_case ); ?></dd>
-				<?php endif; ?>
-			</dl>
+		<?php if ( $mvc_sub_parts ) : ?>
+			<p class="mvcard__sub">
+				<?php
+				$mvc_first = true;
+				foreach ( $mvc_sub_parts as $mvc_part ) {
+					if ( ! $mvc_first ) {
+						echo '<span class="mvcard__sub-sep" aria-hidden="true"> &middot; </span>';
+					}
+					$mvc_first = false;
+
+					if ( $mvc_show_producer && $mvc_part === $mvc_producer && $mvc_producer_url ) {
+						printf(
+							'<a class="mvcard__sub-link" href="%s">%s</a>',
+							esc_url( $mvc_producer_url ),
+							esc_html( $mvc_part )
+						);
+					} else {
+						echo esc_html( $mvc_part );
+					}
+				}
+				?>
+			</p>
 		<?php endif; ?>
 
 		<p class="mvcard__price">
 			<?php if ( $mvc_gated ) : ?>
-				<span class="mvcard__trade"><?php esc_html_e( 'Trade pricing on login', 'maison-vintique-elementor' ); ?></span>
+				<span class="mvcard__trade"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique-elementor' ); ?></span>
 			<?php else : ?>
 				<?php echo wp_kses_post( $product->get_price_html() ); ?>
 			<?php endif; ?>
