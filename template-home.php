@@ -212,12 +212,13 @@ $mv_producers = new WP_Query( array(
               </div>
              <div class="estate-card__face estate-card__face--back">
 				  <span class="estate-card__badge">
-					<span class="estate-card__logo">
-					  <img 
-            src="https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png"
-            alt="Maison Vintique"
-        >
-					</span>
+					<?php // Per-estate logo — Producer → Grid Card → Estate Logo. ?>
+					<?php $estate_logo = mve_producer_logo( get_the_ID() ); ?>
+					<?php if ( $estate_logo ) : ?>
+					  <span class="estate-card__logo">
+						<img src="<?php echo esc_url( $estate_logo ); ?>" alt="<?php the_title_attribute(); ?>" loading="lazy">
+					  </span>
+					<?php endif; ?>
 					<span class="estate-card__ring"><?php echo esc_html( $initials ); ?></span>
 					<?php if ( $back_sub ) : ?>
 					  <span class="estate-card__est"><?php echo $back_sub; ?></span>

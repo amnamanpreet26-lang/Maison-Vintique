@@ -51,19 +51,42 @@ $mvc_gated = function_exists( 'mve_is_gated' ) ? mve_is_gated( $mvc_id ) : ! is_
 /* ---------------------------------------------------------------------------
  * IMAGE — ACF bottle_image first, then the featured image, then the Woo
  * placeholder so a card is never blank.
+ *
+ * NEVER 'mv-card' here. That size is registered hard-cropped to 760x600, so
+ * WordPress cuts the top and bottom off a tall bottle when the file is
+ * uploaded — the whole bottle is gone from the file on disk and no CSS can
+ * bring it back. The sizes below are all soft ones: the picture is scaled to
+ * fit, never cut.
+ *
+ * 'mv-bottle' only exists for images uploaded after this change (or after the
+ * media library is regenerated), so 'large' and then the original are there to
+ * catch everything already on the site.
  * ------------------------------------------------------------------------- */
+$mvc_soft_sizes = array( 'mv-bottle', 'large', 'medium_large' );
+
 $mvc_bottle_image = function_exists( 'get_field' ) ? get_field( 'bottle_image', $mvc_id ) : null;
 $mvc_image_url    = '';
 
-if ( ! empty( $mvc_bottle_image['sizes']['mv-card'] ) ) {
-	$mvc_image_url = $mvc_bottle_image['sizes']['mv-card'];
-} elseif ( ! empty( $mvc_bottle_image['url'] ) ) {
-	$mvc_image_url = $mvc_bottle_image['url'];
-} elseif ( has_post_thumbnail( $mvc_id ) ) {
-	$mvc_image_url = get_the_post_thumbnail_url( $mvc_id, 'mv-card' );
+if ( $mvc_bottle_image ) {
+	$mvc_image_url = mve_image_url( $mvc_bottle_image, $mvc_soft_sizes );
 }
+
+if ( ! $mvc_image_url && has_post_thumbnail( $mvc_id ) ) {
+	$mvc_thumb_id = get_post_thumbnail_id( $mvc_id );
+	foreach ( $mvc_soft_sizes as $mvc_size ) {
+		$mvc_try = wp_get_attachment_image_url( $mvc_thumb_id, $mvc_size );
+		if ( $mvc_try ) {
+			$mvc_image_url = $mvc_try;
+			break;
+		}
+	}
+	if ( ! $mvc_image_url ) {
+		$mvc_image_url = wp_get_attachment_image_url( $mvc_thumb_id, 'full' );
+	}
+}
+
 if ( ! $mvc_image_url ) {
-	$mvc_image_url = wc_placeholder_img_src( 'mv-card' );
+	$mvc_image_url = wc_placeholder_img_src( 'woocommerce_thumbnail' );
 }
 
 /* ---------------------------------------------------------------------------

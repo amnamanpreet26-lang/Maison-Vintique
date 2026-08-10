@@ -10,12 +10,32 @@
             "placement": "top"
         },
         {
+            "key": "field_mv_producer_logo",
+            "label": "Estate Logo",
+            "name": "producer_logo",
+            "type": "image",
+            "instructions": "Shown on the back of the card when it flips, on the homepage and on the Producers page. Use a PNG or SVG with a transparent background — the card behind it is dark. Leave empty and the card falls back to the Maison Vintique crest.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array",
+            "preview_size": "thumbnail",
+            "library": "all",
+            "mime_types": "png,svg,jpg,jpeg,webp"
+        },
+        {
             "key": "field_producer_established_year",
             "label": "Established Year",
             "name": "established_year",
             "type": "text",
             "instructions": "e.g. 1868 — shown on the producers grid as \"Est. 1868\". Leave blank to hide.",
-            "wrapper": { "width": "50" }
+            "wrapper": {
+                "width": "50"
+            }
         },
         {
             "key": "field_producer_estate_note",
@@ -23,7 +43,9 @@
             "name": "estate_note",
             "type": "text",
             "instructions": "Short descriptor after the year, e.g. \"family estate\" or \"Hillside vines\".",
-            "wrapper": { "width": "50" }
+            "wrapper": {
+                "width": "50"
+            }
         },
         {
             "key": "field_producer_appellations",

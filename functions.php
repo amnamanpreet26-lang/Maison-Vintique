@@ -49,7 +49,18 @@ function mve_setup() {
 	add_theme_support( 'wc-product-gallery-lightbox' );
 	add_theme_support( 'wc-product-gallery-slider' );
 	add_theme_support( 'post-thumbnails' );
+	/*
+	 * mv-card is HARD cropped (the `true`) on purpose — producer and journal
+	 * cards are landscape photos that should fill a landscape box.
+	 *
+	 * Bottle shots must never be cropped: a hard crop to 760x600 cuts the top
+	 * and bottom clean off a tall bottle, and no amount of CSS can put them
+	 * back because the pixels are gone from the file on disk. mv-bottle is
+	 * SOFT (the `false`) — the image is scaled to fit inside the box with its
+	 * proportions intact, whatever shape it is.
+	 */
 	add_image_size( 'mv-card', 760, 600, true );
+	add_image_size( 'mv-bottle', 900, 1400, false );
 	add_image_size( 'mv-estate', 1000, 800, true );
 
 	/*
@@ -87,6 +98,61 @@ function mve_field( $name, $fallback = '', $post_id = false ) {
 	}
 	$value = get_field( $name, $post_id );
 	return ( '' === $value || null === $value || false === $value || array() === $value ) ? $fallback : $value;
+}
+
+/**
+ * First available URL from an ACF image array, trying each size in turn.
+ *
+ * WordPress only has the sizes that existed when the file was uploaded, so a
+ * size added later is missing from everything already in the media library.
+ * Pass a list, most-wanted first, and this returns the first one that is
+ * actually there — falling back to the original upload.
+ *
+ * @param array|string $image ACF image field value (array), or a bare URL.
+ * @param array        $sizes Size names to try, in order of preference.
+ * @return string
+ */
+function mve_image_url( $image, $sizes = array() ) {
+	if ( ! is_array( $image ) ) {
+		return (string) $image;
+	}
+	foreach ( (array) $sizes as $size ) {
+		if ( ! empty( $image['sizes'][ $size ] ) ) {
+			return $image['sizes'][ $size ];
+		}
+	}
+	return ! empty( $image['url'] ) ? $image['url'] : '';
+}
+
+/**
+ * The logo shown on the back of a producer card, once it has flipped.
+ *
+ * Per-estate, from the ACF `producer_logo` field (Producer → Grid Card). Both
+ * the homepage "Estate Partners" carousel and the Producers grid call this, so
+ * an estate's logo can only ever be set in one place.
+ *
+ * Falls back to the house crest, which is what every card used to show — an
+ * estate with no logo yet keeps looking finished rather than going blank.
+ * Change the fallback once, here, or filter `mve_default_estate_logo`.
+ *
+ * @param int $producer_id Producer post ID. Defaults to the current post.
+ * @return string Image URL, or '' when there is nothing to show.
+ */
+function mve_producer_logo( $producer_id = 0 ) {
+	$producer_id = $producer_id ? $producer_id : get_the_ID();
+
+	$logo = function_exists( 'get_field' ) ? get_field( 'producer_logo', $producer_id ) : '';
+	$url  = mve_image_url( $logo, array( 'medium', 'medium_large' ) );
+
+	if ( ! $url ) {
+		$url = apply_filters(
+			'mve_default_estate_logo',
+			'https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png',
+			$producer_id
+		);
+	}
+
+	return (string) $url;
 }
 
 /**

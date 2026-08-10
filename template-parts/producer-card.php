@@ -117,12 +117,13 @@ $mvp_wines_url = get_permalink( $mvp_id );
 
 			<div class="mvprod__face mvprod__face--back">
 				<span class="mvprod__badge">
-					<span class="mvprod__crest">
-						<img 
-        src="https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png"
-        alt="Maison Vintique"
-    >
-					</span>
+					<?php // Per-estate logo — Producer → Grid Card → Estate Logo. ?>
+					<?php $mvp_logo = mve_producer_logo( $mvp_id ); ?>
+					<?php if ( $mvp_logo ) : ?>
+						<span class="mvprod__crest">
+							<img src="<?php echo esc_url( $mvp_logo ); ?>" alt="<?php echo esc_attr( get_the_title( $mvp_id ) ); ?>" loading="lazy">
+						</span>
+					<?php endif; ?>
 					<span class="mvprod__ring"><?php echo esc_html( $mvp_initials ); ?></span>
 					<?php if ( $mvp_back_sub ) : ?>
 						<span class="mvprod__est-year"><?php echo esc_html( $mvp_back_sub ); ?></span>

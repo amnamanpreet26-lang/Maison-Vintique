@@ -68,7 +68,7 @@ WordPress/WooCommerce PHP template, so it's easy to edit directly in code:
 | `template-parts/wine-card.php` | **The wine card itself** — badges, award medallion, meta row, title, sub line, price (or "Sign in to view trade pricing"), the "View Wine" button and the two inline links. Used by BOTH the Shop grid and the homepage "Curated Portfolio" grid, so the two can never drift apart. | Card design, which fields show on a card |
 | `template-parts/content-product-wine.php` | Thin wrapper kept so `archive-product.php` keeps working — it just forwards to `wine-card.php`. | Nothing; edit `wine-card.php` instead |
 | `template-parts/shop-filters.php` | Sidebar: Search, Category, Price, Availability. Filters by **Product Category** only (see note in `inc/taxonomies.php` on why Country/Region/Grape aren't separate boxes). | Filter options shown in the sidebar |
-| `inc/shop-query.php` | Turns the filter form + sort dropdown into an actual WP_Query (category/price/stock filtering, "Vintage: newest" sort). | Filtering/sorting behaviour |
+| `inc/shop-query.php` | Turns the filter form + sort dropdown into an actual WP_Query (category/price/stock filtering, "Vintage: newest" sort), and keeps a filtered listing on the grid — see below. | Filtering/sorting behaviour |
 | `assets/css/style.css` (bottom section) | Shop grid, product cards, filters, pagination — uses the same `--mv-*` variables as the rest of the site. | Shop page look & feel |
 
 Price-on-login gating lives entirely in `inc/woocommerce.php` — one helper
@@ -76,6 +76,22 @@ Price-on-login gating lives entirely in `inc/woocommerce.php` — one helper
 `woocommerce_*` filters. The shop card and archive template only call normal
 WooCommerce functions (`get_price_html()`, `is_purchasable()`) and let those
 filters do the gating, so there is a single place that logic lives.
+
+### Filtering down to one wine
+
+The sidebar carries a search box, so **every** filter click submits `s` — empty
+or not — and WordPress treats the result as a search. Core then redirects a
+search matching exactly one post straight to that post, which threw the customer
+onto the product page the moment their filters narrowed to a single wine,
+instead of showing them the one card they had filtered to.
+
+`mve_keep_filtered_shop_on_grid()` switches that redirect off, and only for
+filtered product listings — every other canonical redirect on the site
+(trailing slashes, old permalinks, pagination) is left alone.
+`mve_force_shop_listing()` is the belt-and-braces half, pinning the query to
+"this is a listing" in case the one result is promoted to a single post before
+the redirect stage. It bails out on anything carrying a real single-post query
+var, so opening a product with a stray `?orderby=` on the URL still works.
 
 ## The wine card (homepage portfolio + Shop archive)
 
@@ -86,6 +102,7 @@ the "You may also like" grid on the single product page.
 
 | Part of the card | Comes from |
 |---|---|
+| Bottle image | ACF `bottle_image`, else the featured image. **Never cropped** — see below |
 | Left badge | `wine_colour` taxonomy (falls back to the first Product Category) |
 | Right badge | Stock status → "Available" / "Out of stock". **Logged-in visitors only** — see below |
 | **Award medallion** | ACF `awards` — fades in over the bottle on hover (see below) |
@@ -124,6 +141,26 @@ Wines with no award simply don't get a medallion. On touch devices there is no
 hover, so `@media (hover: none)` shows it permanently rather than hiding it
 forever.
 
+### Why the bottle is not cropped
+
+The card used to ask WordPress for the `mv-card` image size, which is
+registered **hard cropped** to 760×600 (`add_image_size( 'mv-card', 760, 600, true )`
+— the `true` is the crop). WordPress cut the top and bottom off every bottle
+*when the file was uploaded*, so the whole bottle was already gone from the file
+on disk. No amount of CSS could bring it back.
+
+The card now asks for uncropped sizes in this order, using the first one that
+exists: **`mv-bottle`** (new, 900×1400 soft) → **`large`** → **`medium_large`** →
+the original upload. `mv-card` is still hard cropped and still used by the
+producer and journal cards, which *are* landscape photos meant to fill a
+landscape box.
+
+`mv-bottle` only exists for images uploaded **after** this change — WordPress
+generates image sizes at upload time. That's why `large` and the original are in
+the list: everything already on the site keeps working straight away, uncropped.
+To get the tighter `mv-bottle` file for older products, run a "Regenerate
+Thumbnails" plugin once. It is optional.
+
 ### The sub line
 
 The line under the title is built from up to three parts, joined by a middot,
@@ -145,6 +182,23 @@ tab. Nothing new to create; just fill them in per product.
 > recolour both halves of the row in one place.
 
 ## Producers
+
+### Estate logos
+
+Each estate has its own logo on the back of its card, from **Producer → Grid
+Card → Estate Logo** (ACF `producer_logo`). It shows on the homepage "Estate
+Partners" carousel and on the Producers grid — both call `mve_producer_logo()`
+in `functions.php`, so an estate's logo is only ever set in one place.
+
+Use a PNG or SVG with a **transparent background**; the card behind it is dark.
+Any shape works — the CSS caps the height and lets a wide wordmark use the width
+it needs, without cropping or stretching.
+
+Leave it empty and the card falls back to the house crest, which is what every
+card used to show, so an estate with no logo yet still looks finished. To change
+that fallback, edit `mve_producer_logo()` or filter `mve_default_estate_logo`.
+
+### Two routes to the grid
 
 There are **two** routes to the producers grid, and both render the same card
 (`template-parts/producer-card.php`):
