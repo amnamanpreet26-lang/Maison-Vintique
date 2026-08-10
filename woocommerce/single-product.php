@@ -311,15 +311,7 @@ $closure = get_field( 'closure' );
 							</a>
 						</div>
 					<?php endif; ?>
-					<?php if ( $sell_sheet ) : ?>
-						<div class="dl">
-							DOC
-							<div><b><?php esc_html_e( 'Sell Sheet', 'maison-vintique' ); ?></b><div style="font-size:12px;color:var(--taupe)">PDF</div></div>
-							<a class="btn btn-o" style="margin-left:auto;padding:8px 14px" href="<?php echo esc_url( $sell_sheet ); ?>" download>
-								<?php esc_html_e( 'Download', 'maison-vintique' ); ?>
-							</a>
-						</div>
-					<?php endif; ?>
+				
 					<?php if ( ! $technical_sheet && ! $sell_sheet ) : ?>
 						<p style="font-size:12.5px;color:var(--taupe)"><?php esc_html_e( 'No documents uploaded for this wine yet.', 'maison-vintique' ); ?></p>
 					<?php endif; ?>
@@ -329,11 +321,7 @@ $closure = get_field( 'closure' );
 						<div><b><?php esc_html_e( 'Technical Sheet', 'maison-vintique' ); ?></b><div style="font-size:12px;color:var(--taupe)">PDF</div></div>
 						<button class="btn btn-o" style="margin-left:auto;padding:8px 14px" disabled><?php esc_html_e( 'Trade only', 'maison-vintique' ); ?></button>
 					</div>
-					<div class="dl">
-						DOC
-						<div><b><?php esc_html_e( 'Sell Sheet', 'maison-vintique' ); ?></b><div style="font-size:12px;color:var(--taupe)">PDF</div></div>
-						<button class="btn btn-o" style="margin-left:auto;padding:8px 14px" disabled><?php esc_html_e( 'Trade only', 'maison-vintique' ); ?></button>
-					</div>
+
 					<div class="gate">
 						<b><?php esc_html_e( 'Trade documents are locked', 'maison-vintique' ); ?></b>
 						<p><?php esc_html_e( 'Log in with an approved trade account to download technical sheets, sell sheets and hi-res imagery.', 'maison-vintique' ); ?></p>

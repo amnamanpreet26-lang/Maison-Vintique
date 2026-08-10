@@ -120,8 +120,6 @@ if ( $mvc_producer_obj ) {
 }
 
 $mvc_case        = function_exists( 'get_field' ) ? get_field( 'case_format', $mvc_id ) : '';
-$mvc_appellation = function_exists( 'get_field' ) ? get_field( 'appellation', $mvc_id ) : '';
-$mvc_vintage     = function_exists( 'get_field' ) ? get_field( 'vintage_year', $mvc_id ) : '';
 
 // Wines are usually titled "<Estate> <Cuvée> <Year>", which would repeat the
 // producer straight back at the reader. Drop it when the title already says it.

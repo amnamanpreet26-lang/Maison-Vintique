@@ -157,15 +157,6 @@
       "return_format": "url",
       "library": "all",
       "wrapper": { "width": "50" }
-    },
-    {
-      "key": "field_mv_sell_sheet",
-      "label": "Sell Sheet (PDF)",
-      "name": "sell_sheet",
-      "type": "file",
-      "return_format": "url",
-      "library": "all",
-      "wrapper": { "width": "50" }
     }
   ],
   "location": [

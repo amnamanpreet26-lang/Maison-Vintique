@@ -34,10 +34,15 @@ $mve_cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : ho
 	<div class="mv-header__inner">
 
 		<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="mv-header__brand" aria-label="<?php bloginfo( 'name' ); ?> — Home">
-			<span class="mv-header__crest"><?php echo mve_inline_svg( 'logo-crest.svg' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+			<span class="mv-header__crest">
+    <img 
+        src="https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png"
+        alt="Maison Vintique"
+    >
+</span>
 			<span class="mv-header__wordmark">
-				<span class="mv-header__name">Maison Vintique</span>
-				<span class="mv-header__place">London</span>
+				<span class="mv-header__name">MAISON VINTIQUE</span>
+				<span class="mv-header__place">A House of Wine · A Legacy of Taste</span>
 			</span>
 		</a>
 

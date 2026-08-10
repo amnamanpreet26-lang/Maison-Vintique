@@ -50,6 +50,10 @@ while ( have_posts() ) :
 	?>
 
 	<main>
+		
+				<!-- ============ TEXT + IMAGE / VIDEO ============ -->
+		<?php // Copy one side, media the other. Skipped when both halves are empty. ?>
+		<?php get_template_part( 'template-parts/page-split', null, array( 'prefix' => 'ft' ) ); ?>
 
 		<!-- ============ HOW IT WORKS ============ -->
 		<?php if ( have_rows( 'ft_steps' ) || $mvt_primary_label || $mvt_second_label ) : ?>
@@ -107,9 +111,7 @@ while ( have_posts() ) :
 			</section>
 		<?php endif; ?>
 
-		<!-- ============ TEXT + IMAGE / VIDEO ============ -->
-		<?php // Copy one side, media the other. Skipped when both halves are empty. ?>
-		<?php get_template_part( 'template-parts/page-split', null, array( 'prefix' => 'ft' ) ); ?>
+
 
 		<!-- ============ CLOSING NOTE ============ -->
 		<?php if ( $mvt_closing || get_the_content() ) : ?>

@@ -46,7 +46,7 @@ $mve_apply_url = apply_filters( 'mve_trade_application_url', wc_get_page_permali
 <div class="wrap">
 
 	<div class="page-h page-h--center">
-		<p class="eyebrow"><?php esc_html_e( 'Trade Access', 'maison-vintique-elementor' ); ?></p>
+		<p class="eyebrow eyebrow--center"><?php esc_html_e( 'Trade Access', 'maison-vintique-elementor' ); ?></p>
 		<h1><?php esc_html_e( 'Trade Login', 'maison-vintique-elementor' ); ?></h1>
 		<p class="login-lede">
 			<?php

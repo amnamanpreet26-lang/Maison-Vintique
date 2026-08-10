@@ -139,7 +139,7 @@ while ( have_posts() ) :
 			<?php endif; ?>
 
 			<?php if ( $mvs_shop_url && $mvs_wines->have_posts() ) : ?>
-				<a class="btn btn-p" href="<?php echo esc_url( $mvs_shop_url ); ?>">
+				<a class="btn btn-p" href="#wine-from-estate">
 					<?php esc_html_e( 'View wines from this estate', 'maison-vintique-elementor' ); ?>
 				</a>
 			<?php endif; ?>
@@ -191,7 +191,7 @@ while ( have_posts() ) :
 
 	<!-- ============ WINES FROM THIS ESTATE ============ -->
 	<?php if ( $mvs_wines->have_posts() ) : ?>
-		<div class="mvest-wines">
+		<div class="mvest-wines" id="wine-from-estate">
 			<div class="section__head section__head--split">
 				<h2><?php esc_html_e( 'Wines from this estate', 'maison-vintique-elementor' ); ?></h2>
 				<?php if ( $mvs_shop_url ) : ?>

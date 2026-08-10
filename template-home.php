@@ -213,21 +213,10 @@ $mv_producers = new WP_Query( array(
              <div class="estate-card__face estate-card__face--back">
 				  <span class="estate-card__badge">
 					<span class="estate-card__logo">
-					  <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="<?php the_title_attribute(); ?> crest">
-						<mask id="mvCrest-<?php the_ID(); ?>">
-						  <rect x="0" y="0" width="100" height="130" fill="black"></rect>
-						  <path d="M50 88 L21 41 L24 17 L24 7 L35 7 L35 17 L43 17 L43 7 L57 7 L57 17 L65 17 L65 7 L76 7 L76 17 L79 41 Z" fill="white"></path>
-						  <rect x="48.3" y="20.5" width="3.4" height="3.6" fill="black"></rect>
-						  <path d="M47.6 24 L52.4 24 L52.4 31 C52.4 32.6 56 34 56 39 L56 58 L44 58 L44 39 C44 34 47.6 32.6 47.6 31 Z" fill="black"></path>
-						  <path d="M28 61 Q50 54 72 61" fill="none" stroke="black" stroke-width="3" stroke-linecap="round"></path>
-						</mask>
-						<rect x="0" y="0" width="100" height="130" fill="currentColor" mask="url(#mvCrest-<?php the_ID(); ?>)"></rect>
-						<g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-						  <path d="M45 91 L50 98 L55 91"></path>
-						  <path d="M50 98 L50 106"></path>
-						  <path d="M41 108 Q50 103.5 59 108"></path>
-						</g>
-					  </svg>
+					  <img 
+            src="https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png"
+            alt="Maison Vintique"
+        >
 					</span>
 					<span class="estate-card__ring"><?php echo esc_html( $initials ); ?></span>
 					<?php if ( $back_sub ) : ?>
