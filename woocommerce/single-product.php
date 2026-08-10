@@ -52,7 +52,6 @@ while ( have_posts() ) :
 	$sustainability = get_field( 'sustainability' );
 	$serving        = get_field( 'serving' );
 	$technical_sheet = get_field( 'technical_sheet' ); // file URL
-	$sell_sheet       = get_field( 'sell_sheet' );      // file URL
 
 	// 2) WooCommerce global attribute — Grape is seeded as an attribute, not an ACF field.
 	$grape  = $product->get_attribute( 'grape' );
@@ -139,9 +138,12 @@ while ( have_posts() ) :
 				<?php endif; ?>
 
 				<div class="pdp-stockline">
-					<span class="stock <?php echo $product->is_in_stock() ? 'available' : 'out'; ?>" style="position:static">
-						<?php echo $product->is_in_stock() ? esc_html__( 'Available', 'maison-vintique' ) : esc_html__( 'Out of stock', 'maison-vintique' ); ?>
-					</span>
+					<?php // Stock is trade information — hidden until the visitor logs in. ?>
+					<?php if ( $is_trade ) : ?>
+						<span class="stock <?php echo $product->is_in_stock() ? 'available' : 'out'; ?>" style="position:static">
+							<?php echo $product->is_in_stock() ? esc_html__( 'Available', 'maison-vintique' ) : esc_html__( 'Out of stock', 'maison-vintique' ); ?>
+						</span>
+					<?php endif; ?>
 					<?php if ( ! $is_trade ) : ?>
 						<span class="trade-note" style="margin:0"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique' ); ?></span>
 					<?php endif; ?>
@@ -251,7 +253,7 @@ $mve_grape_terms = implode( ', ', $mve_grape_terms );
 					<div><span><?php esc_html_e( 'Bottle', 'maison-vintique' ); ?></span><b><?php echo esc_html( $bottle ); ?></b></div>
 					<?php if ( $case_format ) : ?><div><span><?php esc_html_e( 'Case', 'maison-vintique' ); ?></span><b><?php echo esc_html( $case_format ); ?></b></div><?php endif; ?>
 					<?php if ( $allergens ) : ?><div><span><?php esc_html_e( 'Allergens', 'maison-vintique' ); ?></span><b><?php echo esc_html( $allergens ); ?></b></div><?php endif; ?>
-					<div><span><?php esc_html_e( 'Stock', 'maison-vintique' ); ?></span><b><?php echo $product->is_in_stock() ? esc_html__( 'In stock', 'maison-vintique' ) : esc_html__( 'Out of stock', 'maison-vintique' ); ?></b></div>
+					<?php if ( $is_trade ) : ?><div><span><?php esc_html_e( 'Stock', 'maison-vintique' ); ?></span><b><?php echo $product->is_in_stock() ? esc_html__( 'In stock', 'maison-vintique' ) : esc_html__( 'Out of stock', 'maison-vintique' ); ?></b></div><?php endif; ?>
 				</div>
 
 			</div>
@@ -312,7 +314,7 @@ $closure = get_field( 'closure' );
 						</div>
 					<?php endif; ?>
 				
-					<?php if ( ! $technical_sheet && ! $sell_sheet ) : ?>
+					<?php if ( ! $technical_sheet ) : ?>
 						<p style="font-size:12.5px;color:var(--taupe)"><?php esc_html_e( 'No documents uploaded for this wine yet.', 'maison-vintique' ); ?></p>
 					<?php endif; ?>
 				<?php else : ?>
@@ -324,7 +326,7 @@ $closure = get_field( 'closure' );
 
 					<div class="gate">
 						<b><?php esc_html_e( 'Trade documents are locked', 'maison-vintique' ); ?></b>
-						<p><?php esc_html_e( 'Log in with an approved trade account to download technical sheets, sell sheets and hi-res imagery.', 'maison-vintique' ); ?></p>
+						<p><?php esc_html_e( 'Log in with an approved trade account to download technical sheets and hi-res imagery.', 'maison-vintique' ); ?></p>
 						<a class="btn btn-p" href="<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) ); ?>"><?php esc_html_e( 'Trade Login', 'maison-vintique' ); ?></a>
 					</div>
 				<?php endif; ?>

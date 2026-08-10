@@ -5587,3 +5587,21 @@
 }
 
 /* ===== PAGE MEDIA — FULL-WIDTH BLOCK, SPLIT SECTION, HERO BACKGROUND — END ===== */
+
+/* ===== SCROLL REVEAL — TIMING FIX — START ===== */
+
+.section {
+	transition: opacity .5s ease, transform .5s cubic-bezier(.22, 1, .36, 1);
+	transform: translateY(18px);
+	will-change: auto;
+}
+
+@media (scripting: none) {
+	.section {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}
+
+/* ===== SCROLL REVEAL — TIMING FIX — END ===== */

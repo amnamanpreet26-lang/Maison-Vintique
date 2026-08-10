@@ -162,28 +162,120 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</footer>
 <?php wp_footer(); ?>
 <script>
-	document.addEventListener('DOMContentLoaded', function () {
-    const sections = document.querySelectorAll('.section');
-    if (!sections.length) return;
-    const observer = new IntersectionObserver(
-        function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    // Animate only once
-                    observer.unobserve(entry.target);
-                }
-            });
-        },
-        {
-            threshold: 0.15,
-            rootMargin: '0px 0px -50px 0px'
-        }
-    );
-    sections.forEach(function (section) {
-        observer.observe(section);
-    });
-});
+/**
+ * Fade-up reveal for .section.
+ *
+ * Every section starts at opacity 0 in the CSS, so whatever happens here
+ * decides whether the page is visible at all. Three things were making the
+ * page below the hero arrive late:
+ *
+ *   1. threshold 0.15 with a -50px bottom margin meant a section had to be
+ *      15% ON SCREEN before it even began its 0.8s fade — so you scrolled,
+ *      saw a gap, and the content caught up afterwards. Worse, a section
+ *      taller than ~6x the viewport can never show 15% of itself at once, so
+ *      it would never have revealed at all.
+ *   2. it waited for DOMContentLoaded, so sections already on screen at load
+ *      still faded in from nothing instead of just being there.
+ *   3. no failsafe: one JS error earlier on the page and everything below the
+ *      hero stayed invisible for good.
+ *
+ * Now: anything on screen at load is shown immediately with no animation,
+ * everything else starts its fade ~200px BEFORE it scrolls into view, and if
+ * IntersectionObserver is missing the whole lot is simply shown.
+ */
+(function () {
+	var sections = document.querySelectorAll('.section');
+	if (!sections.length) return;
+
+	function show(el) {
+		el.classList.add('is-visible');
+		// The CSS parks will-change on every section, which keeps a compositor
+		// layer alive for the life of the page. Once a section has finished
+		// revealing it does not need one.
+		el.style.willChange = 'auto';
+	}
+
+	// No observer support, or the visitor asked for reduced motion: show
+	// everything now and skip the animation entirely.
+	var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	if (!('IntersectionObserver' in window) || reduceMotion) {
+		Array.prototype.forEach.call(sections, show);
+		return;
+	}
+
+	// Start the fade this far before a section reaches the viewport, so it has
+	// finished by the time the visitor actually gets to it.
+	var LEAD = 200;
+
+	function viewportH() {
+		return window.innerHeight || document.documentElement.clientHeight;
+	}
+
+	var pending = Array.prototype.slice.call(sections);
+
+	// Reveal everything at or above the trigger line. Deliberately a sweep over
+	// positions rather than an IntersectionObserver: jump straight down the
+	// page (an anchor link, the End key, a restored scroll position) and a
+	// section can go from below the viewport to above it between two frames.
+	// IntersectionObserver reports nothing for that — it was not intersecting
+	// before and is not intersecting now — so the section stays invisible for
+	// good, and you find it blank on the way back up. A position check cannot
+	// miss it.
+	function sweep() {
+		var limit = viewportH() + LEAD;
+		pending = pending.filter(function (section) {
+			if (section.getBoundingClientRect().top >= limit) return true;
+			show(section);
+			return false;
+		});
+		if (!pending.length) stop();
+	}
+
+	// Anything already in view when the page opens is shown with no transition
+	// — the first screenful should be there, not fade in.
+	pending = pending.filter(function (section) {
+		if (section.getBoundingClientRect().top >= viewportH()) return true;
+		section.style.transition = 'none';
+		show(section);
+		return false;
+	});
+
+	// Flush that style change NOW. Without this read the browser batches the
+	// whole lot and only ever sees the end state — transition back on, opacity
+	// going 0 to 1 — so the first screenful animates anyway, which is the exact
+	// thing we are trying to avoid.
+	void document.body.offsetHeight;
+
+	Array.prototype.forEach.call(sections, function (section) {
+		section.style.transition = '';
+	});
+
+	var queued = false;
+
+	function onScroll() {
+		if (queued) return;          // at most one sweep per frame
+		queued = true;
+		requestAnimationFrame(function () {
+			queued = false;
+			sweep();
+		});
+	}
+
+	function stop() {
+		window.removeEventListener('scroll', onScroll);
+		window.removeEventListener('resize', onScroll);
+	}
+
+	if (!pending.length) return;
+
+	window.addEventListener('scroll', onScroll, { passive: true });
+	window.addEventListener('resize', onScroll, { passive: true });
+
+	// Catch the sections that sit just below the fold, plus anything that moved
+	// once images and fonts had loaded.
+	sweep();
+	window.addEventListener('load', sweep);
+})();
 </script>
 </body>
 </html>

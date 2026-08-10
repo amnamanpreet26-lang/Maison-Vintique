@@ -3243,3 +3243,43 @@
 		font-size: 12px;
 	}
 }
+
+
+/* ==========================================================================
+   20. SCROLL REVEAL — timing fix
+   --------------------------------------------------------------------------
+   The reveal animation itself is the site's own (_site-base.css sets
+   .section { opacity: 0 } and .section.is-visible { opacity: 1 }). That block
+   is left exactly as it is; these four lines only change how it FEELS,
+   because sections were arriving noticeably after you had scrolled to them.
+
+   Paired with the rewritten observer in footer.php, which now starts the fade
+   before a section reaches the viewport and shows the first screenful with no
+   animation at all.
+
+   To go back to the original timing, delete this whole section.
+   ========================================================================== */
+
+.section {
+	/* 0.8s is a long time to look at a gap. */
+	transition: opacity .5s ease, transform .5s cubic-bezier(.22, 1, .36, 1);
+
+	/* 35px of travel reads as "the page is still loading" on a long scroll. */
+	transform: translateY(18px);
+
+	/* Was `will-change: opacity, transform` on EVERY section, which keeps a
+	   compositor layer alive for each one for the whole life of the page and
+	   makes scrolling heavier the longer the page is. The JS sets this per
+	   section while it animates instead. */
+	will-change: auto;
+}
+
+/* Failsafe: with JavaScript off, nothing ever adds .is-visible and the entire
+   page below the hero would stay invisible. */
+@media (scripting: none) {
+	.section {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}

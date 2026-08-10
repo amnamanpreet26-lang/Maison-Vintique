@@ -107,7 +107,7 @@ $mve_apply_url = apply_filters( 'mve_trade_application_url', wc_get_page_permali
 			<ul class="checklist">
 				<li><?php esc_html_e( 'Your agreed trade pricing, visible once approved', 'maison-vintique-elementor' ); ?></li>
 				<li><?php esc_html_e( 'Order online, or by pro forma — no impersonal checkout', 'maison-vintique-elementor' ); ?></li>
-				<li><?php esc_html_e( 'Technical sheets, tasting notes &amp; sell sheets', 'maison-vintique-elementor' ); ?></li>
+				<li><?php esc_html_e( 'Technical sheets &amp; tasting notes', 'maison-vintique-elementor' ); ?></li>
 				<li><?php esc_html_e( 'Invoices, statements and delivery notes in one place', 'maison-vintique-elementor' ); ?></li>
 			</ul>
 

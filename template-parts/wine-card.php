@@ -12,6 +12,7 @@
  *
  * Card anatomy (matches the approved design):
  *   [ colour badge ]            [ availability badge ]   <- overlaid on image
+ *                                (logged-in visitors only)
  *        (  Award  )                                     <- medallion, on hover
  *        ( Winning )
  *   ------------------------------------------------
@@ -79,7 +80,13 @@ if ( ! $mvc_colour ) {
 
 /* ---------------------------------------------------------------------------
  * BADGE 2 (top right) — availability, straight from the stock status.
+ *
+ * Trade only: logged-out visitors see no stock at all. Same rule as the price,
+ * so a card either shows trade information or it doesn't — there is no state
+ * where the price is hidden but the stock is on show.
  * ------------------------------------------------------------------------- */
+$mvc_show_stock = ! $mvc_gated;
+
 if ( $product->is_in_stock() ) {
 	$mvc_stock_label = __( 'Available', 'maison-vintique-elementor' );
 	$mvc_stock_state = 'in';
@@ -119,7 +126,13 @@ if ( $mvc_producer_obj ) {
 	$mvc_producer_url = get_permalink( $mvc_producer_id );
 }
 
-$mvc_case        = function_exists( 'get_field' ) ? get_field( 'case_format', $mvc_id ) : '';
+$mvc_case = function_exists( 'get_field' ) ? get_field( 'case_format', $mvc_id ) : '';
+
+// These two were missing while $mvc_appellation_line below still used them,
+// which threw two PHP notices per card and left the appellation out of the
+// sub line entirely.
+$mvc_appellation = function_exists( 'get_field' ) ? get_field( 'appellation', $mvc_id ) : '';
+$mvc_vintage     = function_exists( 'get_field' ) ? get_field( 'vintage_year', $mvc_id ) : '';
 
 // Wines are usually titled "<Estate> <Cuvée> <Year>", which would repeat the
 // producer straight back at the reader. Drop it when the title already says it.
@@ -170,9 +183,11 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 			<span class="mvcard__badge mvcard__badge--colour"><?php echo esc_html( $mvc_colour ); ?></span>
 		<?php endif; ?>
 
-		<span class="mvcard__badge mvcard__badge--stock is-<?php echo esc_attr( $mvc_stock_state ); ?>">
-			<?php echo esc_html( $mvc_stock_label ); ?>
-		</span>
+		<?php if ( $mvc_show_stock ) : ?>
+			<span class="mvcard__badge mvcard__badge--stock is-<?php echo esc_attr( $mvc_stock_state ); ?>">
+				<?php echo esc_html( $mvc_stock_label ); ?>
+			</span>
+		<?php endif; ?>
 
 		<?php if ( $mvc_award ) : ?>
 			<?php // Medallion, faded in over the image on hover / keyboard focus. ?>

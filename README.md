@@ -87,7 +87,7 @@ the "You may also like" grid on the single product page.
 | Part of the card | Comes from |
 |---|---|
 | Left badge | `wine_colour` taxonomy (falls back to the first Product Category) |
-| Right badge | Stock status → "Available" / "Out of stock" |
+| Right badge | Stock status → "Available" / "Out of stock". **Logged-in visitors only** — see below |
 | **Award medallion** | ACF `awards` — fades in over the bottle on hover (see below) |
 | Meta line, left | **`wine_colour` · `wine_region`** taxonomy terms, joined by a middot |
 | Meta line, right | **`wine_country`** taxonomy terms |
@@ -99,6 +99,13 @@ the "You may also like" grid on the single product page.
 | Enquire | `?enquire=<id>` on the Shop page — the same pattern the single product page uses |
 
 Every line is optional, so a product with only a title and an image still renders a valid card.
+
+**Stock is trade information.** Logged-out visitors see no availability badge at
+all — the same rule as the price, via `mve_is_gated()`, so a card either shows
+trade information or it doesn't. There is no state where the price is hidden but
+the stock is on show. The single product page follows the same rule: both the
+availability line under the title and the Stock row in the technical table are
+hidden until login.
 
 ### The award medallion
 
@@ -324,6 +331,41 @@ so changing the `:root` block at the top of the stylesheet restyles everything.
 One block in that file is marked as a **safety net** — the `.card-grid--4` /
 `.pgrid` mobile column counts. Delete it if the existing grid CSS already
 collapses those grids on mobile.
+
+## Scroll reveal
+
+Sections fade up as you scroll. The animation is the site's own — `_site-base.css`
+sets `.section { opacity: 0 }` and `.section.is-visible { opacity: 1 }` — and the
+script that adds `is-visible` lives at the bottom of `footer.php`.
+
+That script was rewritten because the page below the hero arrived late. Three
+things were wrong:
+
+1. **It waited for the section to be 15% on screen** (`threshold: 0.15`, plus a
+   `-50px` bottom margin) before *starting* a 0.8s fade. So you scrolled, saw a
+   gap, and the content caught up afterwards. Worse: a section taller than about
+   six viewports can never show 15% of itself at once, so it would never have
+   revealed at all.
+2. **It waited for `DOMContentLoaded`**, so sections already on screen at load
+   faded in from nothing instead of simply being there.
+3. **No failsafe.** One JavaScript error anywhere earlier and everything below
+   the hero stayed invisible permanently.
+
+Now: whatever is on screen at load is shown immediately with no animation,
+everything else starts fading 200px *before* it scrolls into view, and with
+JavaScript off the CSS shows everything (`@media (scripting: none)`).
+
+It sweeps element positions on scroll rather than using an IntersectionObserver.
+That is deliberate: jump straight down the page — an anchor link, the End key, a
+restored scroll position — and a section can go from below the viewport to above
+it between two frames. IntersectionObserver reports nothing for that (it wasn't
+intersecting before and isn't now), so the section stays invisible and you find
+it blank on the way back up. A position check can't miss it. The listener
+detaches itself once every section has been revealed.
+
+The timing is tuned in **section 20** of the CSS — 0.5s instead of 0.8s, 18px of
+travel instead of 35px, and `will-change` no longer parked on every section for
+the life of the page. Delete that section to go back to the original feel.
 
 ## Menus
 
