@@ -1,0 +1,3285 @@
+/* ==========================================================================
+   MAISON VINTIQUE — ADDITIONAL CSS
+   ==========================================================================
+
+   This file is NOT enqueued by the theme, on purpose.
+   Paste its contents into:  Appearance → Customize → Additional CSS
+   (append it below whatever is already there — nothing here is a reset).
+
+   Contents
+   --------
+   1. Tokens            — local variables, all with fallbacks
+   2. Wine card         — template-parts/wine-card.php
+                          (homepage "Curated Portfolio", Shop archive, and the
+                          "You may also like" grid on the product page)
+   3. Producers grid    — archive-producer.php + producers-grid.php
+   4. My Account        — responsive fixes for the account area
+   5. Cart              — woocommerce/cart/cart.php
+   6. Checkout          — woocommerce/checkout/form-checkout.php
+   7. Login             — woocommerce/myaccount/form-login.php
+   8. Single producer   — single-producer.php
+   9. Header dropdowns  — header.php
+  10. Login overrides   — WooCommerce defaults
+  11. Editorial pages   — shared .mvp-* primitives (Our Story, For the Trade,
+                          FAQ, Contact, Journal)
+  12. FAQ              — template-faq.php
+  13. Contact          — template-contact.php
+  14. Journal          — archive-journal.php + single-journal.php
+   ========================================================================== */
+
+
+/* ==========================================================================
+   0. VARIABLE COMPATIBILITY SHIM
+   --------------------------------------------------------------------------
+   The stylesheet above this point uses 20 custom properties that are never
+   declared anywhere. Two failure modes:
+
+   a) WITH a fallback — e.g. `var(--taupe, #8a7d6f)` — renders, but with the
+      hard-coded fallback rather than the brand value, so those areas (mainly
+      the My Account block) drift slightly off-palette.
+
+   b) WITHOUT a fallback — e.g. `var(--mv-ok)` — the whole declaration is
+      invalid at computed-value time and the browser DROPS it. Currently that
+      silently loses:
+        .spotlight / .values   their background   (`var(----mv-ground)`, typo)
+        .mv-header             its bottom border  (`var(---mv-burg)`,  typo)
+        .stock.available/.limited/.out            their colours
+        .mv-newsletter-form__input                its text + placeholder colour
+        .hero--video figcaption                   its colour
+
+   Declaring the names here fixes every one of them without editing a line of
+   the CSS above — a custom property can have any name, so even the two
+   mistyped ones (three and four leading dashes) resolve correctly.
+
+   If you ever correct those typos upstream, these aliases simply stop being
+   used. Nothing here overrides a value that is already declared.
+   ========================================================================== */
+
+:root {
+	/* Palette aliases — unprefixed names used by the account block */
+	--ground:    var(--mv-ground);
+	--panel:     var(--mv-panel);
+	--panel-2:   var(--mv-panel-2);
+	--surface:   #fff;
+	--ink:       var(--mv-ink);
+	--ink-soft:  var(--mv-ink-soft);
+	--burg:      var(--mv-burg);
+	--gold:      var(--mv-gold);
+	--taupe:     var(--mv-taupe);
+	--line:      var(--mv-line);
+	--serif:     var(--mv-serif);
+	--sans:      var(--mv-sans);
+
+	/* Status colours — referenced as both --x and --mv-x, never declared */
+	--ok:        #2e7d4f;
+	--warn:      #b8860b;
+	--crit:      #b23b3b;
+	--mv-ok:     #2e7d4f;
+	--mv-warn:   #b8860b;
+	--mv-crit:   #b23b3b;
+
+	/* Footer newsletter + video-hero caption */
+	--mv-surface:    #fff;
+	--mv-text:       var(--mv-ground);
+	--mv-muted-dim:  var(--mv-taupe);
+	--mv-chalk-dim:  #c6bbac;
+
+	/* The two typos above, aliased so their declarations stop being dropped.
+	   Intended: --mv-ground on .spotlight/.values, --mv-burg on .mv-header. */
+	----mv-ground: var(--mv-ground);
+	---mv-burg:    var(--mv-burg);
+}
+
+
+/* ==========================================================================
+   1. TOKENS
+   --------------------------------------------------------------------------
+   These alias the site's OWN brand variables, which are declared at the very
+   top of this stylesheet as --mv-ground / --mv-ink / --mv-burg / --mv-gold /
+   --mv-serif / --mv-sans etc.
+
+   IMPORTANT: they must point at the --mv-* names. An earlier version of this
+   block aliased --ink / --burg / --gold / --serif, which this site does not
+   define — so every component silently fell back to the hard-coded values and
+   came out in the wrong palette and the wrong fonts. The fallbacks below are
+   only a safety net for a site that hasn't declared the brand block yet.
+
+   Note --mv-burg is the deep green #17251f, not a burgundy — the name is
+   historical. --mv2-burgundy follows it so the accent stays on-brand.
+   ========================================================================== */
+
+:root {
+	--mv2-ink:      var(--mv-ink,       #5e5a51);
+	--mv2-ink-soft: var(--mv-ink-soft,  #5e5a51);
+	--mv2-taupe:    var(--mv-taupe,     #a6a096);
+	--mv2-line:     var(--mv-line,      #d6cec1);
+	--mv2-cream:    var(--mv-ground,    #f2eee6);
+	--mv2-panel:    var(--mv-panel,     #e9e2d6);
+	--mv2-paper:    var(--mv-panel-2,   #faf8f3);
+	--mv2-gold:     var(--mv-gold,      #a98854);
+	--mv2-burgundy: var(--mv-burg,      #17251f);
+	--mv2-burg-br:  var(--mv-burg-bright, #26312c);
+	--mv2-dark:     var(--mv-dark,      #17251f);
+	--mv2-chalk:    var(--mv-chalk,     #faf8f3);
+
+	--mv2-serif: var(--mv-serif, "Cormorant Garamond", Georgia, serif);
+	--mv2-sans:  var(--mv-sans,  "Montserrat", "Helvetica Neue", Arial, sans-serif);
+
+	--mv2-ok-bg:   #dfe7dc;
+	--mv2-ok-ink:  #3c5540;
+	--mv2-out-bg:  #ece7e1;
+	--mv2-out-ink: #7a6f63;
+
+	/* Shared card treatment across the new pages */
+	--mv2-radius: 10px;
+	--mv2-shadow: 0 20px 44px -30px rgba(43, 36, 32, .5);
+}
+
+
+/* --------------------------------------------------------------------------
+   BORDER-BOX
+   This stylesheet has no global `* { box-sizing: border-box }` — the base only
+   applies it to the homepage sections (.hero, .philosophy, .portfolio …). So
+   anything with width:100% AND padding, e.g. a form input, overflows its
+   container by exactly the padding + border.
+   Rather than change the global default (which would reflow existing layout),
+   opt each component built here into border-box, the same way the base does.
+   -------------------------------------------------------------------------- */
+
+.mvcard, .mvcard *,
+.mvprod, .mvprod *,
+.mvp-hero, .mvp-hero *,
+.mvp-sec, .mvp-sec *,
+.cart-page, .cart-page *,
+.checkout-page, .checkout-page *,
+.login-page, .login-page *,
+.producers-page, .producers-page *,
+.producer-single, .producer-single *,
+.woocommerce-account .acct,
+.woocommerce-account .acct * {
+	box-sizing: border-box;
+}
+
+
+/* ==========================================================================
+   2. WINE CARD  —  .mvcard
+   --------------------------------------------------------------------------
+   Used by BOTH the homepage portfolio grid (.card-grid--4) and the Shop
+   archive grid (.pgrid). The card only styles itself and stretches to fill
+   whatever grid cell it lands in, so the existing grid CSS is untouched.
+   ========================================================================== */
+
+.mvcard {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--mv2-paper);
+	border: 1px solid var(--mv2-line);
+	border-radius: 2px;
+	overflow: hidden;
+	transition: box-shadow .28s ease, transform .28s ease, border-color .28s ease;
+}
+
+.mvcard:hover {
+	border-color: #d3c6b4;
+	box-shadow: 0 14px 34px -20px rgba(31, 27, 23, .45);
+	transform: translateY(-2px);
+}
+
+/* --- Media + badges ------------------------------------------------------ */
+
+.mvcard__media {
+	position: relative;
+	display: block;
+	aspect-ratio: 4 / 3;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	text-decoration: none;
+}
+
+.mvcard__media img {
+	width: 100%;
+	height: 100%;
+	/* contain, not cover — a cropped bottle shot looks broken */
+	object-fit: contain;
+	padding: 16px 16px 0;
+	display: block;
+	transition: transform .6s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvcard:hover .mvcard__media img {
+	transform: scale(1.045);
+}
+
+.mvcard__badge {
+	position: absolute;
+	top: 12px;
+	z-index: 2;
+	padding: 5px 10px;
+	border-radius: 2px;
+	font-family: var(--mv2-sans);
+	font-size: 9.5px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	line-height: 1;
+	white-space: nowrap;
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+}
+
+/* Left badge — wine colour (Red / White / Rosé) */
+.mvcard__badge--colour {
+	left: 12px;
+	background: rgba(255, 253, 250, .92);
+	color: var(--mv2-ink);
+	box-shadow: inset 0 0 0 1px rgba(31, 27, 23, .08);
+}
+
+/* Right badge — availability */
+.mvcard__badge--stock {
+	right: 12px;
+}
+
+.mvcard__badge--stock.is-in {
+	background: var(--mv2-ok-bg);
+	color: var(--mv2-ok-ink);
+}
+
+.mvcard__badge--stock.is-out {
+	background: var(--mv2-out-bg);
+	color: var(--mv2-out-ink);
+}
+
+/* --- Body ---------------------------------------------------------------- */
+
+.mvcard__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	padding: 20px 20px 18px;
+	text-align: left;
+}
+
+.mvcard__title {
+	margin: 0 0 10px;
+	font-family: var(--mv2-serif);
+	font-size: 21px;
+	font-weight: 400;
+	line-height: 1.28;
+	letter-spacing: .01em;
+	color: var(--mv2-ink);
+}
+
+.mvcard__title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.mvcard__title a:hover {
+	color: var(--mv2-burgundy);
+}
+
+.mvcard__meta {
+	margin: 0 0 12px;
+	font-family: var(--mv2-sans);
+	font-size: 10.5px;
+	font-weight: 500;
+	letter-spacing: .13em;
+	text-transform: uppercase;
+	line-height: 1.6;
+	color: var(--mv2-taupe);
+}
+
+.mvcard__price {
+	margin: 0 0 16px;
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	color: var(--mv2-ink);
+}
+
+.mvcard__price .price,
+.mvcard__price ins,
+.mvcard__price bdi {
+	text-decoration: none;
+	color: var(--mv2-ink);
+}
+
+.mvcard__price del {
+	opacity: .5;
+	margin-right: 6px;
+	font-size: 13px;
+}
+
+/* "Trade pricing on login" */
+.mvcard__trade {
+	font-style: italic;
+	font-size: 13px;
+	letter-spacing: .01em;
+	color: var(--mv2-burgundy);
+}
+
+/* --- "View Wine" button --------------------------------------------------- */
+
+.mvcard__cta {
+	display: block;
+	margin-top: auto;          /* pins the CTA to the bottom on uneven cards */
+	padding: 13px 16px;
+	/* Matches the site's existing .add_to_cart_button treatment */
+	border: 1px solid var(--mv2-burgundy);
+	border-radius: 2px;
+	background: transparent;
+	color: var(--mv2-burgundy);
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	text-align: center;
+	text-decoration: none;
+	transition: background .22s ease, color .22s ease;
+}
+
+.mvcard__cta:hover,
+.mvcard__cta:focus-visible {
+	background: var(--mv2-burgundy);
+	color: #fff;
+}
+
+/* --- The two inline links ------------------------------------------------- */
+
+.mvcard__links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 6px 22px;
+	margin-top: 14px;
+}
+
+.mvcard__link {
+	font-family: var(--mv2-sans);
+	font-size: 11.5px;
+	letter-spacing: .02em;
+	color: var(--mv2-taupe);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	text-decoration-thickness: 1px;
+	transition: color .2s ease;
+}
+
+.mvcard__link:hover,
+.mvcard__link:focus-visible {
+	color: var(--mv2-burgundy);
+}
+
+/* --- Grid safety net ------------------------------------------------------
+   The card sits inside grids the theme already owns (.card-grid--4 on the
+   homepage, .pgrid on the shop archive). If those already collapse on mobile,
+   DELETE this block — it only exists so the new card can't end up 4-across on
+   a phone. The :has() scoping means these rules can only ever touch a grid
+   that actually contains the new card, never any other grid on the site.
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+	.card-grid--4:has(.mvcard),
+	.pgrid:has(.mvcard) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 600px) {
+	.card-grid--4:has(.mvcard),
+	.pgrid:has(.mvcard) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* --- Wine card responsive ------------------------------------------------- */
+
+@media (max-width: 1024px) {
+	.mvcard__title { font-size: 20px; }
+	.mvcard__body  { padding: 18px 17px 16px; }
+}
+
+@media (max-width: 600px) {
+	.mvcard__body    { padding: 17px 16px 15px; }
+	.mvcard__title   { font-size: 19px; }
+	.mvcard__cta     { padding: 12px 14px; letter-spacing: .14em; }
+	.mvcard__links   { gap: 6px 18px; }
+	.mvcard__badge   { top: 10px; font-size: 9px; padding: 4px 8px; }
+	.mvcard__badge--colour { left: 10px; }
+	.mvcard__badge--stock  { right: 10px; }
+}
+
+
+/* ==========================================================================
+   3. PRODUCERS GRID
+   --------------------------------------------------------------------------
+   Used by BOTH /producers/ (archive-producer.php) and the "Producers Grid"
+   page template. Values follow the approved prototype.
+   ========================================================================== */
+
+/* The prototype's producer view is narrower than the site default — that
+   narrower measure is what makes the grid sit at a comfortable 3-up. */
+.wrap--producers {
+	max-width: 1120px;
+	margin-inline: auto;
+}
+
+.producers-page .page-h {
+	max-width: 62ch;
+	margin-bottom: 32px;
+}
+
+.mvprod-grid {
+	display: grid;
+	/* Explicit 3-up at desktop — this is the "3 cards in a row" the design
+	   calls for. The minmax(0,1fr) stops long estate names forcing a column
+	   wider than its share. */
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 22px;
+	align-items: stretch;
+	padding-bottom: 60px;
+}
+
+.mvprod {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: var(--mv2-radius);
+	overflow: hidden;
+	box-shadow: var(--mv2-shadow);
+	transition: box-shadow .28s ease, transform .28s ease, border-color .28s ease;
+}
+
+.mvprod:hover {
+	border-color: var(--mv2-gold);
+	box-shadow: 0 22px 46px -26px rgba(43, 36, 32, .55);
+	transform: translateY(-4px);
+}
+
+.mvprod__media {
+	position: relative;
+	display: block;
+	/* Same media band height as the .jcard on the new pages */
+	height: 180px;
+	flex: 0 0 180px;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	text-decoration: none;
+}
+
+/* --- Flip -----------------------------------------------------------------
+   Same EFFECT as the homepage "Estate Partners" cards — photo on the front,
+   crest + initials + est. year on the back — but with its own class names.
+
+   These deliberately do NOT reuse the homepage's `estate-card__*` names: when
+   they did, the homepage's own estate-card rules also landed on these cards
+   and fought with them, which is what stopped the front photo from showing.
+   Separate names means neither component can affect the other.
+   ------------------------------------------------------------------------- */
+
+.mvprod__media {
+	perspective: 900px;
+}
+
+.mvprod__flip {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: 100%;
+	transform-style: preserve-3d;
+	transition: transform .7s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvprod:hover .mvprod__flip,
+.mvprod:focus-within .mvprod__flip {
+	transform: rotateY(180deg);
+}
+
+.mvprod__face {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+}
+
+.mvprod__face--front {
+	background: var(--mv2-cream);
+	/* Safari needs the front face nudged forward or it can win the z-fight
+	   with the back face and hide the photo. */
+	transform: translateZ(1px);
+}
+
+.mvprod__face--front img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	max-width: none; /* beats a global `img { max-width:100% }` shrinking it */
+}
+
+.mvprod__face--back {
+	transform: rotateY(180deg) translateZ(1px);
+	background: linear-gradient(140deg, var(--mv2-dark) 0%, #2f3d35 100%);
+	color: #f2e6d2;
+}
+
+.mvprod__badge {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	padding: 8px;
+}
+
+.mvprod__crest svg {
+	display: block;
+	width: 26px;
+	height: 34px;
+}
+
+.mvprod__ring {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 38px;
+	height: 38px;
+	border: 1px solid rgba(242, 230, 210, .5);
+	border-radius: 50%;
+	font-family: var(--mv2-serif);
+	font-size: 13px;
+	letter-spacing: .12em;
+	text-indent: .12em; /* balances the tracking on the last letter */
+}
+
+.mvprod__est-year {
+	font-family: var(--mv2-sans);
+	font-size: 9.5px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	opacity: .85;
+}
+
+/* Shown on the FRONT face when an estate has no image yet */
+.mvprod__initials {
+	font-family: var(--mv2-serif);
+	font-size: 40px;
+	letter-spacing: .1em;
+	color: rgba(255, 253, 250, .85);
+	background: linear-gradient(140deg, var(--mv2-dark) 0%, #2f3d35 100%);
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Respect a reduced-motion preference — flip instantly rather than animating. */
+@media (prefers-reduced-motion: reduce) {
+	.mvprod__flip { transition: none; }
+}
+
+.mvprod__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	padding: 20px 22px 22px;
+}
+
+.mvprod__title {
+	margin: 0 0 8px;
+	font-family: var(--mv2-serif);
+	font-size: 22px;
+	font-weight: 400;
+	line-height: 1.25;
+	color: var(--mv2-ink);
+}
+
+.mvprod__title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.mvprod__title a:hover {
+	color: var(--mv2-burgundy);
+}
+
+/* "BORDEAUX, FRANCE" */
+.mvprod__location {
+	margin: 0 0 8px;
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .18em;
+	text-transform: uppercase;
+	color: var(--mv2-gold);
+}
+
+/* "Bordeaux Supérieur" */
+.mvprod__appellations {
+	margin: 0;
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--mv2-ink-soft);
+}
+
+/* "Est. 1868 · family estate" */
+.mvprod__est {
+	margin: 2px 0 0;
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	line-height: 1.5;
+	color: #8a8478;
+}
+
+.mvprod__link {
+	display: inline-block;
+	margin-top: 12px;
+	padding-top: 0;
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .01em;
+	color: var(--mv2-burgundy);
+	text-decoration: none;
+	transition: color .2s ease;
+}
+
+/* Pin the link to the bottom so cards of different text length stay aligned */
+.mvprod__body > .mvprod__link {
+	margin-top: auto;
+	padding-top: 12px;
+}
+
+.mvprod__link span {
+	display: inline-block;
+	transition: transform .22s ease;
+}
+
+.mvprod__link:hover {
+	color: var(--mv2-burgundy);
+}
+
+.mvprod__link:hover span {
+	transform: translateX(4px);
+}
+
+/* --- Producers grid responsive ------------------------------------------- */
+
+@media (max-width: 1024px) {
+	.mvprod-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+	.mvprod__title { font-size: 20px; }
+}
+
+@media (max-width: 640px) {
+	.mvprod-grid       { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+	.mvprod__body      { padding: 16px 16px 18px; }
+	.mvprod__initials  { font-size: 34px; }
+	.producers-page .page-h { margin-bottom: 24px; }
+}
+
+
+/* ==========================================================================
+   4. MY ACCOUNT — RESPONSIVE
+   --------------------------------------------------------------------------
+   Covers both the theme's own templates (woocommerce/myaccount/*) and
+   WooCommerce's core endpoint templates (Orders, Downloads, Addresses,
+   Account details), which the theme does not override.
+   ========================================================================== */
+
+/* --- Never let the account area cause a horizontal page scroll ----------- */
+
+.woocommerce-account .acct,
+.woocommerce-account .woocommerce-MyAccount-content {
+	min-width: 0;   /* lets grid/flex children shrink instead of overflowing */
+}
+
+.woocommerce-account .woocommerce-MyAccount-content img {
+	max-width: 100%;
+	height: auto;
+}
+
+/* --- Layout: sidebar + content stacks on tablet -------------------------- */
+
+@media (max-width: 900px) {
+	.acct {
+		display: block;
+	}
+
+	.acct-nav {
+		margin-bottom: 24px;
+	}
+}
+
+/* --- Account nav becomes a horizontal scroller on mobile ----------------- */
+
+@media (max-width: 900px) {
+	.acct-nav {
+		display: flex;
+		/* the desktop sidebar is a column — force it back to a row */
+		flex-direction: row;
+		flex-wrap: nowrap;
+		gap: 6px;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		padding-bottom: 4px;
+		border-bottom: 1px solid var(--mv2-line);
+	}
+
+	.acct-nav::-webkit-scrollbar {
+		display: none;
+	}
+
+	.acct-nav a {
+		flex: 0 0 auto;
+		white-space: nowrap;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		border-radius: 0;
+		padding: 10px 12px;
+	}
+
+	.acct-nav a.on {
+		border-bottom-color: var(--mv2-gold);
+		background: transparent;
+	}
+
+	.acct-nav a svg {
+		width: 15px;
+		height: 15px;
+		flex: 0 0 auto;
+	}
+}
+
+/* --- Welcome block ------------------------------------------------------- */
+
+@media (max-width: 600px) {
+	.acct-welcome h2 { font-size: 24px; line-height: 1.25; }
+	.acct-welcome p  { font-size: 13px; line-height: 1.6; }
+}
+
+/* --- Stat tiles: 4 → 2 → 1 ---------------------------------------------- */
+
+@media (max-width: 980px) {
+	.astats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 420px) {
+	.astats     { grid-template-columns: 1fr; }
+	.astat      { padding: 14px 16px; }
+	.astat .v   { font-size: 22px; }
+}
+
+/* --- Panels -------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+	.apanel      { padding: 18px 16px; }
+	.apanel-h    { flex-wrap: wrap; gap: 6px; }
+	.apanel-h h3 { font-size: 15px; }
+}
+
+/* --- Tables: horizontal scroll on tablet … ------------------------------- */
+
+.atable-wrap {
+	width: 100%;
+	max-width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+.atable {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+/* --- … and full card-stacking on phones ---------------------------------
+   The data-label attributes come from woocommerce/myaccount/dashboard.php.
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+	.atable-wrap { overflow-x: visible; }
+
+	.atable,
+	.atable thead,
+	.atable tbody,
+	.atable tr,
+	.atable td {
+		display: block;
+		width: 100%;
+	}
+
+	.atable thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.atable tr {
+		border: 1px solid var(--mv2-line);
+		border-radius: 2px;
+		padding: 6px 14px;
+		margin-bottom: 12px;
+		background: var(--mv2-paper);
+	}
+
+	.atable td {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 9px 0;
+		border: 0;
+		border-bottom: 1px solid rgba(226, 217, 204, .6);
+		text-align: right;
+		font-size: 13.5px;
+	}
+
+	.atable tr td:last-child {
+		border-bottom: 0;
+	}
+
+	.atable td[data-label]::before {
+		content: attr(data-label);
+		flex: 0 0 auto;
+		font-family: var(--mv2-sans);
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: .12em;
+		text-transform: uppercase;
+		color: var(--mv2-taupe);
+		text-align: left;
+	}
+
+	/* The action cell has no label — let the link fill the row */
+	.atable td.acell-action {
+		justify-content: flex-end;
+		padding-top: 10px;
+	}
+}
+
+/* --- Addresses ----------------------------------------------------------- */
+
+@media (max-width: 720px) {
+	.addr-grid {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+}
+
+/* ==========================================================================
+   4b. WooCommerce core account templates (not overridden by the theme)
+   ========================================================================== */
+
+/* Orders / Downloads / Order details tables — Woo already outputs
+   data-title on every cell, so the same stacking trick works. */
+
+.woocommerce-account .woocommerce-orders-table,
+.woocommerce-account .woocommerce-table--order-details,
+.woocommerce-account .woocommerce-table--downloads,
+.woocommerce-account .shop_table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+@media (max-width: 720px) {
+	.woocommerce-account .woocommerce-orders-table,
+	.woocommerce-account .woocommerce-table--order-details,
+	.woocommerce-account .woocommerce-table--downloads,
+	.woocommerce-account .shop_table,
+	.woocommerce-account .woocommerce-orders-table tbody,
+	.woocommerce-account .shop_table tbody,
+	.woocommerce-account .woocommerce-orders-table tr,
+	.woocommerce-account .shop_table tr,
+	.woocommerce-account .woocommerce-orders-table td,
+	.woocommerce-account .shop_table td {
+		display: block;
+		width: 100%;
+	}
+
+	.woocommerce-account .woocommerce-orders-table thead,
+	.woocommerce-account .shop_table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.woocommerce-account .woocommerce-orders-table tr,
+	.woocommerce-account .shop_table tr {
+		border: 1px solid var(--mv2-line);
+		border-radius: 2px;
+		padding: 6px 14px;
+		margin-bottom: 12px;
+		background: var(--mv2-paper);
+	}
+
+	.woocommerce-account .woocommerce-orders-table td,
+	.woocommerce-account .shop_table td {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 9px 0;
+		border: 0;
+		border-bottom: 1px solid rgba(226, 217, 204, .6);
+		text-align: right;
+		font-size: 13.5px;
+	}
+
+	.woocommerce-account .woocommerce-orders-table tr td:last-child,
+	.woocommerce-account .shop_table tr td:last-child {
+		border-bottom: 0;
+	}
+
+	.woocommerce-account .woocommerce-orders-table td::before,
+	.woocommerce-account .shop_table td::before {
+		content: attr(data-title);
+		flex: 0 0 auto;
+		font-family: var(--mv2-sans);
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: .12em;
+		text-transform: uppercase;
+		color: var(--mv2-taupe);
+		text-align: left;
+	}
+
+	/* Woo puts several buttons in the last cell — let them wrap */
+	.woocommerce-account .woocommerce-orders-table__cell-order-actions {
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.woocommerce-account .woocommerce-orders-table__cell-order-actions .button {
+		margin: 4px 0 0 6px;
+	}
+}
+
+/* --- Account forms (Addresses / Account details) ------------------------- */
+
+@media (max-width: 720px) {
+	.woocommerce-account .woocommerce-address-fields .form-row,
+	.woocommerce-account .woocommerce-EditAccountForm .form-row,
+	.woocommerce-account .form-row-first,
+	.woocommerce-account .form-row-last {
+		width: 100%;
+		float: none;
+		margin-right: 0;
+	}
+
+	.woocommerce-account .col2-set .col-1,
+	.woocommerce-account .col2-set .col-2 {
+		width: 100%;
+		float: none;
+	}
+
+	.woocommerce-account .woocommerce-MyAccount-content input[type="text"],
+	.woocommerce-account .woocommerce-MyAccount-content input[type="email"],
+	.woocommerce-account .woocommerce-MyAccount-content input[type="tel"],
+	.woocommerce-account .woocommerce-MyAccount-content input[type="password"],
+	.woocommerce-account .woocommerce-MyAccount-content select,
+	.woocommerce-account .woocommerce-MyAccount-content textarea,
+	.woocommerce-account .woocommerce-MyAccount-content .select2-container {
+		width: 100%;
+		max-width: 100%;
+		/* 16px stops iOS Safari zooming in when a field is focused */
+		font-size: 16px;
+	}
+
+	.woocommerce-account .woocommerce-MyAccount-content .button {
+		width: 100%;
+		text-align: center;
+	}
+}
+
+/* --- Login / register on the logged-out account page --------------------- */
+
+@media (max-width: 720px) {
+	.woocommerce-account:not(.logged-in) .u-columns.col2-set {
+		display: block;
+	}
+
+	.woocommerce-account:not(.logged-in) .u-column1,
+	.woocommerce-account:not(.logged-in) .u-column2 {
+		width: 100%;
+		float: none;
+		margin-bottom: 28px;
+	}
+}
+
+
+/* ==========================================================================
+   5. CART  —  woocommerce/cart/cart.php
+   --------------------------------------------------------------------------
+   Values follow the approved prototype (.cart-wrap / .cart-line / .summary).
+   ========================================================================== */
+
+.cart-wrap {
+	display: grid;
+	grid-template-columns: 1fr 360px;
+	gap: 34px;
+	padding-bottom: 70px;
+	align-items: start;
+}
+
+.cart-main { min-width: 0; }
+
+/* --- One basket line ----------------------------------------------------- */
+
+.cart-line {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	padding: 18px 0;
+	border-bottom: 1px solid var(--mv2-line);
+}
+
+.cart-line .thumb {
+	width: 64px;
+	height: 96px;
+	flex: 0 0 auto;
+	background: var(--mv2-paper);
+	border: 1px solid var(--mv2-line);
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.cart-line .thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+}
+
+.cart-line .info { flex: 1 1 auto; min-width: 0; }
+
+.cart-line .info h3 {
+	font-family: var(--mv2-serif);
+	font-size: 17px;
+	font-weight: 400;
+	margin: 0 0 2px;
+	line-height: 1.3;
+}
+
+.cart-line .info h3 a {
+	color: var(--mv2-ink);
+	text-decoration: none;
+}
+
+.cart-line .info h3 a:hover { color: var(--mv2-burgundy); }
+
+.cart-line .info .appel {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	color: var(--mv2-taupe);
+}
+
+.cart-line .unit {
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	color: var(--mv2-taupe);
+	margin-top: 4px;
+}
+
+.cart-line .ln-price {
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	color: var(--mv2-burgundy);
+	min-width: 90px;
+	text-align: right;
+}
+
+.cart-line .rm {
+	background: none;
+	border: 0;
+	color: var(--mv2-taupe);
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	padding: 4px;
+	text-decoration: none;
+}
+
+.cart-line .rm:hover { color: #b23b3b; }
+
+/* Quantity stepper */
+.cart-line .qty,
+.mv-qty {
+	display: flex;
+	align-items: center;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: #fff;
+	flex: 0 0 auto;
+}
+
+.cart-line .qty input,
+.cart-line .quantity input {
+	width: 56px;
+	text-align: center;
+	border: 0;
+	outline: none;
+	background: transparent;
+	font-size: 15px;
+	font-variant-numeric: tabular-nums;
+	padding: 11px 0;
+}
+
+/* --- Coupon / update row -------------------------------------------------- */
+
+.cart-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	padding-top: 18px;
+}
+
+.cart-actions .coupon {
+	display: flex;
+	gap: 8px;
+	flex: 1 1 320px;
+	min-width: 0;
+}
+
+.cart-actions .coupon input {
+	flex: 1 1 auto;
+	min-width: 0;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--mv2-paper);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+}
+
+.cart-actions .coupon input:focus {
+	outline: none;
+	border-color: var(--mv2-burgundy);
+}
+
+.cart-continue { padding-top: 18px; }
+
+/* --- Order summary aside -------------------------------------------------- */
+
+.summary {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 22px 24px;
+	align-self: start;
+	position: sticky;
+	top: 90px;
+}
+
+.summary h3 {
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	font-weight: 400;
+	margin: 0 0 16px;
+}
+
+.summary .s-row,
+.summary .shipping th,
+.summary .shipping td {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 8px 0;
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	color: var(--mv2-ink-soft);
+}
+
+.summary .s-row.total {
+	border-top: 1px solid var(--mv2-line);
+	margin-top: 8px;
+	padding-top: 14px;
+	font-family: var(--mv2-serif);
+	font-size: 22px;
+	color: var(--mv2-ink);
+}
+
+.summary .note {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	color: var(--mv2-taupe);
+	margin: 14px 0 0;
+	line-height: 1.6;
+}
+
+.summary-cta { margin-top: 16px; }
+
+/* WooCommerce renders the checkout button through a hook — make it full width
+   and on-brand whichever markup it uses. */
+.summary-cta .checkout-button,
+.summary-cta .button,
+.summary-cta .btn {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+/* WooCommerce's shipping-method rows inside the summary */
+.summary .woocommerce-shipping-totals ul,
+.summary #shipping_method {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	font-size: 13.5px;
+}
+
+.summary .woocommerce-shipping-destination {
+	font-size: 12px;
+	color: var(--mv2-taupe);
+}
+
+/* --- Empty basket --------------------------------------------------------- */
+
+.cart-empty-panel {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 40px 34px;
+	text-align: center;
+	max-width: 560px;
+	margin: 0 auto 70px;
+}
+
+.cart-empty-msg {
+	font-family: var(--mv2-serif);
+	font-size: 21px;
+	margin: 0 0 8px;
+	color: var(--mv2-ink);
+}
+
+.cart-empty-panel .note {
+	font-size: 13px;
+	color: var(--mv2-taupe);
+	margin: 0 0 20px;
+	line-height: 1.6;
+}
+
+/* --- Cart responsive ------------------------------------------------------ */
+
+@media (max-width: 980px) {
+	.cart-wrap { grid-template-columns: 1fr; gap: 26px; }
+	.summary   { position: static; }
+}
+
+@media (max-width: 620px) {
+	.cart-line {
+		display: grid;
+		grid-template-columns: 64px 1fr auto;
+		grid-template-areas:
+			"thumb info   rm"
+			"thumb qty    price";
+		gap: 10px 14px;
+		align-items: center;
+	}
+
+	.cart-line .thumb    { grid-area: thumb; align-self: start; }
+	.cart-line .info     { grid-area: info; }
+	.cart-line .qty      { grid-area: qty; justify-self: start; }
+	.cart-line .ln-price { grid-area: price; text-align: right; min-width: 0; }
+	.cart-line .rm       { grid-area: rm; justify-self: end; align-self: start; }
+
+	.cart-actions .coupon { flex: 1 1 100%; }
+	.cart-actions .btn    { width: 100%; }
+}
+
+
+/* ==========================================================================
+   6. CHECKOUT  —  woocommerce/checkout/form-checkout.php
+   ========================================================================== */
+
+.co-wrap {
+	display: grid;
+	grid-template-columns: 1fr 380px;
+	gap: 34px;
+	padding-bottom: 70px;
+	align-items: start;
+}
+
+.co-main,
+.co-aside { min-width: 0; }
+
+.co-sec {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 24px 26px;
+	margin-bottom: 20px;
+}
+
+.co-sec h3 {
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	font-weight: 400;
+	margin: 0 0 16px;
+}
+
+/* --- WooCommerce's own checkout fields, restyled to the design ------------ */
+
+.co-sec .form-row {
+	display: block;
+	margin: 0 0 16px;
+	padding: 0;
+}
+
+/* Two-up rows, matching the prototype's .grid2 */
+.co-sec .form-row-first,
+.co-sec .form-row-last {
+	width: calc(50% - 7px);
+	float: none;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.co-sec .form-row-first { margin-right: 10px; }
+
+.co-sec label {
+	display: block;
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+	margin-bottom: 6px;
+}
+
+/* Checkbox labels stay sentence-case and sit beside their box */
+.co-sec label.checkbox,
+.co-sec .woocommerce-form__label-for-checkbox {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	font-size: 13.5px;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--mv2-ink-soft);
+}
+
+.co-sec input[type="text"],
+.co-sec input[type="email"],
+.co-sec input[type="tel"],
+.co-sec input[type="password"],
+.co-sec input[type="date"],
+.co-sec input[type="number"],
+.co-sec textarea,
+.co-sec select,
+.co-sec .select2-container .select2-selection {
+	width: 100%;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--mv2-paper);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+	line-height: 1.4;
+}
+
+.co-sec textarea { min-height: 96px; resize: vertical; }
+
+.co-sec input:focus,
+.co-sec textarea:focus,
+.co-sec select:focus {
+	outline: none;
+	border-color: var(--mv2-burgundy);
+}
+
+.co-sec input[type="checkbox"],
+.co-sec input[type="radio"] {
+	width: auto;
+	accent-color: var(--mv2-burgundy);
+}
+
+.co-sec .required { color: var(--mv2-burgundy); border: 0; }
+
+/* --- Order review table --------------------------------------------------- */
+
+.co-aside .shop_table {
+	width: 100%;
+	border-collapse: collapse;
+	font-family: var(--mv2-sans);
+}
+
+.co-aside .shop_table th,
+.co-aside .shop_table td {
+	padding: 9px 0;
+	border-bottom: 1px solid var(--mv2-line);
+	font-size: 13.5px;
+	font-weight: 400;
+	text-align: left;
+	color: var(--mv2-ink-soft);
+}
+
+.co-aside .shop_table td { text-align: right; }
+
+.co-aside .shop_table thead th {
+	font-size: 10px;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+}
+
+.co-aside .shop_table .order-total th,
+.co-aside .shop_table .order-total td {
+	border-bottom: 0;
+	padding-top: 14px;
+	font-family: var(--mv2-serif);
+	font-size: 19px;
+	color: var(--mv2-ink);
+}
+
+/* --- Payment methods, styled as the design's .pay rows -------------------- */
+
+#payment ul.wc_payment_methods {
+	list-style: none;
+	margin: 0 0 14px;
+	padding: 0;
+}
+
+#payment ul.wc_payment_methods li {
+	display: block;
+	border: 1px solid var(--mv2-line);
+	border-radius: 6px;
+	padding: 14px 16px;
+	margin-bottom: 10px;
+	cursor: pointer;
+}
+
+#payment ul.wc_payment_methods li:has(input:checked) {
+	border-color: var(--mv2-burgundy);
+	background: rgba(110, 30, 42, .03);
+}
+
+#payment ul.wc_payment_methods li label {
+	display: inline;
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--mv2-ink);
+	margin: 0;
+}
+
+#payment .payment_box {
+	background: transparent;
+	color: var(--mv2-taupe);
+	font-size: 12.5px;
+	line-height: 1.6;
+	margin: 6px 0 0;
+	padding: 0;
+}
+
+#payment .payment_box::before { display: none; }
+
+#payment .woocommerce-terms-and-conditions-wrapper {
+	display: flex;
+	gap: 9px;
+	align-items: flex-start;
+	font-size: 13px;
+	color: var(--mv2-ink-soft);
+	margin: 14px 0 18px;
+}
+
+#payment .form-row.place-order { margin: 0; }
+
+#payment #place_order {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+/* --- Checkout responsive -------------------------------------------------- */
+
+@media (max-width: 980px) {
+	.co-wrap { grid-template-columns: 1fr; gap: 26px; }
+}
+
+@media (max-width: 620px) {
+	.co-sec { padding: 20px 18px; }
+
+	.co-sec .form-row-first,
+	.co-sec .form-row-last {
+		width: 100%;
+		display: block;
+		margin-right: 0;
+	}
+
+	/* 16px stops iOS Safari zooming when a field is focused */
+	.co-sec input,
+	.co-sec select,
+	.co-sec textarea { font-size: 16px; }
+}
+
+
+/* ==========================================================================
+   7. LOGIN  —  woocommerce/myaccount/form-login.php
+   ========================================================================== */
+
+.page-h--center {
+	text-align: center;
+	padding-top: 36px;
+	max-width: 700px;
+	margin: 0 auto;
+}
+
+.login-lede {
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	color: var(--mv2-ink-soft);
+	margin: 8px 0 0;
+	line-height: 1.5;
+}
+
+.auth {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 30px;
+	max-width: 940px;
+	margin: 40px auto 80px;
+	align-items: start;
+}
+
+.auth-card {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	padding: 36px 34px;
+}
+
+.auth-card h2 {
+	font-family: var(--mv2-serif);
+	font-size: 26px;
+	font-weight: 400;
+	margin: 0 0 6px;
+	color: var(--mv2-ink);
+}
+
+.auth-card .sub {
+	font-family: var(--mv2-sans);
+	color: var(--mv2-taupe);
+	font-size: 13.5px;
+	margin: 0 0 24px;
+}
+
+.auth-alt {
+	background: var(--mv2-panel);
+	border: 1px solid var(--mv2-line);
+}
+
+.auth-card .field { margin-bottom: 16px; }
+
+.auth-card .field label {
+	display: block;
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+	margin-bottom: 6px;
+}
+
+.auth-card .field input {
+	width: 100%;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--mv2-paper);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+}
+
+.auth-card .field input:focus {
+	outline: none;
+	border-color: var(--mv2-burgundy);
+}
+
+.auth-card .required { color: var(--mv2-burgundy); border: 0; }
+
+/* "Remember me" + "Forgot password?" row */
+.auth-card .rowbtwn {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 14px;
+	flex-wrap: wrap;
+	margin: 4px 0 18px;
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+}
+
+.auth-card .rowbtwn label {
+	display: flex;
+	gap: 7px;
+	align-items: center;
+	color: var(--mv2-ink-soft);
+	text-transform: none;
+	letter-spacing: 0;
+	font-size: 13px;
+	margin: 0;
+}
+
+.auth-card .rowbtwn input[type="checkbox"] { accent-color: var(--mv2-burgundy); }
+
+.auth-card .rowbtwn a {
+	color: var(--mv2-burgundy);
+	text-decoration: none;
+}
+
+.auth-card .rowbtwn a:hover { text-decoration: underline; }
+
+/* Benefits list — the tick is drawn in CSS, no icon font needed */
+.checklist {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 22px;
+}
+
+.checklist li {
+	display: flex;
+	gap: 10px;
+	font-family: var(--mv2-sans);
+	font-size: 13.5px;
+	line-height: 1.5;
+	color: var(--mv2-ink-soft);
+	padding: 6px 0;
+}
+
+.checklist li::before {
+	content: "";
+	flex: 0 0 auto;
+	width: 15px;
+	height: 8px;
+	margin-top: 5px;
+	border-left: 2px solid #2e7d5b;
+	border-bottom: 2px solid #2e7d5b;
+	transform: rotate(-45deg);
+}
+
+.auth-note {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	color: var(--mv2-taupe);
+	margin-top: 14px;
+	line-height: 1.6;
+}
+
+/* --- Login responsive ------------------------------------------------------ */
+
+@media (max-width: 860px) {
+	.auth { grid-template-columns: 1fr; gap: 22px; margin: 30px auto 60px; }
+}
+
+@media (max-width: 620px) {
+	.auth-card { padding: 26px 20px; }
+	.auth-card h2 { font-size: 23px; }
+	.auth-card .field input { font-size: 16px; }
+	.page-h--center { padding-top: 24px; }
+}
+
+
+/* ==========================================================================
+   8. SINGLE PRODUCER  —  single-producer.php
+   ========================================================================== */
+
+/* --- Estate header -------------------------------------------------------- */
+
+.mvest-hero {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 44px;
+	align-items: center;
+	padding: 8px 0 56px;
+}
+
+.mvest-hero__content { min-width: 0; }
+
+.mvest-hero__title {
+	font-family: var(--mv2-serif);
+	font-size: clamp(30px, 4vw, 46px);
+	font-weight: 400;
+	line-height: 1.1;
+	margin: 6px 0 8px;
+	color: var(--mv2-ink);
+}
+
+.mvest-hero__location {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	color: var(--mv2-gold);
+	margin: 0 0 22px;
+}
+
+.mvest-hero__intro {
+	font-family: var(--mv2-sans);
+	font-size: 14.5px;
+	line-height: 1.75;
+	color: var(--mv2-ink-soft);
+	margin-bottom: 26px;
+}
+
+.mvest-hero__intro p { margin: 0 0 1em; }
+.mvest-hero__intro p:last-child { margin-bottom: 0; }
+
+.mvest-hero__media {
+	margin: 0;
+	border-radius: 12px;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	/* The figure needs its own height: the grid is align-items:center, so
+	   without this it collapses to the image's intrinsic height (or to nothing
+	   at all while the image is still loading). */
+	aspect-ratio: 4 / 3;
+}
+
+.mvest-hero__media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* --- Facts row ------------------------------------------------------------ */
+
+.mvest-facts {
+	list-style: none;
+	margin: 0 0 26px;
+	padding: 18px 0;
+	border-top: 1px solid var(--mv2-line);
+	border-bottom: 1px solid var(--mv2-line);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px 38px;
+}
+
+.mvest-facts li {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.mvest-facts span {
+	font-family: var(--mv2-sans);
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: .14em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+}
+
+.mvest-facts b {
+	font-family: var(--mv2-serif);
+	font-size: 17px;
+	font-weight: 400;
+	color: var(--mv2-ink);
+}
+
+/* --- Story ---------------------------------------------------------------- */
+
+.mvest-story {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 34px 44px;
+	padding-bottom: 56px;
+}
+
+.mvest-story__block h2,
+.mvest-gallery h2,
+.mvest-wines h2 {
+	font-family: var(--mv2-serif);
+	font-size: 24px;
+	font-weight: 400;
+	margin: 0 0 12px;
+	color: var(--mv2-ink);
+}
+
+.mvest-story__body {
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	line-height: 1.75;
+	color: var(--mv2-ink-soft);
+}
+
+.mvest-story__body p { margin: 0 0 1em; }
+.mvest-story__body p:last-child { margin-bottom: 0; }
+
+/* --- Gallery -------------------------------------------------------------- */
+
+.mvest-gallery { padding-bottom: 56px; }
+
+.mvest-gallery__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 18px;
+}
+
+.mvest-gallery__grid figure {
+	margin: 0;
+	border-radius: 8px;
+	overflow: hidden;
+	background: var(--mv2-cream);
+	aspect-ratio: 4 / 3;
+}
+
+.mvest-gallery__grid img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform .6s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvest-gallery__grid figure:hover img { transform: scale(1.045); }
+
+/* --- Wines from this estate ----------------------------------------------- */
+
+.mvest-wines { padding-bottom: 70px; }
+
+.mvest-wines .section__head--split {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-bottom: 20px;
+}
+
+.mvest-wines .pgrid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 24px;
+}
+
+/* --- Single producer responsive ------------------------------------------- */
+
+@media (max-width: 980px) {
+	.mvest-hero {
+		grid-template-columns: 1fr;
+		gap: 28px;
+		padding-bottom: 40px;
+	}
+
+	/* Photo above the copy reads better once stacked */
+	.mvest-hero__media { order: -1; aspect-ratio: 16 / 9; }
+
+	.mvest-story          { grid-template-columns: 1fr; gap: 26px; }
+	.mvest-wines .pgrid   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+	.mvest-facts          { gap: 14px 26px; }
+	.mvest-gallery__grid  { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+	.mvest-wines .pgrid   { grid-template-columns: minmax(0, 1fr); }
+	.mvest-hero .btn      { width: 100%; }
+}
+
+
+/* ==========================================================================
+   9. HEADER DROPDOWNS  —  header.php
+   --------------------------------------------------------------------------
+   WordPress nests child menu items in `<ul class="sub-menu">`. With no CSS for
+   that, the children just render as more list items in the same row — which is
+   why sub-items appeared inline next to their parent. These rules take the
+   sub-menu out of flow and show it on hover / keyboard focus.
+   ========================================================================== */
+
+.mv-nav {
+	display: flex;
+	align-items: center;
+	gap: 26px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+/* The anchor for the absolutely-positioned dropdown */
+.mv-nav > li {
+	position: relative;
+}
+
+.mv-nav a {
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+/* --- Caret on parents ----------------------------------------------------- */
+
+.mv-nav > li.menu-item-has-children > a::after {
+	content: "";
+	display: inline-block;
+	width: .38em;
+	height: .38em;
+	margin-left: .5em;
+	vertical-align: .12em;
+	border-right: 1px solid currentColor;
+	border-bottom: 1px solid currentColor;
+	transform: rotate(45deg);
+	transition: transform .2s ease;
+}
+
+.mv-nav > li.menu-item-has-children:hover > a::after {
+	transform: rotate(225deg);
+}
+
+/* --- The dropdown --------------------------------------------------------- */
+
+.mv-nav .sub-menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 200;
+	min-width: 220px;
+	/* The base sets `.mv-nav ul { display:flex }`, which laid sub-menu items
+	   out in a ROW — the reported "goes inline with the parent". Stack them. */
+	display: block;
+	margin: 0;
+	padding: 8px 0;
+	list-style: none;
+	background: var(--mv2-paper, #fffdfa);
+	border: 1px solid var(--mv2-line);
+	border-radius: 4px;
+	box-shadow: 0 20px 44px -24px rgba(20, 26, 22, .55);
+
+	/* Hidden but still hit-testable-free: opacity+visibility keeps the
+	   transition, and pointer-events stops it swallowing clicks while hidden. */
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	transform: translateY(6px);
+	transition: opacity .18s ease, transform .18s ease, visibility .18s;
+}
+
+/* A small invisible bridge so the menu doesn't close in the gap between the
+   parent item and the dropdown. */
+.mv-nav > li.menu-item-has-children::after {
+	content: "";
+	position: absolute;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	height: 14px;
+}
+
+.mv-nav li:hover > .sub-menu,
+.mv-nav li:focus-within > .sub-menu {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transform: translateY(0);
+}
+
+.mv-nav .sub-menu li {
+	list-style: none;
+	margin: 0;
+}
+
+.mv-nav .sub-menu a {
+	display: block;
+	padding: 9px 18px;
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+	line-height: 1.4;
+	color: var(--mv2-ink-soft);
+	transition: background .18s ease, color .18s ease;
+}
+
+.mv-nav .sub-menu a:hover,
+.mv-nav .sub-menu a:focus-visible {
+	background: var(--mv2-cream);
+	color: var(--mv2-burgundy);
+}
+
+/* --- Third level, if a menu ever goes that deep --------------------------- */
+
+.mv-nav .sub-menu .sub-menu {
+	top: -9px;
+	left: 100%;
+	transform: translateX(6px);
+}
+
+.mv-nav .sub-menu li:hover > .sub-menu,
+.mv-nav .sub-menu li:focus-within > .sub-menu {
+	transform: translateX(0);
+}
+
+/* Flip the dropdown back inside the viewport for the last item or two */
+.mv-nav > li:last-child .sub-menu,
+.mv-nav > li:nth-last-child(2) .sub-menu {
+	left: auto;
+	right: 0;
+}
+
+.mv-nav > li:last-child .sub-menu .sub-menu,
+.mv-nav > li:nth-last-child(2) .sub-menu .sub-menu {
+	left: auto;
+	right: 100%;
+	transform: translateX(-6px);
+}
+
+/* --- Mobile nav ------------------------------------------------------------
+   In the slide-down panel there's no room to float a dropdown, so children
+   become a normal indented list that's always open.
+   ------------------------------------------------------------------------- */
+
+.mv-nav--mobile {
+	display: block;
+}
+
+.mv-nav--mobile > li {
+	position: static;
+}
+
+.mv-nav--mobile > li.menu-item-has-children > a::after {
+	display: none;
+}
+
+.mv-nav--mobile > li.menu-item-has-children::after {
+	display: none;
+}
+
+/* Parent row: link on the left, caret button on the right. The caret is
+   injected by assets/js/main.js — there is no hover on touch, so the sub-menu
+   needs a real tap target rather than a :hover rule. */
+.mv-nav--mobile > li.menu-item-has-children {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.mv-nav--mobile > li.menu-item-has-children > a {
+	flex: 1 1 auto;
+}
+
+.mv-subnav-toggle {
+	flex: 0 0 auto;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	position: relative;
+}
+
+.mv-subnav-toggle::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 8px;
+	height: 8px;
+	margin: -6px 0 0 -4px;
+	border-right: 1.5px solid var(--mv2-gold);
+	border-bottom: 1.5px solid var(--mv2-gold);
+	transform: rotate(45deg);
+	transition: transform .22s ease;
+}
+
+.mv-nav--mobile > li.is-open > .mv-subnav-toggle::before {
+	transform: rotate(225deg);
+	margin-top: -2px;
+}
+
+.mv-nav--mobile .sub-menu {
+	position: static;
+	flex: 1 1 100%;
+	min-width: 0;
+	margin: 0;
+	padding: 0 0 0 16px;
+	border: 0;
+	border-left: 1px solid rgba(214, 206, 193, .35);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	transform: none;
+	pointer-events: auto;
+
+	/* Closed by default; the caret opens it. */
+	display: block;
+	opacity: 0;
+	visibility: hidden;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height .28s ease, opacity .2s ease;
+}
+
+.mv-nav--mobile > li.is-open > .sub-menu {
+	opacity: 1;
+	visibility: visible;
+	max-height: 60vh;
+	overflow: auto;
+	margin: 6px 0 4px;
+}
+
+.mv-nav--mobile .sub-menu a {
+	padding: 8px 0;
+	font-size: 13px;
+	/* The desktop dropdown sits on a white panel; this one sits on the dark
+	   header, so it needs the same light colour as the parent nav links. */
+	color: var(--mv-panel, #e9e2d6);
+	background: transparent;
+}
+
+.mv-nav--mobile .sub-menu a:hover,
+.mv-nav--mobile .sub-menu a:focus-visible {
+	background: transparent;
+	color: var(--mv2-gold);
+}
+
+/* Below the header breakpoint the desktop nav is hidden anyway, but if the
+   theme keeps it visible, stop the dropdown escaping the screen. */
+@media (max-width: 900px) {
+	.mv-nav {
+		gap: 16px;
+	}
+}
+
+
+/* ==========================================================================
+   10. LOGIN PAGE — WooCommerce default overrides
+   --------------------------------------------------------------------------
+   woocommerce.css styles the login/register FORMS themselves:
+
+       .woocommerce form.login,
+       .woocommerce form.register {
+           border: 1px solid #d3ced2; padding: 20px;
+           margin: 2em 0; border-radius: 5px;
+       }
+
+   The form sits inside .auth-card, so that painted a second grey rounded box
+   inside each card, pushed everything down by 2em and broke the layout. These
+   rules strip it back so the card itself is the only panel.
+   ========================================================================== */
+
+.auth-card form.login,
+.auth-card form.register,
+.woocommerce .auth-card form.login,
+.woocommerce .auth-card form.register,
+.woocommerce-page .auth-card form.login,
+.woocommerce-page .auth-card form.register {
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+	margin: 0;
+	background: transparent;
+}
+
+/* WooCommerce's .form-row wrapper spacing, if a hooked plugin adds fields */
+.auth-card .form-row,
+.woocommerce .auth-card .form-row {
+	padding: 0;
+	margin: 0 0 16px;
+}
+
+.auth-card .form-row label,
+.woocommerce .auth-card .form-row label {
+	display: block;
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--mv2-taupe);
+	margin-bottom: 6px;
+	line-height: 1.4;
+}
+
+.auth-card .form-row input[type="text"],
+.auth-card .form-row input[type="email"],
+.auth-card .form-row input[type="password"],
+.woocommerce .auth-card .form-row input.input-text {
+	width: 100%;
+	border: 1px solid var(--mv2-line);
+	border-radius: 3px;
+	background: var(--mv2-paper);
+	padding: 12px 14px;
+	font-size: 14px;
+	font-family: var(--mv2-sans);
+	color: var(--mv2-ink);
+	box-shadow: none;
+}
+
+/* The submit buttons carry .btn .btn-p / .btn-o already — stop WooCommerce's
+   grey `.button` skin winning if a plugin adds that class too. */
+.auth-card .btn,
+.woocommerce .auth-card .btn,
+.woocommerce .auth-card button.button,
+.woocommerce .auth-card input.button {
+	width: 100%;
+	border-radius: 2px;
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	font-weight: 600;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	padding: 13px 22px;
+	line-height: 1.2;
+}
+
+.auth-card .btn-p,
+.woocommerce .auth-card button.button {
+	background: var(--mv2-burgundy);
+	color: #f6ebdd;
+	border: 1px solid var(--mv2-burgundy);
+}
+
+.auth-card .btn-p:hover,
+.woocommerce .auth-card button.button:hover {
+	background: var(--mv2-burg-br);
+	border-color: var(--mv2-burg-br);
+	color: #f6ebdd;
+}
+
+.auth-card .btn-o {
+	background: transparent;
+	border: 1px solid var(--mv2-burgundy);
+	color: var(--mv2-burgundy);
+}
+
+.auth-card .btn-o:hover {
+	background: var(--mv2-burgundy);
+	color: #f6ebdd;
+}
+
+/* WooCommerce's notice block sits above the cards — give it room */
+.login-page .woocommerce-notices-wrapper:not(:empty) {
+	max-width: 940px;
+	margin: 0 auto 20px;
+}
+
+/* Never let the two-card grid overflow its container */
+.auth,
+.auth-card {
+	min-width: 0;
+}
+
+.auth-card form {
+	min-width: 0;
+}
+
+
+/* ==========================================================================
+   11. EDITORIAL PAGES  —  shared primitives
+   --------------------------------------------------------------------------
+   Used by Our Story, For the Trade, FAQ, Contact, the Journal archive and
+   single journal entries. Class names are prefixed .mvp-* so nothing here can
+   collide with the theme, WooCommerce or Elementor.
+
+   Colours and fonts come from the site's own --mv-* brand variables via the
+   --mv2-* aliases in section 1 — nothing here hard-codes a brand colour.
+   ========================================================================== */
+
+/* --- Dark page banner ----------------------------------------------------- */
+
+.mvp-hero {
+	background: var(--mv2-dark);
+	color: var(--mv2-chalk);
+	text-align: center;
+	padding: 64px 0 68px;
+}
+
+.mvp-hero .eyebrow {
+	color: var(--mv2-gold);
+	justify-content: center;
+}
+
+.mvp-hero h1 {
+	font-family: var(--mv2-serif);
+	font-weight: 400;
+	font-size: clamp(32px, 5.4vw, 58px);
+	line-height: 1.12;
+	margin: 0;
+	color: var(--mv2-chalk);
+}
+
+.mvp-hero__intro {
+	font-family: var(--mv2-sans);
+	max-width: 60ch;
+	margin: 18px auto 0;
+	font-size: 16px;
+	line-height: 1.7;
+	color: #cdd4cc;
+}
+
+.mvp-hero__intro a {
+	color: var(--mv2-gold);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* --- Section shells ------------------------------------------------------- */
+
+.mvp-sec--panel {
+	background: var(--mv2-paper);
+}
+
+.mvp-sec--cta {
+	text-align: center;
+}
+
+.mvp-sec__title {
+	font-family: var(--mv2-serif);
+	font-weight: 400;
+	font-size: clamp(26px, 3.4vw, 34px);
+	line-height: 1.2;
+	text-align: center;
+	margin: 0 0 40px;
+	color: var(--mv2-ink);
+}
+
+/* --- Prose ---------------------------------------------------------------- */
+
+.mvp-prose {
+	max-width: 760px;
+	margin: 0 auto;
+	font-family: var(--mv2-sans);
+}
+
+.mvp-prose--center,
+.mvp-sec .mvp-prose {
+	text-align: center;
+}
+
+.mvp-prose p {
+	margin: 0 0 18px;
+	font-size: 16px;
+	line-height: 1.75;
+	color: var(--mv2-ink-soft);
+}
+
+.mvp-prose p:last-child {
+	margin-bottom: 0;
+}
+
+.mvp-lead {
+	font-family: var(--mv2-serif);
+	font-size: clamp(20px, 2.4vw, 28px);
+	line-height: 1.5;
+	color: var(--mv2-ink-soft);
+	margin: 0 0 22px;
+}
+
+/* --- Three-up cards ------------------------------------------------------- */
+
+.mvp-cols3 {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 26px;
+	align-items: stretch;
+}
+
+.mvp-card {
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: var(--mv2-radius);
+	padding: 26px 24px;
+	box-shadow: var(--mv2-shadow);
+}
+
+.mvp-card__n {
+	font-family: var(--mv2-serif);
+	font-size: 15px;
+	letter-spacing: .1em;
+	color: var(--mv2-gold);
+	margin-bottom: 12px;
+}
+
+.mvp-card h3 {
+	font-family: var(--mv2-serif);
+	font-weight: 400;
+	font-size: 22px;
+	line-height: 1.25;
+	margin: 0 0 8px;
+	color: var(--mv2-ink);
+}
+
+.mvp-card p {
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	line-height: 1.7;
+	color: var(--mv2-ink-soft);
+	margin: 8px 0 0;
+}
+
+/* --- Button row ----------------------------------------------------------- */
+
+.mvp-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	justify-content: center;
+	margin-top: 44px;
+}
+
+/* Outline button on a light background — the theme's own .btn--outline is
+   built for dark sections, so this is the light-background counterpart. */
+.mvp-btn-ghost {
+	background: transparent;
+	border: 1px solid var(--mv2-burgundy);
+	color: var(--mv2-burgundy);
+}
+
+.mvp-btn-ghost:hover,
+.mvp-btn-ghost:focus-visible {
+	background: var(--mv2-burgundy);
+	color: var(--mv2-chalk);
+}
+
+/* --- Shared responsive ---------------------------------------------------- */
+
+@media (max-width: 900px) {
+	.mvp-cols3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+	.mvp-hero  { padding: 48px 0 52px; }
+}
+
+@media (max-width: 640px) {
+	.mvp-cols3   { grid-template-columns: minmax(0, 1fr); }
+	.mvp-card    { padding: 22px 20px; }
+	.mvp-actions { flex-direction: column; align-items: stretch; }
+	.mvp-actions .btn { text-align: center; justify-content: center; }
+	.mvp-sec__title { margin-bottom: 28px; }
+}
+
+
+/* ==========================================================================
+   12. FAQ  —  template-faq.php
+   --------------------------------------------------------------------------
+   Native <details>/<summary>, so the accordion needs no JavaScript.
+   ========================================================================== */
+
+.mvp-faq {
+	max-width: 820px;
+	margin: 0 auto;
+}
+
+.mvp-faq__grp {
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .2em;
+	text-transform: uppercase;
+	color: var(--mv2-gold);
+	margin: 36px 0 4px;
+}
+
+.mvp-faq__grp:first-child {
+	margin-top: 0;
+}
+
+.mvp-faq details {
+	border-bottom: 1px solid var(--mv2-line);
+	padding: 6px 0;
+}
+
+.mvp-faq summary {
+	list-style: none;
+	cursor: pointer;
+	padding: 16px 0;
+	font-family: var(--mv2-serif);
+	font-size: 20px;
+	line-height: 1.35;
+	color: var(--mv2-ink);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+}
+
+.mvp-faq summary::-webkit-details-marker { display: none; }
+.mvp-faq summary::marker { content: ""; }
+
+.mvp-faq summary::after {
+	content: "+";
+	flex: 0 0 auto;
+	font-family: var(--mv2-sans);
+	font-size: 24px;
+	line-height: 1;
+	color: var(--mv2-gold);
+}
+
+.mvp-faq details[open] summary::after {
+	content: "\2013"; /* en dash */
+}
+
+.mvp-faq summary:focus-visible {
+	outline: 2px solid var(--mv2-gold);
+	outline-offset: 3px;
+}
+
+.mvp-faq__a {
+	font-family: var(--mv2-sans);
+	max-width: 70ch;
+	padding-bottom: 8px;
+}
+
+.mvp-faq__a p {
+	margin: 0 0 16px;
+	font-size: 15px;
+	line-height: 1.75;
+	color: var(--mv2-ink-soft);
+}
+
+@media (max-width: 640px) {
+	.mvp-faq summary { font-size: 17px; padding: 14px 0; }
+}
+
+
+/* ==========================================================================
+   13. CONTACT  —  template-contact.php
+   ========================================================================== */
+
+.mvp-split {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 44px;
+	align-items: start;
+}
+
+.mvp-split__info { min-width: 0; }
+
+.mvp-info-row {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 18px;
+	font-family: var(--mv2-sans);
+	font-size: 15px;
+	color: var(--mv2-ink);
+}
+
+.mvp-info-row__k {
+	flex: 0 0 auto;
+	min-width: 92px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+	color: var(--mv2-gold);
+	padding-top: 3px;
+}
+
+.mvp-info-row__v { min-width: 0; word-break: break-word; }
+
+.mvp-info-row a {
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 1px solid var(--mv2-line);
+}
+
+.mvp-info-row a:hover { color: var(--mv2-burgundy); }
+
+.mvp-split__note {
+	font-family: var(--mv2-sans);
+	font-size: 15px;
+	line-height: 1.7;
+	color: var(--mv2-ink-soft);
+	margin: 20px 0;
+}
+
+/* --- The enquiry form ----------------------------------------------------- */
+
+.mvp-form__title {
+	font-family: var(--mv2-serif);
+	font-weight: 400;
+	font-size: 24px;
+	margin: 0 0 18px;
+	color: var(--mv2-ink);
+}
+
+.mvp-field { margin-bottom: 16px; }
+
+.mvp-field label {
+	display: block;
+	font-family: var(--mv2-sans);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--mv2-ink-soft);
+	margin-bottom: 6px;
+}
+
+.mvp-field input,
+.mvp-field textarea {
+	width: 100%;
+	padding: 12px 14px;
+	border: 1px solid var(--mv2-line);
+	border-radius: 8px;
+	background: #fff;
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	color: var(--mv2-ink);
+	line-height: 1.5;
+}
+
+.mvp-field textarea { resize: vertical; min-height: 110px; }
+
+.mvp-field input:focus,
+.mvp-field textarea:focus {
+	outline: none;
+	border-color: var(--mv2-gold);
+}
+
+.mvp-form__submit {
+	width: 100%;
+	text-align: center;
+	border: 0;
+	cursor: pointer;
+}
+
+/* Honeypot — hidden from people, still reachable by bots */
+.mvp-hp {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.mvp-form__msg {
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	line-height: 1.6;
+	padding: 12px 14px;
+	border-radius: 8px;
+	margin: 0 0 18px;
+}
+
+.mvp-form__msg.is-ok {
+	background: var(--mv2-ok-bg);
+	color: var(--mv2-ok-ink);
+}
+
+.mvp-form__msg.is-error {
+	background: #f3e3e3;
+	color: #8c3b3b;
+}
+
+@media (max-width: 900px) {
+	.mvp-split { grid-template-columns: 1fr; gap: 30px; }
+}
+
+@media (max-width: 640px) {
+	.mvp-info-row     { flex-direction: column; gap: 2px; margin-bottom: 16px; }
+	.mvp-info-row__k  { padding-top: 0; }
+	/* 16px stops iOS Safari zooming when a field is focused */
+	.mvp-field input,
+	.mvp-field textarea { font-size: 16px; }
+}
+
+
+/* ==========================================================================
+   14. JOURNAL  —  archive-journal.php + single-journal.php
+   ========================================================================== */
+
+.mvp-grid3 {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 26px;
+	align-items: stretch;
+}
+
+.mvp-jcard {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: #fff;
+	border: 1px solid var(--mv2-line);
+	border-radius: var(--mv2-radius);
+	overflow: hidden;
+	box-shadow: var(--mv2-shadow);
+	text-decoration: none;
+	color: inherit;
+	transition: transform .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s ease, border-color .35s ease;
+}
+
+.mvp-jcard:hover {
+	transform: translateY(-4px);
+	border-color: var(--mv2-gold);
+	box-shadow: 0 24px 48px -26px rgba(43, 36, 32, .55);
+}
+
+.mvp-jcard__img {
+	height: 180px;
+	flex: 0 0 180px;
+	background-size: cover;
+	background-position: center;
+	background-color: var(--mv2-cream);
+}
+
+/* No featured image yet — a quiet brand-coloured band rather than a grey gap */
+.mvp-jcard__img.is-empty {
+	background-image: linear-gradient(140deg, var(--mv2-dark) 0%, #2f3d35 100%);
+}
+
+.mvp-jcard__body {
+	padding: 20px 22px 22px;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+}
+
+.mvp-jcard__cat {
+	font-family: var(--mv2-sans);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .18em;
+	text-transform: uppercase;
+	color: var(--mv2-gold);
+	margin-bottom: 8px;
+}
+
+.mvp-jcard h3 {
+	font-family: var(--mv2-serif);
+	font-weight: 400;
+	font-size: 22px;
+	line-height: 1.25;
+	margin: 0 0 8px;
+	color: var(--mv2-ink);
+}
+
+.mvp-jcard p {
+	font-family: var(--mv2-sans);
+	font-size: 14px;
+	line-height: 1.7;
+	color: var(--mv2-ink-soft);
+	margin: 0;
+}
+
+/* --- Single journal entry -------------------------------------------------- */
+
+.mvp-article__media {
+	margin: 0 0 36px;
+	border-radius: var(--mv2-radius);
+	overflow: hidden;
+	background: var(--mv2-cream);
+	aspect-ratio: 16 / 9;
+}
+
+.mvp-article__media img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Long-form copy reads left-aligned, unlike the short centred page intros */
+.mvp-article,
+.mvp-sec .mvp-article {
+	text-align: left;
+}
+
+.mvp-article h2,
+.mvp-article h3 {
+	font-family: var(--mv2-serif);
+	font-weight: 400;
+	color: var(--mv2-ink);
+	margin: 32px 0 12px;
+}
+
+.mvp-article h2 { font-size: 28px; }
+.mvp-article h3 { font-size: 22px; }
+
+.mvp-article img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 6px;
+}
+
+.mvp-article blockquote {
+	margin: 28px 0;
+	padding-left: 22px;
+	border-left: 2px solid var(--mv2-gold);
+	font-family: var(--mv2-serif);
+	font-size: 22px;
+	line-height: 1.5;
+	color: var(--mv2-ink);
+}
+
+@media (max-width: 640px) {
+	.mvp-grid3          { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+	.mvp-article__media { margin-bottom: 24px; aspect-ratio: 4 / 3; }
+	.mvp-article h2     { font-size: 24px; }
+	.mvp-article blockquote { font-size: 19px; }
+}
+
+
+/* ==========================================================================
+   15. SPOTLIGHT — logged-out state
+   ========================================================================== */
+
+.spotlight__trade {
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+	font-style: italic;
+	color: var(--mv2-taupe);
+}
+
+.spotlight .section__title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.spotlight .section__title a:hover {
+	color: var(--mv2-gold);
+}
+
+.spotlight__media a {
+	display: block;
+	text-decoration: none;
+}
+
+
+/* ==========================================================================
+   17. PRODUCT GALLERY
+   --------------------------------------------------------------------------
+   Behaviour only — the thumbnail's own look (border, active colour) is already
+   set in the shop/product styles above and is left exactly as it is.
+   ========================================================================== */
+
+.pdp-thumbs span {
+	cursor: pointer;
+}
+
+/* Let the main image be swiped horizontally on touch */
+@media (hover: none) {
+	.pdp-media {
+		touch-action: pan-y;
+	}
+}
+
+
+/* ==========================================================================
+   18. WINE CARD — AWARD MEDALLION, META ROW, SUB LINE
+   --------------------------------------------------------------------------
+   Extends section 2 to match the approved card design:
+
+     [ RED ]                          [ AVAILABLE ]
+          ( Award )     bottle
+          (Winning)
+     -------------------------------------------------
+     RED · BORDEAUX                        FRANCE
+     Château Toulouse-Lautrec
+     Bordeaux Supérieur 2019 · 6 x 75cl
+     Sign in to view trade pricing
+   ========================================================================== */
+
+/* The small caps line above the title. The design shows it in a wine red;
+   this site's accent token (--mv-burg) is the deep green #17251f, so it is
+   pulled out here as its own variable — change this ONE line to recolour
+   both halves of that row. */
+:root {
+	--mv2-card-meta: var(--mv2-burgundy);
+}
+
+/* --- Award medallion, faded in over the image on hover -------------------- */
+
+.mvcard__award {
+	position: absolute;
+	left: 18px;
+	top: 50%;
+	z-index: 3;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 84px;
+	height: 84px;
+	border-radius: 50%;
+	background: rgba(250, 248, 243, .94);
+	box-shadow: inset 0 0 0 1px var(--mv2-gold), 0 10px 26px -14px rgba(31, 27, 23, .55);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	color: var(--mv2-ink);
+	text-align: center;
+	pointer-events: none;
+
+	/* Hidden until hover / keyboard focus */
+	opacity: 0;
+	transform: translateY(-50%) scale(.88);
+	transition: opacity .3s ease, transform .3s cubic-bezier(.22, .61, .36, 1);
+}
+
+.mvcard:hover .mvcard__award,
+.mvcard:focus-within .mvcard__award {
+	opacity: 1;
+	transform: translateY(-50%) scale(1);
+}
+
+.mvcard__award-label {
+	font-family: var(--mv2-serif);
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.25;
+	letter-spacing: .01em;
+}
+
+/* The actual award ("Gold — IWC 2023") for screen readers. The medallion
+   itself always reads "Award Winning", so the specific award has to be
+   announced some other way. Not relying on the theme's .screen-reader-text —
+   neither stylesheet defines it. */
+.mvcard__award-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Touch devices have no hover — show it rather than hide it forever */
+@media (hover: none) {
+	.mvcard__award {
+		opacity: 1;
+		transform: translateY(-50%) scale(1);
+	}
+}
+
+/* --- Meta row: colour · region on the left, country on the right ---------- */
+
+.mvcard__meta {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+	margin: 0 0 8px;
+	padding-top: 2px;
+	color: var(--mv2-card-meta);
+}
+
+.mvcard__meta-left {
+	min-width: 0;
+}
+
+.mvcard__meta-right {
+	flex: 0 0 auto;
+}
+
+/* --- Sub line: producer · appellation vintage · case ---------------------- */
+
+.mvcard__sub {
+	margin: 0 0 14px;
+	font-family: var(--mv2-sans);
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--mv2-taupe);
+}
+
+.mvcard__sub-sep {
+	opacity: .7;
+}
+
+.mvcard__sub-link {
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 1px solid var(--mv2-line);
+}
+
+.mvcard__sub-link:hover {
+	color: var(--mv2-gold);
+	border-bottom-color: var(--mv2-gold);
+}
+
+@media (max-width: 600px) {
+	.mvcard__meta {
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.mvcard__award {
+		left: 12px;
+		width: 70px;
+		height: 70px;
+	}
+
+	.mvcard__award-label {
+		font-size: 12px;
+	}
+}
+
+
+/* ==========================================================================
+   19. PAGE MEDIA — full-width block, split section, hero background
+   --------------------------------------------------------------------------
+   Used by Our Story and Trade Partners.
+   ========================================================================== */
+
+/* --- The media itself, shared by both layouts ----------------------------- */
+
+.mvp-media {
+	margin: 0;
+	max-width: 960px;
+	margin-inline: auto;
+}
+
+.mvp-media img,
+.mvp-media__video {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: var(--mv2-radius);
+	background: var(--mv2-cream);
+}
+
+.mvp-media--image img,
+.mvp-media--video .mvp-media__video {
+	box-shadow: var(--mv2-shadow);
+}
+
+/* Keep an embed 16:9 whatever the provider returns */
+.mvp-media__embed {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	border-radius: var(--mv2-radius);
+	overflow: hidden;
+	background: var(--mv2-dark);
+	box-shadow: var(--mv2-shadow);
+}
+
+.mvp-media__embed iframe,
+.mvp-media__embed object,
+.mvp-media__embed embed {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.mvp-media__caption {
+	margin-top: 14px;
+	font-family: var(--mv2-sans);
+	font-size: 12.5px;
+	letter-spacing: .04em;
+	color: var(--mv2-taupe);
+	text-align: center;
+}
+
+/* The media block sits between two padded sections — halve the gap */
+.mvp-media-sec {
+	padding-top: 0;
+}
+
+/* --- Split section: copy one side, media the other ------------------------ */
+
+.mvp-split {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	align-items: center;
+	gap: clamp(28px, 5vw, 64px);
+}
+
+/* Only one half filled in — one column, but keep the copy to a readable
+   measure rather than letting it run the full 1240px */
+.mvp-split--single {
+	grid-template-columns: 1fr;
+}
+
+.mvp-split--single .mvp-split__copy {
+	max-width: 72ch;
+}
+
+/* Media on the left: swap the two columns without reordering the markup, so
+   the copy still comes first for screen readers and on mobile. */
+.mvp-split--media-left .mvp-split__copy {
+	grid-column: 2;
+	grid-row: 1;
+}
+
+.mvp-split--media-left .mvp-split__media {
+	grid-column: 1;
+	grid-row: 1;
+}
+
+.mvp-split__title {
+	margin: 10px 0 0;
+	font-family: var(--mv2-serif);
+	font-size: clamp(26px, 3.4vw, 38px);
+	font-weight: 400;
+	line-height: 1.2;
+	color: var(--mv2-ink);
+}
+
+.mvp-split__body {
+	margin-top: 16px;
+	font-family: var(--mv2-sans);
+	font-size: 15px;
+	line-height: 1.85;
+	color: var(--mv2-ink-soft);
+}
+
+.mvp-split__body > *:first-child {
+	margin-top: 0;
+}
+
+.mvp-split__body > *:last-child {
+	margin-bottom: 0;
+}
+
+.mvp-split__cta {
+	margin-top: 24px;
+}
+
+/* Inside the split the media fills its column rather than centring at 960px */
+.mvp-split__media .mvp-media {
+	max-width: none;
+}
+
+@media (max-width: 900px) {
+	.mvp-split,
+	.mvp-split--media-left {
+		grid-template-columns: 1fr;
+	}
+
+	/* Stack copy first whichever side the media was on */
+	.mvp-split--media-left .mvp-split__copy,
+	.mvp-split--media-left .mvp-split__media {
+		grid-column: 1;
+		grid-row: auto;
+	}
+}
+
+/* --- Hero background image / video ---------------------------------------- */
+
+.mvp-hero--bg {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+}
+
+/* The background image is set inline by the template so it survives the video
+   being hidden (reduced motion, or a phone that won't autoplay). */
+.mvp-hero__bg {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background-color: var(--mv2-dark);
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.mvp-hero__bg-image,
+.mvp-hero__bg-video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+/* The tint that keeps the white text readable. Its opacity is set inline from
+   the page's Background Darkness field. */
+.mvp-hero__scrim {
+	position: absolute;
+	inset: 0;
+	display: block;
+	background: linear-gradient(180deg, rgba(23, 37, 31, .92) 0%, rgba(23, 37, 31, .74) 45%, rgba(23, 37, 31, .92) 100%);
+}
+
+/* The hero already sits on a dark panel, so its own text colours are right —
+   but pin them here too in case the panel background is overridden. */
+.mvp-hero--bg .wrap {
+	position: relative;
+	z-index: 1;
+}
+
+/* A background deserves more room than the flat banner */
+@media (min-width: 901px) {
+	.mvp-hero--bg {
+		padding-top: clamp(90px, 9vw, 140px);
+		padding-bottom: clamp(90px, 9vw, 140px);
+	}
+}
+
+/* Autoplaying video is motion the user may not want */
+@media (prefers-reduced-motion: reduce) {
+	.mvp-hero__bg-video {
+		display: none;
+	}
+}
+
+@media (max-width: 640px) {
+	.mvp-media__caption {
+		font-size: 12px;
+	}
+}
+
+
+/* ==========================================================================
+   20. SCROLL REVEAL — timing fix
+   --------------------------------------------------------------------------
+   The reveal animation itself is the site's own (_site-base.css sets
+   .section { opacity: 0 } and .section.is-visible { opacity: 1 }). That block
+   is left exactly as it is; these four lines only change how it FEELS,
+   because sections were arriving noticeably after you had scrolled to them.
+
+   Paired with the rewritten observer in footer.php, which now starts the fade
+   before a section reaches the viewport and shows the first screenful with no
+   animation at all.
+
+   To go back to the original timing, delete this whole section.
+   ========================================================================== */
+
+.section {
+	/* 0.8s is a long time to look at a gap. */
+	transition: opacity .5s ease, transform .5s cubic-bezier(.22, 1, .36, 1);
+
+	/* 35px of travel reads as "the page is still loading" on a long scroll. */
+	transform: translateY(18px);
+
+	/* Was `will-change: opacity, transform` on EVERY section, which keeps a
+	   compositor layer alive for each one for the whole life of the page and
+	   makes scrolling heavier the longer the page is. The JS sets this per
+	   section while it animates instead. */
+	will-change: auto;
+}
+
+/* Failsafe: with JavaScript off, nothing ever adds .is-visible and the entire
+   page below the hero would stay invisible. */
+@media (scripting: none) {
+	.section {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}

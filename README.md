@@ -379,16 +379,26 @@ render rather than showing nothing.
 
 ## Where the CSS lives
 
-**One file, one place: Appearance → Customize → Additional CSS.**
+**Appearance → Customize → Additional CSS** holds the site's styling.
 
-The theme ships **no stylesheet of its own except `style.css`**, which carries
-the WordPress child-theme header and a handful of brand primitives. `assets/css/`
-is gone (its stylesheet was empty and enqueued for nothing) and so is the old
-`additional-css/` build pipeline. Nothing in the theme can now compete with, or
-be overridden by, what you paste into the Customizer.
+The file to paste is `additional-css/maison-vintique-site.css`. Paste the
+**whole** file, replacing everything already in Additional CSS.
 
-The file to paste is `maison-vintique-site.css`. Paste the **whole** file,
-replacing everything already in Additional CSS.
+The theme's own stylesheets are all still here and still enqueued:
+
+| File | What it is |
+|---|---|
+| `style.css` | Child-theme header plus a few brand primitives |
+| `assets/css/style.css` | Enqueued after `style.css`. Currently empty — a place for theme-side CSS if you ever want it |
+| `additional-css/_site-base.css` | Your original Customizer CSS, kept as the build input |
+| `additional-css/mv-additional.css` | Only what this build added, commented, for review |
+| `additional-css/mv-customizer-full.css` | The older generated combined file |
+| `additional-css/mv-add-this-round.css` | A round's additions on their own |
+| `additional-css/build-full.php` | Regenerates the combined file from the two sources |
+
+Nothing in `additional-css/` is enqueued — those are build sources, not
+stylesheets the browser loads. They are kept so a later round can rebuild
+cleanly instead of hand-merging.
 
 Two things follow from this:
 
