@@ -187,6 +187,26 @@ if ( $mvc_awards_raw ) {
 }
 
 /* ---------------------------------------------------------------------------
+ * EMPTY FIELDS — nothing on this card renders a label, a separator or an empty
+ * box for a field that has not been filled in. A wine with only a title and a
+ * picture gets a card with only a title and a picture.
+ * ------------------------------------------------------------------------- */
+$mvc_price_html = $product->get_price_html();
+
+// "Technical Details" is only worth offering when the Technical tab actually
+// has something in it — otherwise the link sends the customer to a blank tab.
+$mvc_tech_fields = array( 'appellation', 'bottles_per_case', 'closure', 'sustainability', 'serving', 'abv', 'bottle_size', 'allergens', 'technical_sheet' );
+$mvc_has_tech    = false;
+if ( function_exists( 'get_field' ) ) {
+	foreach ( $mvc_tech_fields as $mvc_tech_field ) {
+		if ( get_field( $mvc_tech_field, $mvc_id ) ) {
+			$mvc_has_tech = true;
+			break;
+		}
+	}
+}
+
+/* ---------------------------------------------------------------------------
  * INLINE LINKS — Technical Details deep-links to the Technical tab on the
  * single product page; Enquire uses the same ?enquire=ID pattern as the PDP.
  * ------------------------------------------------------------------------- */
@@ -229,8 +249,12 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 		<?php // Colour · region on the left, country on the right. ?>
 		<?php if ( $mvc_meta_left || $mvc_meta_right ) : ?>
 			<p class="mvcard__meta">
-				<span class="mvcard__meta-left"><?php echo esc_html( $mvc_meta_left ); ?></span>
-				<span class="mvcard__meta-right"><?php echo esc_html( $mvc_meta_right ); ?></span>
+				<?php if ( $mvc_meta_left ) : ?>
+					<span class="mvcard__meta-left"><?php echo esc_html( $mvc_meta_left ); ?></span>
+				<?php endif; ?>
+				<?php if ( $mvc_meta_right ) : ?>
+					<span class="mvcard__meta-right"><?php echo esc_html( $mvc_meta_right ); ?></span>
+				<?php endif; ?>
 			</p>
 		<?php endif; ?>
 
@@ -262,22 +286,24 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 			</p>
 		<?php endif; ?>
 
-		<p class="mvcard__price">
-			<?php if ( $mvc_gated ) : ?>
+		<?php if ( $mvc_gated ) : ?>
+			<p class="mvcard__price">
 				<span class="mvcard__trade"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique-elementor' ); ?></span>
-			<?php else : ?>
-				<?php echo wp_kses_post( $product->get_price_html() ); ?>
-			<?php endif; ?>
-		</p>
+			</p>
+		<?php elseif ( $mvc_price_html ) : ?>
+			<p class="mvcard__price"><?php echo wp_kses_post( $mvc_price_html ); ?></p>
+		<?php endif; ?>
 
 		<a class="mvcard__cta" href="<?php echo esc_url( $mvc_permalink ); ?>">
 			<?php esc_html_e( 'View Wine', 'maison-vintique-elementor' ); ?>
 		</a>
 
 		<div class="mvcard__links">
-			<a class="mvcard__link" href="<?php echo esc_url( $mvc_tech_url ); ?>">
-				<?php esc_html_e( 'Technical Details', 'maison-vintique-elementor' ); ?>
-			</a>
+			<?php if ( $mvc_has_tech ) : ?>
+				<a class="mvcard__link" href="<?php echo esc_url( $mvc_tech_url ); ?>">
+					<?php esc_html_e( 'Technical Details', 'maison-vintique-elementor' ); ?>
+				</a>
+			<?php endif; ?>
 			<a class="mvcard__link" href="<?php echo esc_url( $mvc_enquire_url ); ?>">
 				<?php esc_html_e( 'Enquire', 'maison-vintique-elementor' ); ?>
 			</a>

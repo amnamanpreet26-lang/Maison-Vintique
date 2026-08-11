@@ -122,6 +122,48 @@ function mve_force_shop_listing( $query ) {
 add_action( 'parse_query', 'mve_force_shop_listing' );
 
 /**
+ * Last line of defence: a filtered listing ALWAYS gets the grid template.
+ *
+ * The two hooks above stop the redirect and stop the query being promoted, but
+ * both depend on guessing which mechanism WordPress used to turn one result
+ * into a single product. This does not guess. If the request carries shop
+ * filters and the result is a product listing, the archive template renders —
+ * whatever WordPress decided the request was.
+ *
+ * It refuses to touch anything that is genuinely a single product (see the
+ * query-var check in mve_force_shop_listing), so a real product URL is safe.
+ */
+function mve_filtered_shop_template( $template ) {
+	if ( is_admin() || ! mve_shop_is_filtered() ) {
+		return $template;
+	}
+
+	global $wp_query;
+	if ( ! $wp_query instanceof WP_Query ) {
+		return $template;
+	}
+
+	foreach ( array( 'name', 'p', 'product', 'pagename', 'page_id' ) as $mve_single_var ) {
+		if ( $wp_query->get( $mve_single_var ) ) {
+			return $template;
+		}
+	}
+
+	$mve_post_type = $wp_query->get( 'post_type' );
+	if ( 'product' !== $mve_post_type && ! $wp_query->get( 'wc_query' ) ) {
+		return $template;
+	}
+
+	$mve_archive = locate_template( array( 'woocommerce/archive-product.php' ) );
+	if ( ! $mve_archive && function_exists( 'WC' ) ) {
+		$mve_archive = WC()->plugin_path() . '/templates/archive-product.php';
+	}
+
+	return ( $mve_archive && file_exists( $mve_archive ) ) ? $mve_archive : $template;
+}
+add_filter( 'template_include', 'mve_filtered_shop_template', 99 );
+
+/**
  * "Vintage: newest" sort option.
  */
 function mve_catalog_ordering_args( $args ) {

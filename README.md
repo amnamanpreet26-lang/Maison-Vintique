@@ -1,5 +1,31 @@
 # Maison Vintique — Elementor + WooCommerce + ACF Build
 
+> ## ⚠ SECURITY: injected code was found and removed from `functions.php`
+>
+> The uploaded theme contained a **144 KB obfuscated block** between markers
+> `/* SC_TH_BEGIN:4.0.3:c46bfced */` and `/* SC_TH_END:... */` — 92% of the
+> file. The theme's real code is about 11 KB.
+>
+> It used `eval` and `gzinflate` on a 141,000-character blob, and rebuilt the
+> names `rename`, `copy`, `unlink`, `chmod` and `opcache_invalidate` character
+> by character from a scrambled alphabet so that searching the file for those
+> words finds nothing. Writing, renaming and deleting files then clearing the
+> opcache is what a self-installing backdoor does.
+>
+> **It has been removed from this copy of the theme.** That is not a cleanup.
+> Injections like this are rarely confined to one file — assume `wp-config.php`,
+> `wp-content/uploads`, other themes, plugins, the database `wp_options` table
+> and any admin accounts are also affected, and that whatever got in can get
+> back in. This is a live shop handling trade accounts, so treat it as a
+> compromise: take a backup, get a malware scan across the whole install
+> (Wordfence / Sucuri / the host's own scanner), rotate all admin and database
+> passwords and any API keys, and check the user list for accounts nobody
+> created.
+>
+> A backdoor that rewrites theme files is also a plausible reason for fixes
+> appearing not to take effect after deployment.
+
+
 A luxury editorial wine importer & **B2B trade store** built on **Elementor Pro + WooCommerce + ACF Pro**, delivered as a Hello Elementor **child theme** with importable ACF field groups and Elementor templates.
 
 ## Required plugins / theme
@@ -55,7 +81,7 @@ Appearance → Menus → create **Primary** (Home, Shop, Producers, Journal, Our
 | Price on login / trade gating | `inc/woocommerce.php` (`mve_is_gated` — logged in or not) |
 | Minimum order (by the case) | ACF `min_order_qty` → `mve_min_order_qty()` |
 | VCIS stock matching | ACF `sku_ehd` (the code matched against EHD's stock CSV) |
-| Brand design tokens | `style.css` + `assets/css/style.css` (CSS vars + `.mv-*` classes) |
+| Brand design tokens | `style.css` + the Customizer CSS (see **Where the CSS lives**) |
 | Layouts | `/elementor-templates` + Elementor Theme Builder |
 
 ## Shop / Archive page (built as PHP, not Theme Builder)
@@ -69,7 +95,6 @@ WordPress/WooCommerce PHP template, so it's easy to edit directly in code:
 | `template-parts/content-product-wine.php` | Thin wrapper kept so `archive-product.php` keeps working — it just forwards to `wine-card.php`. | Nothing; edit `wine-card.php` instead |
 | `template-parts/shop-filters.php` | Sidebar: Search, Category, Price, Availability. Filters by **Product Category** only (see note in `inc/taxonomies.php` on why Country/Region/Grape aren't separate boxes). | Filter options shown in the sidebar |
 | `inc/shop-query.php` | Turns the filter form + sort dropdown into an actual WP_Query (category/price/stock filtering, "Vintage: newest" sort), and keeps a filtered listing on the grid — see below. | Filtering/sorting behaviour |
-| `assets/css/style.css` (bottom section) | Shop grid, product cards, filters, pagination — uses the same `--mv-*` variables as the rest of the site. | Shop page look & feel |
 
 Price-on-login gating lives entirely in `inc/woocommerce.php` — one helper
 (`mve_is_gated()`, which is just "is this visitor logged out?") plus three
@@ -352,39 +377,38 @@ that renders the full-width block — so the two can't drift apart. If the Media
 Type doesn't match what's actually filled in, it falls back to whatever it can
 render rather than showing nothing.
 
-## CSS
+## Where the CSS lives
 
-There are three files in `additional-css/`, and **none of them is enqueued** —
-the Customizer holds the site's one stylesheet.
+**One file, one place: Appearance → Customize → Additional CSS.**
 
-| File | What it is |
-|---|---|
-| `mv-customizer-full.css` | **Paste this one.** The complete Additional CSS: the site's base styles plus everything this theme adds. |
-| `_site-base.css` | The styles that predate this theme's work, kept so the full file can be rebuilt. |
-| `mv-additional.css` | Only the part this theme owns — the reviewable source. |
+The theme ships **no stylesheet of its own except `style.css`**, which carries
+the WordPress child-theme header and a handful of brand primitives. `assets/css/`
+is gone (its stylesheet was empty and enqueued for nothing) and so is the old
+`additional-css/` build pipeline. Nothing in the theme can now compete with, or
+be overridden by, what you paste into the Customizer.
 
-Edit `_site-base.css` or `mv-additional.css`, then regenerate:
+The file to paste is `maison-vintique-site.css`. Paste the **whole** file,
+replacing everything already in Additional CSS.
 
-```
-php additional-css/build-full.php
-```
+Two things follow from this:
 
-Then paste `mv-customizer-full.css` into **Appearance → Customize → Additional
-CSS**, replacing everything there.
+- **Edit it in the Customizer, and keep a copy.** The Customizer is the live
+  source of truth. If you hand-edit there (crest sizes, spacing, the wordmark —
+  all of which you have), send the current contents back before asking for
+  changes, otherwise a regenerated file overwrites them.
+- **Order matters.** Everything is one file, so a rule later in the file beats
+  an identical-specificity rule earlier. The fixes are appended at the bottom
+  under `FIXES — ADDED THIS ROUND` for exactly that reason.
 
 ### Colours and fonts
 
 Every component uses the site's own brand variables — `--mv-ink`, `--mv-burg`,
 `--mv-gold`, `--mv-serif`, `--mv-sans` and friends — through the `--mv2-*`
-aliases at the top of `mv-additional.css`. Nothing hard-codes a brand colour,
-so changing the `:root` block at the top of the stylesheet restyles everything.
+aliases near the top of the file. Nothing hard-codes a brand colour, so editing
+the `:root` block restyles everything.
 
 > Note `--mv-burg` is the deep green `#17251f`, not a burgundy — the name is
 > historical.
-
-One block in that file is marked as a **safety net** — the `.card-grid--4` /
-`.pgrid` mobile column counts. Delete it if the existing grid CSS already
-collapses those grids on mobile.
 
 ## Scroll reveal
 
