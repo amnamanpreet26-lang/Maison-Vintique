@@ -125,11 +125,27 @@ while ( have_posts() ) :
 					<p class="prod"><?php echo esc_html( $producer ); ?></p>
 				<?php endif; ?>
 
-				<?php if ( ! empty( $awards ) ) : ?>
-					<div class="awards">
-						<?php foreach ( $awards as $award ) : ?>
-							<span><?php echo esc_html( $award ); ?></span>
-						<?php endforeach; ?>
+				<?php
+				/*
+				 * Awards. The card shows a single "Award Winning" medallion
+				 * because there is no room for more; here there is, so every
+				 * line of the ACF field gets its own medal and its full text.
+				 */
+				if ( ! empty( $awards ) ) :
+					?>
+					<div class="mv-awards">
+						<p class="mv-awards__label"><?php esc_html_e( 'Awards &amp; recognition', 'maison-vintique' ); ?></p>
+						<ul class="mv-awards__list">
+							<?php foreach ( $awards as $award ) : ?>
+								<li class="mv-awards__item">
+									<svg class="mv-awards__medal" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+										<circle cx="12" cy="9" r="5.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+										<path d="M8.4 13.4 6.6 21l5.4-2.7 5.4 2.7-1.8-7.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+									</svg>
+									<span class="mv-awards__text"><?php echo esc_html( $award ); ?></span>
+								</li>
+							<?php endforeach; ?>
+						</ul>
 					</div>
 				<?php endif; ?>
 				
