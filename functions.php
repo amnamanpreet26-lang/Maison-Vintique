@@ -35,7 +35,8 @@ function mve_asset_version( $rel ) {
 function mve_enqueue() {
 	wp_enqueue_style( 'hello-elementor', get_template_directory_uri() . '/style.css', array(), MVE_VERSION );
 	wp_enqueue_style( 'mve-style', get_stylesheet_uri(), array( 'hello-elementor' ), mve_asset_version( '/style.css' ) );
-	wp_enqueue_style( 'mve-main', get_stylesheet_directory_uri() . '/assets/css/style.css', array( 'mve-style' ), mve_asset_version( '/assets/css/style.css' ) );
+	// All site styling lives in Appearance > Customize > Additional CSS.
+	// The theme ships no stylesheet of its own beyond style.css.
 	wp_enqueue_script( 'mve-main', get_stylesheet_directory_uri() . '/assets/js/main.js', array(), mve_asset_version( '/assets/js/main.js' ), true );
 }
 add_action( 'wp_enqueue_scripts', 'mve_enqueue' );
@@ -94,6 +95,26 @@ function mve_setup() {
 	) );
 }
 add_action( 'after_setup_theme', 'mve_setup' );
+
+/**
+ * Producers are listed alphabetically, everywhere.
+ *
+ * /producers/ runs on the main query, so the two templates that build their own
+ * WP_Query are not enough — this covers the archive as well.
+ *
+ * @param WP_Query $query Main query.
+ */
+function mve_order_producers_alphabetically( $query ) {
+	if ( is_admin() || ! $query->is_main_query() ) {
+		return;
+	}
+	if ( ! $query->is_post_type_archive( 'producer' ) && ! $query->is_tax( array( 'producer_country', 'producer_region' ) ) ) {
+		return;
+	}
+	$query->set( 'orderby', 'title' );
+	$query->set( 'order', 'ASC' );
+}
+add_action( 'pre_get_posts', 'mve_order_producers_alphabetically' );
 
 /**
  * Never crop a product image.

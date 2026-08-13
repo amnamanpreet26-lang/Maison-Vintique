@@ -72,6 +72,10 @@ while ( have_posts() ) :
 		<?php // Copy one side, media the other. Skipped when both halves are empty. ?>
 		<?php get_template_part( 'template-parts/page-split', null, array( 'prefix' => 'os' ) ); ?>
 
+		<!-- ============ FULL-WIDTH VIDEO BAND ============ -->
+		<?php // Edge to edge, same shape as the homepage hero. Skipped when empty. ?>
+		<?php get_template_part( 'template-parts/page-video-hero', null, array( 'prefix' => 'os' ) ); ?>
+
 		<!-- ============ WHAT GUIDES US ============ -->
 		<?php if ( have_rows( 'os_values' ) ) : ?>
 			<section class="section mvp-sec mvp-sec--panel">

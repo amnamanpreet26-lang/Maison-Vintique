@@ -72,18 +72,12 @@ $mve_cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : ho
 				<?php endif; ?>
 			</form>
 
-			<a class="mv-header__icon" href="<?php echo esc_url( $mve_account_url ); ?>" aria-label="Account">
-				<svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-					<circle cx="11" cy="7.4" r="3.6" stroke="currentColor" stroke-width="1.4"/>
-					<path d="M3.6 18.4C4.9 14.9 7.6 13 11 13c3.4 0 6.1 1.9 7.4 5.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-				</svg>
-			</a>
-
 			<?php
 			/*
-			 * Cart is for signed-in customers only. Nothing is purchasable while
-			 * logged out (inc/woocommerce.php), so showing a basket icon to a
-			 * guest just offers a route that dead-ends.
+			 * Cart FIRST in the markup so that, once signed in, the basket sits
+			 * to the LEFT of the account button. Logged out there is no basket
+			 * at all — nothing is purchasable (inc/woocommerce.php), so a
+			 * basket icon would only offer a route that dead-ends.
 			 */
 			if ( is_user_logged_in() ) :
 				?>
@@ -95,6 +89,26 @@ $mve_cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : ho
 					<span class="mv-header__cart-count" data-cart-count><?php echo (int) $mve_cart_count; ?></span>
 				</a>
 			<?php endif; ?>
+
+			<?php
+			/*
+			 * Account: icon AND words in one button. A bare person icon reads as
+			 * "profile" to most people; trade customers were not finding the
+			 * login. The label changes to "My Account" once signed in, because
+			 * "Trade Login" would then be telling them to do something they
+			 * have already done.
+			 */
+			$mve_account_label = is_user_logged_in()
+				? __( 'My Account', 'maison-vintique' )
+				: __( 'Trade Login', 'maison-vintique' );
+			?>
+			<a class="mv-header__account<?php echo is_user_logged_in() ? ' is-in' : ''; ?>" href="<?php echo esc_url( $mve_account_url ); ?>">
+				<svg class="mv-header__account-icon" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+					<circle cx="11" cy="7.4" r="3.6" stroke="currentColor" stroke-width="1.4"/>
+					<path d="M3.6 18.4C4.9 14.9 7.6 13 11 13c3.4 0 6.1 1.9 7.4 5.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+				</svg>
+				<span class="mv-header__account-label"><?php echo esc_html( $mve_account_label ); ?></span>
+			</a>
 
 			<button class="mv-header__burger" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="site-header-mobile-nav">
 				<span></span><span></span><span></span>

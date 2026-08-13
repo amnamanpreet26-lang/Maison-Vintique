@@ -373,6 +373,170 @@
             "name": "os_media_caption",
             "type": "text",
             "instructions": "Optional line under the image or video."
+        },
+        {
+            "key": "field_mv_os_vhero_tab",
+            "label": "Full-width Video",
+            "name": "",
+            "type": "tab",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "placement": "top",
+            "endpoint": 0
+        },
+        {
+            "key": "field_mv_os_vhero_video",
+            "label": "Video File",
+            "name": "os_vhero_video",
+            "type": "file",
+            "instructions": "An MP4 that fills the full width of the page, like the homepage hero. Muted and looped so browsers allow it to autoplay.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array",
+            "library": "all",
+            "mime_types": "mp4"
+        },
+        {
+            "key": "field_mv_os_vhero_embed",
+            "label": "Video URL",
+            "name": "os_vhero_embed",
+            "type": "url",
+            "instructions": "A YouTube or Vimeo link, used only when no MP4 is uploaded above.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_mv_os_vhero_image",
+            "label": "Poster / Fallback Image",
+            "name": "os_vhero_image",
+            "type": "image",
+            "instructions": "Shown while the video loads, on phones that refuse to autoplay, and for anyone browsing with reduced motion. Set this on its own and the band becomes a full-width image.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        },
+        {
+            "key": "field_mv_os_vhero_height",
+            "label": "Band Height",
+            "name": "os_vhero_height",
+            "type": "select",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "tall": "Tall (like the homepage hero)",
+                "medium": "Medium",
+                "short": "Short"
+            },
+            "default_value": "tall",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0
+        },
+        {
+            "key": "field_mv_os_vhero_colour",
+            "label": "Overlay Colour",
+            "name": "os_vhero_colour",
+            "type": "color_picker",
+            "instructions": "Laid over the video so the text stays readable. Leave empty for the house dark green.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_mv_os_vhero_opacity",
+            "label": "Overlay Strength",
+            "name": "os_vhero_opacity",
+            "type": "number",
+            "instructions": "0 to 1. 0 = no overlay (text will be hard to read over video), 1 = solid colour. Leave empty for the default of 0.55.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "placeholder": "0.55"
+        },
+        {
+            "key": "field_mv_os_vhero_eyebrow",
+            "label": "Eyebrow",
+            "name": "os_vhero_eyebrow",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_mv_os_vhero_title",
+            "label": "Heading",
+            "name": "os_vhero_title",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_mv_os_vhero_text",
+            "label": "Text",
+            "name": "os_vhero_text",
+            "type": "textarea",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "rows": 3,
+            "new_lines": ""
         }
     ],
     "location": [

@@ -136,39 +136,31 @@ $mvc_meta_left  = implode( ' · ', array_filter( array_merge( array( $mvc_colour
 $mvc_meta_right = implode( ' · ', $mvc_countries );
 
 /* ---------------------------------------------------------------------------
- * SUB LINE — "Château Toulouse-Lautrec · Bordeaux Supérieur 2019 · 6 × 75cl".
- * Producer, then appellation + vintage, then case format, joined by a middot.
- * Each part is dropped when its field is empty.
+ * SUB LINE — "Château Toulouse-Lautrec · 6 × 75cl".
+ * Just the two raw field values, producer then case format, joined by a
+ * middot. Plain text only — no link. Each part is dropped when empty, and
+ * the whole line is dropped when both are empty.
  * ------------------------------------------------------------------------- */
 $mvc_producer_obj = function_exists( 'get_field' ) ? get_field( 'producer', $mvc_id ) : null;
-$mvc_producer     = '';
-$mvc_producer_url = '';
-if ( $mvc_producer_obj ) {
-	$mvc_producer_id  = is_object( $mvc_producer_obj ) ? $mvc_producer_obj->ID : (int) $mvc_producer_obj;
-	$mvc_producer     = get_the_title( $mvc_producer_id );
-	$mvc_producer_url = get_permalink( $mvc_producer_id );
+$mvc_producer      = '';
+
+if ( $mvc_producer_obj instanceof WP_Post ) {
+	// ACF field set to return_format => object.
+	$mvc_producer = get_the_title( $mvc_producer_obj->ID );
+} elseif ( is_array( $mvc_producer_obj ) && ! empty( $mvc_producer_obj['ID'] ) ) {
+	// ACF field set to return_format => array.
+	$mvc_producer = get_the_title( $mvc_producer_obj['ID'] );
+} elseif ( is_numeric( $mvc_producer_obj ) ) {
+	// ACF field set to return_format => id (or raw post ID stored).
+	$mvc_producer = get_the_title( (int) $mvc_producer_obj );
 }
 
 $mvc_case = function_exists( 'get_field' ) ? get_field( 'case_format', $mvc_id ) : '';
-
-// These two were missing while $mvc_appellation_line below still used them,
-// which threw two PHP notices per card and left the appellation out of the
-// sub line entirely.
-$mvc_appellation = function_exists( 'get_field' ) ? get_field( 'appellation', $mvc_id ) : '';
-$mvc_vintage     = function_exists( 'get_field' ) ? get_field( 'vintage_year', $mvc_id ) : '';
-
-// Wines are usually titled "<Estate> <Cuvée> <Year>", which would repeat the
-// producer straight back at the reader. Drop it when the title already says it.
-$mvc_show_producer = ( '' !== $mvc_producer )
-	&& ( false === stripos( get_the_title( $mvc_id ), $mvc_producer ) );
-
-// "Bordeaux Supérieur 2019" — one part, so the middots fall in the right places.
-$mvc_appellation_line = trim( $mvc_appellation . ' ' . $mvc_vintage );
+$mvc_case = is_string( $mvc_case ) ? trim( $mvc_case ) : '';
 
 $mvc_sub_parts = array_filter(
 	array(
-		$mvc_show_producer ? $mvc_producer : '',
-		$mvc_appellation_line,
+		$mvc_producer,
 		$mvc_case,
 	)
 );
@@ -265,23 +257,8 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 		<?php if ( $mvc_sub_parts ) : ?>
 			<p class="mvcard__sub">
 				<?php
-				$mvc_first = true;
-				foreach ( $mvc_sub_parts as $mvc_part ) {
-					if ( ! $mvc_first ) {
-						echo '<span class="mvcard__sub-sep" aria-hidden="true"> &middot; </span>';
-					}
-					$mvc_first = false;
-
-					if ( $mvc_show_producer && $mvc_part === $mvc_producer && $mvc_producer_url ) {
-						printf(
-							'<a class="mvcard__sub-link" href="%s">%s</a>',
-							esc_url( $mvc_producer_url ),
-							esc_html( $mvc_part )
-						);
-					} else {
-						echo esc_html( $mvc_part );
-					}
-				}
+				// Plain text, no link — the parts joined by a middot.
+				echo esc_html( implode( ' · ', $mvc_sub_parts ) );
 				?>
 			</p>
 		<?php endif; ?>

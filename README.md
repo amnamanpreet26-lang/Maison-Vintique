@@ -22,8 +22,13 @@
 > passwords and any API keys, and check the user list for accounts nobody
 > created.
 >
-> A backdoor that rewrites theme files is also a plausible reason for fixes
-> appearing not to take effect after deployment.
+> **IT CAME BACK.** The block was removed on 10 August. The theme uploaded on
+> 13 August contained it again — same marker, 225 KB this time instead of 144 KB,
+> 94% of the file. That is not a leftover; something on the server put it back.
+> The site is actively compromised and cleaning the theme alone will not stop
+> it. Until the whole install is cleaned, every theme file will keep getting
+> re-infected, and a backdoor that rewrites theme files is also a plausible
+> reason for fixes appearing not to take effect after deployment.
 
 
 A luxury editorial wine importer & **B2B trade store** built on **Elementor Pro + WooCommerce + ACF Pro**, delivered as a Hello Elementor **child theme** with importable ACF field groups and Elementor templates.

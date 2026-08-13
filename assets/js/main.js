@@ -96,3 +96,132 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
     track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
   });
 });
+
+/* ==========================================================================
+   SMOOTH SCROLL FOR IN-PAGE LINKS
+   --------------------------------------------------------------------------
+   Done in JavaScript rather than with `scroll-behavior: smooth` in CSS so it
+   can offset for the sticky header. With the CSS property alone the target
+   section lands underneath the header and the visitor sees the wrong thing.
+   ========================================================================== */
+(function () {
+	var header = document.querySelector('.mv-header');
+
+	function headerOffset() {
+		if (!header) return 0;
+		// Only a sticky/fixed header covers the content once you have scrolled.
+		var pos = getComputedStyle(header).position;
+		return (pos === 'sticky' || pos === 'fixed') ? header.getBoundingClientRect().height : 0;
+	}
+
+	function scrollToTarget(target, push, href) {
+		var top = target.getBoundingClientRect().top + window.pageYOffset - headerOffset() - 12;
+		var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		window.scrollTo({ top: top, behavior: reduce ? 'auto' : 'smooth' });
+
+		// Keep the URL and the back button working, without the instant jump
+		// that setting location.hash would cause.
+		if (push && href && window.history && window.history.pushState) {
+			window.history.pushState(null, '', href);
+		}
+
+		// Move keyboard focus too, or the next Tab starts from the top again.
+		if (!target.hasAttribute('tabindex')) {
+			target.setAttribute('tabindex', '-1');
+		}
+		target.focus({ preventScroll: true });
+	}
+
+	document.addEventListener('click', function (e) {
+		var link = e.target.closest && e.target.closest('a[href*="#"]');
+		if (!link || link.hasAttribute('data-no-smooth')) return;
+
+		// Same page only. A link to another page's anchor must navigate.
+		if (link.pathname !== window.location.pathname || link.host !== window.location.host) return;
+
+		var id = link.hash.slice(1);
+		if (!id) return;
+
+		var target = document.getElementById(id) || document.getElementsByName(id)[0];
+		if (!target) return;
+
+		e.preventDefault();
+		scrollToTarget(target, true, link.href);
+	});
+
+	// Arriving with a #hash in the URL: let the browser do its instant jump,
+	// then correct for the header once images have settled the layout.
+	window.addEventListener('load', function () {
+		if (!window.location.hash) return;
+		var target = document.getElementById(window.location.hash.slice(1));
+		if (target) {
+			setTimeout(function () { scrollToTarget(target, false); }, 60);
+		}
+	});
+})();
+
+/* ==========================================================================
+   FAQ ACCORDION — OPEN AND CLOSE SMOOTHLY
+   --------------------------------------------------------------------------
+   <details> cannot be animated: the browser flips it open in one frame, and
+   height:auto is not animatable anyway. So the panel is measured and its
+   height animated by hand, and on close the `open` attribute is held until the
+   animation has finished.
+
+   With JavaScript off, <details> still opens and closes — just instantly.
+   ========================================================================== */
+(function () {
+	var panels = document.querySelectorAll('.mvp-faq details, details.mv-accordion');
+	if (!panels.length) return;
+
+	var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	if (reduce) return;   // no animation wanted; native behaviour is correct
+
+	Array.prototype.forEach.call(panels, function (details) {
+		var summary = details.querySelector('summary');
+		if (!summary) return;
+
+		// Everything after the <summary> is the panel.
+		var body = document.createElement('div');
+		body.className = 'mv-accordion__body';
+		while (summary.nextSibling) {
+			body.appendChild(summary.nextSibling);
+		}
+		details.appendChild(body);
+
+		var animation = null;
+		var closing = false;
+
+		function animate(from, to, onDone) {
+			if (animation) animation.cancel();
+			animation = body.animate(
+				{ height: [from + 'px', to + 'px'], opacity: [from ? 1 : 0, to ? 1 : 0] },
+				{ duration: 260, easing: 'cubic-bezier(.22,.61,.36,1)' }
+			);
+			animation.onfinish = function () {
+				animation = null;
+				body.style.height = '';
+				if (onDone) onDone();
+			};
+			animation.oncancel = function () { animation = null; };
+		}
+
+		summary.addEventListener('click', function (e) {
+			e.preventDefault();
+
+			if (details.open && !closing) {
+				// Closing: keep it open until the animation has played out.
+				closing = true;
+				animate(body.offsetHeight, 0, function () {
+					details.open = false;
+					closing = false;
+				});
+			} else {
+				closing = false;
+				details.open = true;
+				animate(0, body.scrollHeight);
+			}
+		});
+	});
+})();

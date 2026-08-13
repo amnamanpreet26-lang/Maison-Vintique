@@ -56,61 +56,100 @@ function mve_shop_is_filtered() {
 }
 
 /**
- * Filter down to one wine and stay on the grid.
+ * A LISTING STAYS A LISTING.
  *
- * The sidebar form carries a search box, so every filter click submits `s`
- * (empty or not) and WordPress treats the result as a SEARCH. Core then
- * redirects a search that matches exactly one post straight to that post —
- * so narrowing the filters down to a single wine threw the customer onto the
- * product page instead of showing them the one card they had filtered to.
+ * The symptom: narrow the shop down to one wine and WordPress throws the
+ * customer onto that wine's product page instead of showing the one card they
+ * filtered to.
  *
- * Switching it off only for filtered shop requests. Every other canonical
- * redirect on the site — trailing slashes, old permalinks, pagination — is
- * left alone.
+ * Two earlier attempts at this only engaged when the request carried one of the
+ * sidebar's own GET parameters. That misses the case this keeps happening in —
+ * a plain collection or category link (/product-category/…/, /wine-country/…/)
+ * carries no sidebar parameters at all, so the guards never ran.
+ *
+ * So the question is no longer "did the sidebar submit something", it is
+ * "did this URL ask for a LIST or for ONE PRODUCT". A URL that names a post
+ * (name/p/product/pagename) is a single product and is left completely alone.
+ * Anything else that resolves to products — the shop, a product taxonomy, a
+ * product search, the sidebar filters — is a list, and a list is never allowed
+ * to turn into a product page no matter how few results it has.
+ *
+ * @param WP_Query $q Query to inspect. Defaults to the main query.
+ * @return bool
  */
-function mve_keep_filtered_shop_on_grid( $redirect_url ) {
-	if ( is_admin() || ! mve_shop_is_filtered() ) {
-		return $redirect_url;
+function mve_query_wants_a_listing( $q = null ) {
+	if ( null === $q ) {
+		global $wp_query;
+		$q = $wp_query;
+	}
+	if ( ! $q instanceof WP_Query ) {
+		return false;
 	}
 
-	$mve_is_listing = ( function_exists( 'is_shop' ) && is_shop() )
-		|| is_post_type_archive( 'product' )
-		|| ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() )
-		// The sidebar carries a search box, so a filter click always submits
-		// `s` and this is the case that actually fires.
-		|| is_search();
+	// $q->query is what the URL actually asked for, before WordPress decided
+	// what kind of page it was. That is the part we can still trust after a
+	// one-result query has been promoted to a single post.
+	$vars = (array) $q->query;
 
-	return $mve_is_listing ? false : $redirect_url;
-}
-add_filter( 'redirect_canonical', 'mve_keep_filtered_shop_on_grid' );
-
-/**
- * Belt and braces for the same problem.
- *
- * redirect_canonical is the redirect we actually hit, but a one-result query
- * can also be promoted to a single post before it ever gets there. Pinning the
- * query back to "this is a listing" means the archive template renders the
- * grid either way.
- */
-function mve_force_shop_listing( $query ) {
-	if ( is_admin() || ! $query->is_main_query() || ! mve_shop_is_filtered() ) {
-		return;
-	}
-
-	// A genuine single-product request ALWAYS carries one of these. Without
-	// this check, opening a product with a stray ?orderby= on the URL would be
-	// forced into archive mode and the product page would break.
-	foreach ( array( 'name', 'p', 'product', 'pagename', 'page_id' ) as $mve_single_var ) {
-		if ( $query->get( $mve_single_var ) ) {
-			return;
+	// Naming a specific post makes it a single-product request. Nothing below
+	// applies and nothing here touches it.
+	foreach ( array( 'name', 'p', 'product', 'pagename', 'page_id', 'attachment', 'attachment_id' ) as $single_var ) {
+		if ( ! empty( $vars[ $single_var ] ) ) {
+			return false;
 		}
 	}
 
-	$mve_is_product_query = 'product' === $query->get( 'post_type' )
-		|| $query->get( 'wc_query' )
-		|| $query->is_post_type_archive( 'product' );
+	if ( isset( $vars['post_type'] ) && 'product' === $vars['post_type'] ) {
+		return true;
+	}
 
-	if ( ! $mve_is_product_query ) {
+	if ( isset( $vars['s'] ) ) {
+		return true;
+	}
+
+	// Every taxonomy attached to products — product_cat, product_tag and all
+	// the wine_* ones. Checked by query var AND by name, because a taxonomy can
+	// be registered with either.
+	foreach ( get_object_taxonomies( 'product' ) as $tax ) {
+		$tax_object = get_taxonomy( $tax );
+		$query_var  = ( $tax_object && $tax_object->query_var ) ? $tax_object->query_var : $tax;
+		if ( ! empty( $vars[ $query_var ] ) || ! empty( $vars[ $tax ] ) ) {
+			return true;
+		}
+	}
+
+	return mve_shop_is_filtered();
+}
+
+/**
+ * Never redirect a listing to a single product.
+ *
+ * Scoped to listings only, so every other canonical redirect on the site —
+ * trailing slashes, old permalinks, pagination — behaves exactly as before.
+ */
+function mve_keep_listing_on_grid( $redirect_url ) {
+	if ( is_admin() ) {
+		return $redirect_url;
+	}
+
+	$is_listing = ( function_exists( 'is_shop' ) && is_shop() )
+		|| is_post_type_archive( 'product' )
+		|| ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() )
+		|| is_search()
+		|| mve_query_wants_a_listing();
+
+	return $is_listing ? false : $redirect_url;
+}
+add_filter( 'redirect_canonical', 'mve_keep_listing_on_grid' );
+
+/**
+ * Keep the query itself flagged as an archive.
+ *
+ * Stops a one-result query being promoted to a single post before the redirect
+ * stage ever runs.
+ */
+function mve_force_shop_listing( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! mve_query_wants_a_listing( $query ) ) {
 		return;
 	}
 
@@ -118,48 +157,28 @@ function mve_force_shop_listing( $query ) {
 	$query->is_singular = false;
 	$query->is_page     = false;
 	$query->is_archive  = true;
+	$query->is_404      = false;
 }
 add_action( 'parse_query', 'mve_force_shop_listing' );
 
 /**
- * Last line of defence: a filtered listing ALWAYS gets the grid template.
+ * Last line of defence: a listing ALWAYS gets the grid template.
  *
- * The two hooks above stop the redirect and stop the query being promoted, but
- * both depend on guessing which mechanism WordPress used to turn one result
- * into a single product. This does not guess. If the request carries shop
- * filters and the result is a product listing, the archive template renders —
- * whatever WordPress decided the request was.
- *
- * It refuses to touch anything that is genuinely a single product (see the
- * query-var check in mve_force_shop_listing), so a real product URL is safe.
+ * The two hooks above depend on guessing which mechanism WordPress used to turn
+ * one result into a single product. This one does not guess — if the URL asked
+ * for a list, the archive template renders, whatever WordPress decided.
  */
 function mve_filtered_shop_template( $template ) {
-	if ( is_admin() || ! mve_shop_is_filtered() ) {
+	if ( is_admin() || ! mve_query_wants_a_listing() ) {
 		return $template;
 	}
 
-	global $wp_query;
-	if ( ! $wp_query instanceof WP_Query ) {
-		return $template;
+	$archive = locate_template( array( 'woocommerce/archive-product.php' ) );
+	if ( ! $archive && function_exists( 'WC' ) ) {
+		$archive = WC()->plugin_path() . '/templates/archive-product.php';
 	}
 
-	foreach ( array( 'name', 'p', 'product', 'pagename', 'page_id' ) as $mve_single_var ) {
-		if ( $wp_query->get( $mve_single_var ) ) {
-			return $template;
-		}
-	}
-
-	$mve_post_type = $wp_query->get( 'post_type' );
-	if ( 'product' !== $mve_post_type && ! $wp_query->get( 'wc_query' ) ) {
-		return $template;
-	}
-
-	$mve_archive = locate_template( array( 'woocommerce/archive-product.php' ) );
-	if ( ! $mve_archive && function_exists( 'WC' ) ) {
-		$mve_archive = WC()->plugin_path() . '/templates/archive-product.php';
-	}
-
-	return ( $mve_archive && file_exists( $mve_archive ) ) ? $mve_archive : $template;
+	return ( $archive && file_exists( $archive ) ) ? $archive : $template;
 }
 add_filter( 'template_include', 'mve_filtered_shop_template', 99 );
 

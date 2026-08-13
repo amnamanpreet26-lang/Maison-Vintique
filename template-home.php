@@ -23,12 +23,28 @@ get_header();
 		$hero_has_video  = ( 'video' === $hero_bg_type && $hero_bg_video );
 		$hero_has_image  = ( ! $hero_has_video && $hero_bg_image );
 
+		$hero_overlay_colour = get_field('hero_overlay_colour');
+
 		$hero_style = '';
 		if ( $hero_has_image ) {
 			$hero_style .= "background-image: url('" . esc_url($hero_bg_image['url']) . "');";
 		}
-		if ( $hero_bg_opacity !== '' && $hero_bg_opacity !== false ) {
-			$hero_style .= " --hero-bg-opacity: " . esc_attr($hero_bg_opacity) . ";";
+
+		/*
+		 * The overlay is what makes the white heading readable over the video.
+		 * It defaults to 0 in the CSS, i.e. no overlay at all, so unless
+		 * somebody had filled the field in the text sat straight on the footage
+		 * and disappeared into any bright frame. A background now gets a
+		 * sensible default; a hero with no background still gets none.
+		 */
+		if ( $hero_bg_opacity !== '' && $hero_bg_opacity !== false && $hero_bg_opacity !== null ) {
+			$hero_style .= " --hero-bg-opacity: " . esc_attr( $hero_bg_opacity ) . ";";
+		} elseif ( $hero_has_video || $hero_has_image ) {
+			$hero_style .= " --hero-bg-opacity: 0.55;";
+		}
+
+		if ( $hero_overlay_colour ) {
+			$hero_style .= " --hero-overlay-colour: " . esc_attr( $hero_overlay_colour ) . ";";
 		}
 		$hero_classes = 'section hero' . ( $hero_has_video ? ' hero--video' : '' );
 		?>
@@ -157,7 +173,10 @@ get_header();
 $mv_producers = new WP_Query( array(
     'post_type'      => 'producer',
     'posts_per_page' => 8,
-    'orderby'        => 'menu_order',
+    // Alphabetical by estate name. menu_order is not a manual ordering anyone
+    // has set here — every producer sits at 0 — so it left them in whatever
+    // order they happened to be created in.
+    'orderby'        => 'title',
     'order'          => 'ASC',
     'no_found_rows'  => true,
 ) );
@@ -381,9 +400,9 @@ $mv_producers = new WP_Query( array(
 <?php
 $mv_products = new WP_Query( array(
     'post_type'      => 'product',
-    'posts_per_page' => 8,
-    'orderby'        => 'menu_order',
-    'order'          => 'ASC',
+    'posts_per_page' => 4,
+    'orderby'        => 'date',
+    'order'          => 'DESC',
     'no_found_rows'  => true,
 ) );
 ?>

@@ -58,9 +58,10 @@ $mvp_producers = new WP_Query(
 		'post_type'      => 'producer',
 		'posts_per_page' => $mvp_per_page,
 		'paged'          => $mvp_paged,
+		// Alphabetical by estate name. menu_order came first before, which
+		// meant the list only looked alphabetical until someone set one.
 		'orderby'        => array(
-			'menu_order' => 'ASC',
-			'title'      => 'ASC',
+			'title' => 'ASC',
 		),
 	)
 );

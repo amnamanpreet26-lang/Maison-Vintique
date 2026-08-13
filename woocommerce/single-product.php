@@ -336,7 +336,7 @@ $closure = get_field( 'closure' );
 		<?php
 		// "You may also like" — renders the SAME card as the homepage portfolio
 		// and the shop archive (template-parts/wine-card.php).
-		$related_ids = wc_get_related_products( $product->get_id(), 4 );
+		$related_ids = wc_get_related_products( $product->get_id(), 3 );
 
 		// Keep a handle on the wine being viewed: the shared card partial writes
 		// to $GLOBALS['product'], so it has to be restored afterwards or anything
