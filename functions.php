@@ -292,6 +292,33 @@ require_once get_stylesheet_directory() . '/inc/registration.php';
 require_once get_stylesheet_directory() . '/inc/social.php';
 
 /**
+ * Branded transactional email for every WooCommerce and account event, plus
+ * the emails WooCommerce does not ship (trade account, invoice, payment
+ * chasing, back in stock). Wording is edited at WooCommerce → Settings →
+ * Emails.
+ */
+require_once get_stylesheet_directory() . '/inc/emails.php';
+
+/**
+ * The trade application lifecycle — pending, approved, more information,
+ * declined — reviewed on the user's profile screen, with the matching email
+ * sent on each change.
+ */
+require_once get_stylesheet_directory() . '/inc/trade-accounts.php';
+
+/**
+ * The Invoices tab in My Account, the printable invoice, and the per-order
+ * View / Download invoice / Reorder actions.
+ */
+require_once get_stylesheet_directory() . '/inc/invoices.php';
+
+/**
+ * "Trade Pricing Available" — shown once to visitors who are not signed in.
+ * Wording at Appearance → Customize → Trade Pricing Popup.
+ */
+require_once get_stylesheet_directory() . '/inc/trade-popup.php';
+
+/**
  * ACF: load/save field groups from the theme's acf-json folder (version control + handover).
  */
 function mve_acf_json_save( $path ) {

@@ -1,0 +1,149 @@
+{
+    "key": "group_mv_policy",
+    "title": "Policy / Legal Page",
+    "fields": [
+        {
+            "key": "field_mv_policy_eyebrow",
+            "label": "Eyebrow",
+            "name": "policy_eyebrow",
+            "type": "text",
+            "instructions": "Small line above the title, e.g. \"Legal\".",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "Legal"
+        },
+        {
+            "key": "field_mv_policy_title",
+            "label": "Title",
+            "name": "policy_title",
+            "type": "text",
+            "instructions": "Leave empty to use the page's own title.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_mv_policy_updated",
+            "label": "Last Reviewed",
+            "name": "policy_updated",
+            "type": "text",
+            "instructions": "Free text, e.g. \"17 August 2026\". Shown under the banner. Update it whenever you change the wording.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_mv_policy_intro",
+            "label": "Intro",
+            "name": "policy_intro",
+            "type": "textarea",
+            "instructions": "One or two sentences in the dark banner.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "rows": 3,
+            "new_lines": ""
+        },
+        {
+            "key": "field_mv_policy_sections",
+            "label": "Sections",
+            "name": "policy_sections",
+            "type": "repeater",
+            "instructions": "One row per clause. They are numbered automatically, each gets its own link, and a contents list is built from the headings when there are more than two.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "layout": "block",
+            "button_label": "Add section",
+            "min": 0,
+            "sub_fields": [
+                {
+                    "key": "field_mv_policy_s_heading",
+                    "label": "Heading",
+                    "name": "heading",
+                    "type": "text",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    }
+                },
+                {
+                    "key": "field_mv_policy_s_body",
+                    "label": "Body",
+                    "name": "body",
+                    "type": "wysiwyg",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "tabs": "all",
+                    "toolbar": "full",
+                    "media_upload": 0
+                }
+            ]
+        },
+        {
+            "key": "field_mv_policy_contact",
+            "label": "Contact Note",
+            "name": "policy_contact",
+            "type": "textarea",
+            "instructions": "Who to contact about this policy. Shown in a panel at the bottom.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "rows": 3,
+            "new_lines": "wpautop"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "page_template",
+                "operator": "==",
+                "value": "template-policy.php"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "Privacy Policy, Refund Policy, Terms & Conditions and Cookie Policy all use this one group.",
+    "show_in_rest": 0
+}

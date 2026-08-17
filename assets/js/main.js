@@ -225,3 +225,75 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
 		});
 	});
 })();
+
+/* ==========================================================================
+   TRADE PRICING POPUP
+   --------------------------------------------------------------------------
+   Shown once per visitor, not once per page view. The flag is in localStorage
+   with a timestamp, so it survives navigation and a return visit, and the
+   "days to stay dismissed" setting can be honoured.
+
+   A native dialog element, so focus trapping, Escape-to-close and the backdrop
+   come from the browser rather than from code we would have to maintain.
+   ========================================================================== */
+(function () {
+	var popup = document.getElementById('mv-trade-popup');
+	if (!popup) return;
+
+	var KEY   = 'mvTradePopupDismissed';
+	var days  = parseInt(popup.dataset.days, 10);
+	var delay = parseInt(popup.dataset.delay, 10);
+	if (isNaN(days)) days = 30;
+	if (isNaN(delay)) delay = 1200;
+
+	function store() {
+		// Private browsing can throw on localStorage access, and a popup is not
+		// worth breaking the page over.
+		try { return window.localStorage; } catch (e) { return null; }
+	}
+
+	function alreadyDismissed() {
+		var ls = store();
+		if (!ls) return false;
+		var stamp = parseInt(ls.getItem(KEY), 10);
+		if (!stamp) return false;
+		if (days === 0) return true;                 // 0 = never show again
+		var age = (Date.now() - stamp) / 86400000;   // ms -> days
+		return age < days;
+	}
+
+	function remember() {
+		var ls = store();
+		if (ls) { try { ls.setItem(KEY, String(Date.now())); } catch (e) {} }
+	}
+
+	function close() {
+		remember();
+		if (typeof popup.close === 'function' && popup.open) popup.close();
+		else popup.removeAttribute('open');
+	}
+
+	if (alreadyDismissed()) return;
+
+	setTimeout(function () {
+		if (typeof popup.showModal === 'function') popup.showModal();
+		else popup.setAttribute('open', '');          // very old browsers
+	}, delay);
+
+	popup.querySelectorAll('[data-mv-popup-close]').forEach(function (btn) {
+		btn.addEventListener('click', close);
+	});
+
+	// Escape fires dialog's own close event; record the dismissal for that too.
+	popup.addEventListener('close', remember);
+
+	// Clicking the backdrop closes it. The dialog's own box is the only child,
+	// so a click landing on the dialog itself was outside that box.
+	popup.addEventListener('click', function (e) {
+		if (e.target === popup) close();
+	});
+
+	// Following the CTA counts as dealt with — do not nag them again.
+	var cta = popup.querySelector('.mv-popup__cta');
+	if (cta) cta.addEventListener('click', remember);
+})();

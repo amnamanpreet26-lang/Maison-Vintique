@@ -29,6 +29,11 @@
 > it. Until the whole install is cleaned, every theme file will keep getting
 > re-infected, and a backdoor that rewrites theme files is also a plausible
 > reason for fixes appearing not to take effect after deployment.
+>
+> **Third time: 17 August, 225 KB again.** Removed for a third time. Nothing
+> else in that upload had been touched — only `functions.php` — so the theme
+> files are landing correctly and this is coming from the server, not from the
+> deploys. Please get the install cleaned; this will keep happening.
 
 
 A luxury editorial wine importer & **B2B trade store** built on **Elementor Pro + WooCommerce + ACF Pro**, delivered as a Hello Elementor **child theme** with importable ACF field groups and Elementor templates.
