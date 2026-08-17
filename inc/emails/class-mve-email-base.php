@@ -219,6 +219,17 @@ abstract class MVE_Email_Base extends WC_Email {
 	}
 
 	/**
+	 * Public read of the above, for the admin preview screen — it needs to know
+	 * whether to hand this email a sample order, and cannot call a protected
+	 * method from outside.
+	 *
+	 * @return bool
+	 */
+	public function show_order_details_for_preview() {
+		return $this->show_order_details();
+	}
+
+	/**
 	 * The standard WooCommerce settings screen for this email.
 	 */
 	public function init_form_fields() {

@@ -25,6 +25,18 @@ defined( 'ABSPATH' ) || exit;
  * @return bool
  */
 function mve_show_trade_popup() {
+	/*
+	 * PREVIEW OVERRIDE.
+	 *
+	 * The popup is for logged-OUT visitors, so an administrator testing the
+	 * site never sees it — which reads exactly like "the popup is broken".
+	 * Add ?mv_popup=preview to any URL to force it, signed in or not. It also
+	 * ignores the "already dismissed" flag, so it shows every time.
+	 */
+	if ( isset( $_GET['mv_popup'] ) && 'preview' === $_GET['mv_popup'] ) { // phpcs:ignore WordPress.Security.NonceVerification -- display only.
+		return true;
+	}
+
 	if ( is_user_logged_in() || is_admin() ) {
 		return false;
 	}
@@ -61,10 +73,19 @@ function mve_render_trade_popup() {
 	$url     = get_theme_mod( 'mve_popup_cta_url', '' );
 	$url     = $url ? $url : $account;
 	$delay   = (int) get_theme_mod( 'mve_popup_delay', 1200 );
+	$decor   = get_theme_mod( 'mve_popup_image', '' );
+	$preview = isset( $_GET['mv_popup'] ) && 'preview' === $_GET['mv_popup']; // phpcs:ignore WordPress.Security.NonceVerification -- display only.
 	$days    = (int) apply_filters( 'mve_trade_popup_remember_days', (int) get_theme_mod( 'mve_popup_days', 30 ) );
 	?>
-	<dialog class="mv-popup" id="mv-trade-popup" data-delay="<?php echo esc_attr( max( 0, $delay ) ); ?>" data-days="<?php echo esc_attr( max( 0, $days ) ); ?>" aria-labelledby="mv-popup-title">
+	<dialog class="mv-popup<?php echo $decor ? ' mv-popup--decor' : ''; ?>"
+		id="mv-trade-popup"
+		data-delay="<?php echo esc_attr( $preview ? 200 : max( 0, $delay ) ); ?>"
+		data-days="<?php echo esc_attr( max( 0, $days ) ); ?>"
+		<?php echo $preview ? 'data-preview="1"' : ''; ?>
+		<?php if ( $decor ) : ?>style="--mv-popup-decor:url('<?php echo esc_url( $decor ); ?>')"<?php endif; ?>
+		aria-labelledby="mv-popup-title">
 		<div class="mv-popup__inner">
+			<div class="mv-popup__frame" aria-hidden="true"></div>
 			<button type="button" class="mv-popup__close" data-mv-popup-close aria-label="<?php esc_attr_e( 'Close', 'maison-vintique' ); ?>">&times;</button>
 
 			<?php if ( $eyebrow ) : ?>
@@ -139,6 +160,13 @@ function mve_popup_customizer( $wp_customize ) {
 			'type'        => 'url',
 			'default'     => '',
 			'description' => __( 'Leave empty to send them to the account page.', 'maison-vintique' ),
+			'sanitize'    => 'esc_url_raw',
+		),
+		'mve_popup_image'   => array(
+			'label'       => __( 'Decorative background image', 'maison-vintique' ),
+			'type'        => 'url',
+			'default'     => '',
+			'description' => __( 'Optional. A PNG with a transparent middle — botanical corners, a border engraving. Upload it to the Media Library and paste the URL here.', 'maison-vintique' ),
 			'sanitize'    => 'esc_url_raw',
 		),
 		'mve_popup_delay'   => array(

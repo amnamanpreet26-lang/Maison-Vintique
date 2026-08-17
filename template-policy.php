@@ -47,13 +47,19 @@ while ( have_posts() ) :
 		while ( have_rows( 'policy_sections' ) ) {
 			the_row();
 			$mvl_heading = get_sub_field( 'heading' );
-			if ( ! $mvl_heading ) {
+			$mvl_body    = get_sub_field( 'body' );
+
+			// A row with neither heading nor body is just an empty row.
+			if ( ! $mvl_heading && ! $mvl_body ) {
 				continue;
 			}
+
+			// Headings are optional: a block of text on its own is a valid
+			// clause, and forcing a heading on it would invent one.
 			$mvl_sections[] = array(
 				'heading' => $mvl_heading,
-				'body'    => get_sub_field( 'body' ),
-				'id'      => 'policy-' . sanitize_title( $mvl_heading ),
+				'body'    => $mvl_body,
+				'id'      => $mvl_heading ? 'policy-' . sanitize_title( $mvl_heading ) : '',
 			);
 		}
 	}
@@ -76,27 +82,23 @@ while ( have_posts() ) :
 					</p>
 				<?php endif; ?>
 
-				<?php if ( count( $mvl_sections ) > 2 ) : ?>
-					<nav class="mv-policy__toc" aria-label="<?php esc_attr_e( 'On this page', 'maison-vintique-elementor' ); ?>">
-						<p class="mv-policy__toc-label"><?php esc_html_e( 'On this page', 'maison-vintique-elementor' ); ?></p>
-						<ol>
-							<?php foreach ( $mvl_sections as $mvl_section ) : ?>
-								<li><a href="#<?php echo esc_attr( $mvl_section['id'] ); ?>"><?php echo esc_html( $mvl_section['heading'] ); ?></a></li>
-							<?php endforeach; ?>
-						</ol>
-					</nav>
-				<?php endif; ?>
 
 				<div class="mv-policy__body">
 					<?php if ( $mvl_sections ) : ?>
-						<?php $mvl_n = 0; ?>
 						<?php foreach ( $mvl_sections as $mvl_section ) : ?>
-							<?php $mvl_n++; ?>
-							<section class="mv-policy__section" id="<?php echo esc_attr( $mvl_section['id'] ); ?>">
-								<h2 class="mv-policy__h">
-									<span class="mv-policy__n"><?php echo esc_html( $mvl_n ); ?></span>
-									<?php echo esc_html( $mvl_section['heading'] ); ?>
-								</h2>
+							<section class="mv-policy__section"<?php echo $mvl_section['id'] ? ' id="' . esc_attr( $mvl_section['id'] ) . '"' : ''; ?>>
+								<?php if ( $mvl_section['heading'] ) : ?>
+									<h2 class="mv-policy__h"><?php echo esc_html( $mvl_section['heading'] ); ?></h2>
+								<?php endif; ?>
+
+								<?php
+								/*
+								 * wp_kses_post, NOT esc_html: this is a WYSIWYG
+								 * field, so bold, lists, links and tables pasted
+								 * in must survive exactly as pasted. kses strips
+								 * scripts and iframes but leaves formatting alone.
+								 */
+								?>
 								<?php if ( $mvl_section['body'] ) : ?>
 									<div class="mv-policy__prose"><?php echo wp_kses_post( $mvl_section['body'] ); ?></div>
 								<?php endif; ?>
@@ -109,10 +111,8 @@ while ( have_posts() ) :
 				</div>
 
 				<?php if ( $mvl_contact ) : ?>
-					<div class="mv-policy__contact">
-						<p class="mv-policy__toc-label"><?php esc_html_e( 'Questions about this policy', 'maison-vintique-elementor' ); ?></p>
-						<?php echo wp_kses_post( wpautop( $mvl_contact ) ); ?>
-					</div>
+					<?php // Plain text, same as the rest of the page — no panel, no label. ?>
+					<div class="mv-policy__contact mv-policy__prose"><?php echo wp_kses_post( wpautop( $mvl_contact ) ); ?></div>
 				<?php endif; ?>
 
 			</div>

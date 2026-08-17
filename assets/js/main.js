@@ -263,6 +263,7 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
 	}
 
 	function remember() {
+		if (popup.dataset.preview) return;   // previewing should not dismiss it
 		var ls = store();
 		if (ls) { try { ls.setItem(KEY, String(Date.now())); } catch (e) {} }
 	}
@@ -273,7 +274,9 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
 		else popup.removeAttribute('open');
 	}
 
-	if (alreadyDismissed()) return;
+	// ?mv_popup=preview forces it every time, so it can be checked while
+	// signed in and after it has already been dismissed.
+	if (!popup.dataset.preview && alreadyDismissed()) return;
 
 	setTimeout(function () {
 		if (typeof popup.showModal === 'function') popup.showModal();

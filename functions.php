@@ -307,6 +307,15 @@ require_once get_stylesheet_directory() . '/inc/emails.php';
 require_once get_stylesheet_directory() . '/inc/trade-accounts.php';
 
 /**
+ * WooCommerce → Email Preview. Renders any transactional email on demand with
+ * sample data, and sends a test to the logged-in administrator, so the
+ * templates can be checked without placing real orders.
+ */
+if ( is_admin() ) {
+	require_once get_stylesheet_directory() . '/inc/email-preview.php';
+}
+
+/**
  * The Invoices tab in My Account, the printable invoice, and the per-order
  * View / Download invoice / Reorder actions.
  */
