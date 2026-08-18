@@ -538,6 +538,92 @@ date** and **Delivery instructions** — are registered as real WooCommerce
 checkout fields in `inc/woocommerce.php`, saved to the order, and shown on the
 order screen in wp-admin.
 
+## Trade pricing popup
+
+Appearance → Customize → **Trade Pricing Popup** — wording, button, delay, how
+long it stays dismissed, and an optional decorative background image.
+
+**"I can't see the popup."** Almost always this: it is for visitors who are
+**not signed in**, and you are signed in to wp-admin in the same browser, so it
+is doing exactly what it should. Two ways to see it yourself:
+
+- tick **"Show it to signed-in users too (for testing)"** in that Customizer
+  section — remember to untick it when you're done; or
+- add `?mv_popup=preview` to any address. That forces it for one page view,
+  ignores the "already dismissed" flag, and does not set one.
+
+It is also deliberately never shown on the account, basket or checkout pages.
+
+Once dismissed it stays dismissed for the number of days set in the Customizer.
+That flag lives in the browser, not the database — to clear it, run
+`localStorage.removeItem('mvTradePopupDismissed')` in the console.
+
+## Trade Account Application
+
+The nine-section form from the client's Word document, as a real page.
+
+**To put it live:** Pages → Add New, call it *Apply for a Trade Account*,
+then Page Attributes → Template → **Trade Account Application**. Publish.
+That is the whole setup — nothing else has to be linked by hand:
+
+- the login page's "Apply for an account" panel becomes a button through to it
+  (and stops showing the short two-field registration form, so there is only
+  one way to apply);
+- the trade popup's button points at it;
+- if the page is ever unpublished, both fall back to `/my-account/` as before,
+  so no link ever dies.
+
+**What is editable.** The wording around the form — eyebrow, title, intro, the
+numbered "what happens next" steps, the side note, and a hero background image
+or video — is ACF on the page itself (`group_trade_application.json`). The page
+editor's own content shows above the steps.
+
+**The form fields themselves** are defined once, as data, in
+`mve_application_schema()` in `inc/trade-application.php`. The form markup, the
+validation, the storage and the admin display all read that one array, so
+adding or removing a question is a single edit. From a plugin or snippet:
+
+```php
+add_filter( 'mve_application_schema', function ( $schema ) {
+    $schema['business']['fields']['sic_code'] = array(
+        'label' => 'SIC code',
+        'type'  => 'text',
+        'width' => 'half',
+    );
+    return $schema;
+} );
+```
+
+Field types: `text`, `email`, `tel`, `url`, `textarea`, `date`, `number`,
+`select`, `radio`, `checkgroup`, `checkbox`, `file`, `users`. Add
+`'controls' => 'some-group'` to a radio and `'group' => 'some-group'` to the
+questions that depend on it, and they stay hidden until the answer calls for
+them; `'when' => 'no'` flips that round.
+
+**What happens on submit**
+
+1. Nonce, honeypot and a one-a-minute-per-address throttle.
+2. Validation. Anything wrong comes straight back with every answer still in
+   its box — a nine-section form that empties itself is a lost application.
+3. A WooCommerce customer is created with the primary contact's email as the
+   sign-in, status **Pending review**. WooCommerce sends them their password.
+4. Every answer is stored against that user, and the uploaded documents go into
+   the media library as **private** attachments owned by them.
+5. The applicant gets "Application received"; the shop gets a plain-text
+   notification with a link straight to the review screen. Change the address
+   it goes to with the `mve_application_notification_email` filter.
+
+**To review one:** Users → the applicant → the *Trade account application*
+panel shows every answer, section by section, with the documents linked. The
+*Trade account* panel above it changes the status, and each status sends the
+matching email (see Emails). Pricing itself is still "logged in sees pricing" —
+approval is a review workflow on top of that, not a second gate. To make
+approval a hard requirement there is a commented filter at the bottom of
+`inc/trade-accounts.php`.
+
+**Hook it into a CRM** with `do_action( 'mve_trade_application_received',
+$user_id, $values )`.
+
 ## Next steps for the developer
 1. Build a **Single Product** template the same way (a `single-product.php` following this same pattern), using the Wine Details ACF tabs (Tasting, Terroir, Allergens, Awards, Downloads).
 2. Wire trade **pricing** to the Laravel portal (SSO + API) — this theme handles the *gating*; the *price values* for trade users come from Laravel/your B2B pricing plugin.

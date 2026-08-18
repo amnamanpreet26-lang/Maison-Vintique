@@ -1,7 +1,27 @@
 /* Maison Vintique — front-end interactions.
-   Cart badge + Add-to-Cart demo behaviour. In production the cart total
+
+   ONE BROKEN BLOCK MUST NOT TAKE THE REST WITH IT.
+   ------------------------------------------------
+   Everything below is a separate block, but they all live in one file, and an
+   uncaught error anywhere stops the browser reading the rest of it. That is
+   how a missing carousel arrow on one page silently killed the trade popup,
+   the smooth scrolling and the FAQ accordion on every page.
+
+   mvBlock() runs each block on its own. If one throws, it is reported to the
+   console and the next one still runs. */
+function mvBlock(fn) {
+  try {
+    fn();
+  } catch (err) {
+    if (window.console && console.warn) {
+      console.warn('[Maison Vintique] a script block failed and was skipped:', err);
+    }
+  }
+}
+
+/* Cart badge + Add-to-Cart demo behaviour. In production the cart total
    comes from the Laravel trade portal / WooCommerce session. */
-(function () {
+mvBlock(function () {
   'use strict';
 
   var count = 0;
@@ -70,30 +90,45 @@
     }, { threshold: 0.14, rootMargin: '0px 0px -6% 0px' });
     reveal.forEach(function (el) { io.observe(el); });
   }
-})();
+});
 
 
 
 
 
-document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
-  var count = parseInt(carousel.dataset.count, 10);
-  if (count <= 3) return; // static grid, no carousel behavior needed
+/* ==========================================================================
+   PRODUCER CAROUSEL ARROWS
+   --------------------------------------------------------------------------
+   Three producers or fewer render as a plain grid with no arrows at all, so
+   every element here is checked before it is used. Without those checks a page
+   with a short producer list threw, and everything after this point in the
+   file never ran.
+   ========================================================================== */
+mvBlock(function () {
+  document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
+    var count = parseInt(carousel.dataset.count, 10);
+    if (!isNaN(count) && count <= 3) return;   // static grid, nothing to scroll
 
-  var track = carousel.querySelector('.producer-carousel__track');
-  var prev  = carousel.querySelector('.producer-carousel__arrow--prev');
-  var next  = carousel.querySelector('.producer-carousel__arrow--next');
+    var track = carousel.querySelector('.producer-carousel__track');
+    var prev  = carousel.querySelector('.producer-carousel__arrow--prev');
+    var next  = carousel.querySelector('.producer-carousel__arrow--next');
+    if (!track) return;
 
-  var scrollAmount = function () {
-    var slide = track.querySelector('.producer-carousel__slide');
-    return slide ? slide.getBoundingClientRect().width + 24 : 300;
-  };
+    var scrollAmount = function () {
+      var slide = track.querySelector('.producer-carousel__slide');
+      return slide ? slide.getBoundingClientRect().width + 24 : 300;
+    };
 
-  prev.addEventListener('click', function () {
-    track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
-  });
-  next.addEventListener('click', function () {
-    track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
+    if (prev) {
+      prev.addEventListener('click', function () {
+        track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
+      });
+    }
+    if (next) {
+      next.addEventListener('click', function () {
+        track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
+      });
+    }
   });
 });
 
@@ -104,7 +139,7 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
    can offset for the sticky header. With the CSS property alone the target
    section lands underneath the header and the visitor sees the wrong thing.
    ========================================================================== */
-(function () {
+mvBlock(function () {
 	var header = document.querySelector('.mv-header');
 
 	function headerOffset() {
@@ -159,7 +194,7 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
 			setTimeout(function () { scrollToTarget(target, false); }, 60);
 		}
 	});
-})();
+});
 
 /* ==========================================================================
    FAQ ACCORDION — OPEN AND CLOSE SMOOTHLY
@@ -171,7 +206,7 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
 
    With JavaScript off, <details> still opens and closes — just instantly.
    ========================================================================== */
-(function () {
+mvBlock(function () {
 	var panels = document.querySelectorAll('.mvp-faq details, details.mv-accordion');
 	if (!panels.length) return;
 
@@ -224,7 +259,7 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
 			}
 		});
 	});
-})();
+});
 
 /* ==========================================================================
    TRADE PRICING POPUP
@@ -236,7 +271,7 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
    A native dialog element, so focus trapping, Escape-to-close and the backdrop
    come from the browser rather than from code we would have to maintain.
    ========================================================================== */
-(function () {
+mvBlock(function () {
 	var popup = document.getElementById('mv-trade-popup');
 	if (!popup) return;
 
@@ -299,4 +334,89 @@ document.querySelectorAll('.producer-carousel').forEach(function (carousel) {
 	// Following the CTA counts as dealt with — do not nag them again.
 	var cta = popup.querySelector('.mv-popup__cta');
 	if (cta) cta.addEventListener('click', remember);
-})();
+});
+
+/* ==========================================================================
+   TRADE ACCOUNT APPLICATION
+   --------------------------------------------------------------------------
+   Two small jobs on a long form:
+
+   1. Conditional questions. "Premises licence number" only makes sense once
+      somebody has said they do sell to the public, so those fields stay out of
+      the way until the answer above them calls for them. With scripts blocked
+      every field is simply visible — nothing is hidden behind JavaScript.
+
+   2. "Add another person". The authorised-users table starts with two rows
+      and this clones one more on demand, renumbering the field names so the
+      server receives them as a list.
+   ========================================================================== */
+mvBlock(function () {
+	var form = document.querySelector('.mvta-form');
+	if (!form) return;
+
+	/* ---------- 1. Conditional questions ---------- */
+	var triggers = form.querySelectorAll('[data-mvta-controls]');
+
+	function sync(trigger) {
+		var group  = trigger.getAttribute('data-mvta-controls');
+		var chosen = trigger.querySelector('input:checked');
+		var answer = chosen ? chosen.value : '';
+		var fields = form.querySelectorAll('[data-mvta-group="' + group + '"]');
+
+		Array.prototype.forEach.call(fields, function (field) {
+			// Most follow-ups appear on anything but "no". A field carrying
+			// data-mvta-when is the other way round — "explain why you have no
+			// licence" only belongs under a "no".
+			var when   = field.getAttribute('data-mvta-when');
+			var wanted = when ? (answer === when) : (!!answer && answer !== 'no');
+
+			field.hidden = !wanted;
+
+			// A hidden required field can never be filled in, and the browser
+			// then refuses to submit with no visible explanation.
+			field.querySelectorAll('input, select, textarea').forEach(function (input) {
+				if (!wanted && input.required) {
+					input.dataset.mvtaRequired = '1';
+					input.required = false;
+				} else if (wanted && input.dataset.mvtaRequired) {
+					input.required = true;
+					delete input.dataset.mvtaRequired;
+				}
+			});
+		});
+	}
+
+	Array.prototype.forEach.call(triggers, function (trigger) {
+		sync(trigger);
+		trigger.addEventListener('change', function () { sync(trigger); });
+	});
+
+	/* ---------- 2. Add another authorised user ---------- */
+	var table = form.querySelector('[data-mvta-users]');
+	var add   = form.querySelector('[data-mvta-add-user]');
+	if (!table || !add) return;
+
+	add.addEventListener('click', function () {
+		var rows = table.querySelectorAll('[data-mvta-user-row]');
+		if (!rows.length) return;
+
+		var last  = rows[rows.length - 1];
+		var clone = last.cloneNode(true);
+		var index = rows.length;
+
+		clone.querySelectorAll('input').forEach(function (input) {
+			// name="authorised_users[2][email]" — only the number changes.
+			input.name = input.name.replace(/\[\d+\]/, '[' + index + ']');
+			if (input.type === 'checkbox') {
+				input.checked = false;
+			} else {
+				input.value = '';
+			}
+		});
+
+		add.parentNode.insertBefore(clone, add);
+
+		var first = clone.querySelector('input');
+		if (first) first.focus();
+	});
+});

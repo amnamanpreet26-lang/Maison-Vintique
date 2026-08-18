@@ -21,26 +21,32 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'woocommerce_before_customer_login_form' );
 
 /**
- * The registration form is rendered here ALWAYS.
+ * "Apply for an account" goes one of two places, and never nowhere.
  *
- * It used to be gated on WooCommerce's "enable registration" setting, and when
- * that setting is off the button fell back to linking at /trade/ — a page that
- * doesn't exist, so "Apply for an account" 404'd. Rendering the form directly
- * removes the dead link entirely.
+ * If a page is using the "Trade Account Application" template, this becomes a
+ * button through to it — that is the real nine-section application, and it
+ * collects the licensing, AWRS and delivery detail the shop has to have before
+ * it can open an account.
  *
- * WooCommerce still does the actual work: WC_Form_Handler::process_registration()
- * fires on wp_loaded whenever $_POST['register'] is set with a valid nonce, and
- * it does not check that option — so validation, account creation, the welcome
- * email and the automatic sign-in afterwards all behave normally.
+ * If that page has not been made yet, the short WooCommerce registration form
+ * is rendered here instead, exactly as before, so the panel is never a dead
+ * end. (It used to link at /trade/ — a page that doesn't exist — which is why
+ * "Apply for an account" 404'd.)
  *
- * To go back to linking at a separate application page:
- *   add_filter( 'mve_show_registration_form', '__return_false' );
- *   add_filter( 'mve_trade_application_url', fn() => home_url( '/apply/' ) );
+ * WooCommerce still does the actual work for the short form:
+ * WC_Form_Handler::process_registration() fires on wp_loaded whenever
+ * $_POST['register'] is set with a valid nonce, so validation, account
+ * creation, the welcome email and the automatic sign-in all behave normally.
+ *
+ * To force the short form back on even with the application page published:
+ *   add_filter( 'mve_show_registration_form', '__return_true', 20 );
  */
 $mve_show_registration = (bool) apply_filters( 'mve_show_registration_form', true );
 
-/** Only used when the form is deliberately switched off. */
-$mve_apply_url = apply_filters( 'mve_trade_application_url', wc_get_page_permalink( 'myaccount' ) );
+/** Used when the form is switched off — see inc/trade-application.php. */
+$mve_apply_url = function_exists( 'mve_trade_application_url' )
+	? mve_trade_application_url()
+	: wc_get_page_permalink( 'myaccount' );
 ?>
 <section class="section login-page">
 <div class="wrap">

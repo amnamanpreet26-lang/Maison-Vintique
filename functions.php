@@ -328,6 +328,13 @@ require_once get_stylesheet_directory() . '/inc/invoices.php';
 require_once get_stylesheet_directory() . '/inc/trade-popup.php';
 
 /**
+ * The full Trade Account Application — the web version of the client's
+ * nine-section form. Make a page with the "Trade Account Application" template
+ * and everything else finds it on its own.
+ */
+require_once get_stylesheet_directory() . '/inc/trade-application.php';
+
+/**
  * ACF: load/save field groups from the theme's acf-json folder (version control + handover).
  */
 function mve_acf_json_save( $path ) {

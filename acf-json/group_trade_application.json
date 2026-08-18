@@ -1,0 +1,141 @@
+{
+  "key": "group_trade_application",
+  "title": "Trade Account Application Page",
+  "fields": [
+    {
+      "key": "field_ta_eyebrow",
+      "label": "Eyebrow",
+      "name": "ta_eyebrow",
+      "type": "text",
+      "instructions": "Small line above the title. Defaults to \"Trade Accounts\".",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ta_title",
+      "label": "Title",
+      "name": "ta_title",
+      "type": "text",
+      "instructions": "Defaults to the page title.",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
+      "key": "field_ta_intro",
+      "label": "Hero Intro",
+      "name": "ta_intro",
+      "type": "textarea",
+      "instructions": "One or two sentences under the title.",
+      "rows": 3
+    },
+    {
+      "key": "field_ta_steps",
+      "label": "What Happens Next",
+      "name": "ta_steps",
+      "type": "repeater",
+      "instructions": "The numbered list beside the form. Three or four short steps works best — leave it empty to hide the whole column.",
+      "layout": "row",
+      "button_label": "Add step",
+      "sub_fields": [
+        {
+          "key": "field_ta_s_title",
+          "label": "Step",
+          "name": "title",
+          "type": "text",
+          "instructions": "e.g. We check your licence",
+          "wrapper": {
+            "width": "40"
+          }
+        },
+        {
+          "key": "field_ta_s_text",
+          "label": "Detail",
+          "name": "text",
+          "type": "textarea",
+          "rows": 2,
+          "wrapper": {
+            "width": "60"
+          }
+        }
+      ]
+    },
+    {
+      "key": "field_ta_note",
+      "label": "Side Note",
+      "name": "ta_note",
+      "type": "textarea",
+      "instructions": "Optional small print under the steps — how long review takes, who to call, what to have ready.",
+      "rows": 3
+    },
+    {
+      "key": "field_ta_hero_tab",
+      "label": "Hero Background",
+      "name": "",
+      "type": "tab",
+      "placement": "top",
+      "endpoint": 0
+    },
+    {
+      "key": "field_ta_hero_bg_image",
+      "label": "Hero Background Image",
+      "name": "ta_hero_bg_image",
+      "type": "image",
+      "instructions": "Sits behind the page title. Leave empty for the plain dark banner. Use a wide image — at least 1920px.",
+      "wrapper": {
+        "width": "50"
+      },
+      "return_format": "array",
+      "preview_size": "medium",
+      "library": "all"
+    },
+    {
+      "key": "field_ta_hero_bg_video",
+      "label": "Hero Background Video",
+      "name": "ta_hero_bg_video",
+      "type": "file",
+      "instructions": "An MP4 that plays behind the title. Muted and looped so browsers allow it to autoplay. The image above is used as its poster.",
+      "wrapper": {
+        "width": "50"
+      },
+      "return_format": "array",
+      "library": "all",
+      "mime_types": "mp4"
+    },
+    {
+      "key": "field_ta_hero_bg_overlay",
+      "label": "Background Darkness",
+      "name": "ta_hero_bg_overlay",
+      "type": "number",
+      "instructions": "0-100. How dark the tint over the image/video is, so the white text stays readable. Leave empty for the default (55).",
+      "wrapper": {
+        "width": "50"
+      },
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "placeholder": "55",
+      "append": "%"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "page_template",
+        "operator": "==",
+        "value": "template-trade-application.php"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": "Wording around the trade account application. The form itself is built in inc/trade-application.php — the page editor content shows above the steps.",
+  "show_in_rest": 1,
+  "modified": 1787011200
+}

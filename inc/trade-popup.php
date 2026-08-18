@@ -37,10 +37,19 @@ function mve_show_trade_popup() {
 		return true;
 	}
 
-	if ( is_user_logged_in() || is_admin() ) {
+	if ( is_admin() ) {
 		return false;
 	}
 	if ( ! get_theme_mod( 'mve_popup_enabled', true ) ) {
+		return false;
+	}
+	/*
+	 * "I can't see the popup" is almost always this: an administrator checking
+	 * the site is signed in, and the popup is for people who are not. The
+	 * Customizer checkbox below shows it to signed-in users too, so it can be
+	 * looked at without signing out or opening a private window.
+	 */
+	if ( is_user_logged_in() && ! get_theme_mod( 'mve_popup_show_logged_in', false ) ) {
 		return false;
 	}
 	// Not while they are trying to sign in, register, or pay.
@@ -69,7 +78,10 @@ function mve_render_trade_popup() {
 	$title   = get_theme_mod( 'mve_popup_title', __( 'Trade Pricing Available', 'maison-vintique' ) );
 	$text    = get_theme_mod( 'mve_popup_text', __( 'Register for a trade account to view your exclusive pricing.', 'maison-vintique' ) );
 	$cta     = get_theme_mod( 'mve_popup_cta', __( 'Apply for Trade Account', 'maison-vintique' ) );
-	$account = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' );
+	// The trade application page when there is one, the account page otherwise.
+	$account = function_exists( 'mve_trade_application_url' )
+		? mve_trade_application_url()
+		: ( function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' ) );
 	$url     = get_theme_mod( 'mve_popup_cta_url', '' );
 	$url     = $url ? $url : $account;
 	$delay   = (int) get_theme_mod( 'mve_popup_delay', 1200 );
@@ -130,6 +142,13 @@ function mve_popup_customizer( $wp_customize ) {
 			'type'    => 'checkbox',
 			'default' => true,
 			'sanitize' => 'mve_sanitize_checkbox',
+		),
+		'mve_popup_show_logged_in' => array(
+			'label'       => __( 'Show it to signed-in users too (for testing)', 'maison-vintique' ),
+			'type'        => 'checkbox',
+			'default'     => false,
+			'description' => __( 'Normally the popup is only for visitors who are not signed in, which means you never see it while you are logged in to wp-admin. Tick this to see it yourself, then untick it when you are done. Adding ?mv_popup=preview to any address does the same thing for one page view.', 'maison-vintique' ),
+			'sanitize'    => 'mve_sanitize_checkbox',
 		),
 		'mve_popup_eyebrow' => array(
 			'label'   => __( 'Eyebrow', 'maison-vintique' ),
