@@ -61,7 +61,15 @@ function mve_trade_application_submitted( $user_id ) {
 	update_user_meta( $user_id, MVE_TRADE_STATUS_KEY, 'pending' );
 	update_user_meta( $user_id, 'mve_trade_applied', current_time( 'mysql' ) );
 
-	mve_send_email( 'mve_trade_application_received', $user_id );
+	/*
+	 * This fires from inside wp_insert_user(), which is before the full trade
+	 * application has had a chance to store the business name — so the long
+	 * form defers it and sends the same email itself a moment later, with
+	 * everything filled in. See mve_send_application_ack().
+	 */
+	if ( ! apply_filters( 'mve_defer_application_email', false, $user_id ) ) {
+		mve_send_application_ack( $user_id );
+	}
 
 	/**
 	 * Fires when a trade application arrives. Hook this to push it into a CRM.
@@ -70,6 +78,31 @@ function mve_trade_application_submitted( $user_id ) {
 }
 add_action( 'woocommerce_created_customer', 'mve_trade_application_submitted' );
 add_action( 'user_register', 'mve_trade_application_submitted' );
+
+/**
+ * Send the applicant their "we have it" email, once and once only.
+ *
+ * Both registration paths can reach this — the short form on the login page and
+ * the full application — so it records that it has been sent rather than
+ * relying on which hook got there first.
+ *
+ * @param int $user_id Applicant.
+ * @return bool
+ */
+function mve_send_application_ack( $user_id ) {
+	if ( get_user_meta( $user_id, 'mve_app_ack_sent', true ) ) {
+		return false;
+	}
+
+	$sent = mve_send_email( 'mve_trade_application_received', $user_id );
+
+	// Recorded even when the mailer refused it, so a broken mail server does
+	// not turn one application into a stream of retries. The Emails screen
+	// under WooCommerce reports the refusal.
+	update_user_meta( $user_id, 'mve_app_ack_sent', current_time( 'mysql' ) );
+
+	return (bool) $sent;
+}
 
 /**
  * Change a user's trade status and send the matching email.

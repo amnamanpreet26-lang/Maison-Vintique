@@ -56,10 +56,38 @@ abstract class MVE_Email_Base extends WC_Email {
 
 		parent::__construct();
 
-		if ( ! $this->to_customer && ! $this->get_option( 'recipient' ) ) {
-			$this->recipient = $this->get_option( 'recipient', get_option( 'admin_email' ) );
+		if ( ! $this->to_customer ) {
+			$this->recipient = $this->shop_recipient();
 		}
 	}
+
+	/**
+	 * Where a shop-facing email goes.
+	 *
+	 * Whatever was typed into this email's own Recipient box, and failing that
+	 * the one address at the top of WooCommerce → Settings → Emails. Resolved
+	 * again at send time so a change takes effect immediately.
+	 *
+	 * @return string
+	 */
+	protected function shop_recipient() {
+		$own = trim( (string) $this->get_option( 'recipient', '' ) );
+		if ( '' !== $own ) {
+			return $own;
+		}
+		return function_exists( 'mve_notification_email' )
+			? mve_notification_email()
+			: get_option( 'admin_email' );
+	}
+
+	/**
+	 * Last chance to set things up before the message is built.
+	 *
+	 * The subject is rendered before the body, so a placeholder a subclass only
+	 * fills in while writing the body would never reach the subject line. This
+	 * runs before either.
+	 */
+	protected function prepare() {}
 
 	/**
 	 * The body, as an array of paragraphs. This is the ONLY thing most
@@ -122,6 +150,14 @@ abstract class MVE_Email_Base extends WC_Email {
 				}
 			}
 		}
+
+		// Re-resolved every time, so editing the notification address takes
+		// effect on the next email rather than the next page load.
+		if ( ! $this->to_customer ) {
+			$this->recipient = $this->shop_recipient();
+		}
+
+		$this->prepare();
 
 		$sent = false;
 		if ( $this->is_enabled() && $this->get_recipient() ) {
@@ -227,6 +263,14 @@ abstract class MVE_Email_Base extends WC_Email {
 	 */
 	public function show_order_details_for_preview() {
 		return $this->show_order_details();
+	}
+
+	/**
+	 * Same again for prepare(), so the preview screen renders an email exactly
+	 * as its trigger would — placeholders filled in and all.
+	 */
+	public function prepare_for_preview() {
+		$this->prepare();
 	}
 
 	/**

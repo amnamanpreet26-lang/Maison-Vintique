@@ -538,6 +538,82 @@ date** and **Delivery instructions** — are registered as real WooCommerce
 checkout fields in `inc/woocommerce.php`, saved to the order, and shown on the
 order screen in wp-admin.
 
+## Emails
+
+### Where do I put the address that receives them?
+
+**WooCommerce → Settings → Emails**, the very first box: *Send shop
+notifications to*. One address, or several separated by commas. Everything the
+shop is told about goes there:
+
+- a new trade account application
+- a new order, and a new order request
+- cancelled and failed orders
+
+Leave it empty and it uses the WordPress admin email. Each individual email
+still has its own **Recipient** box further down that screen — anything typed
+there wins for that one email, so a specific address can go to accounts while
+everything else goes to the office.
+
+Emails **to a customer** always go to the customer. There is nothing to set.
+
+### Where do I edit the wording?
+
+**WooCommerce → Settings → Emails**. Every email is listed with its own on/off
+switch, subject line and heading. The body copy lives in
+`inc/emails/class-mve-emails.php` — one small class each, only the words.
+
+### How do I see one without placing an order?
+
+**WooCommerce → Emails**. Pick any email, look at it rendered, and send a real
+copy to any address you type in. Try one Gmail address and one Outlook address —
+they filter very differently.
+
+### Nothing is arriving
+
+The same screen answers this. The panel at the top reports what the site is
+actually doing, and the two causes below account for nearly every case.
+
+**1. WordPress is asking the web server to send mail directly.** Most hosts
+block PHP's `mail()` outright, and mail from a hosting IP without authentication
+is filed as spam by Gmail and Outlook whatever it says. **Install WP Mail SMTP
+or FluentSMTP and point it at a real mail service** — Brevo, Postmark, SendGrid,
+Google Workspace or your own mailbox. Until that is done, no email from the site
+is reliable, however good the template looks.
+
+**2. The "from" address is on someone else's domain.** WooCommerce → Settings →
+Emails → *Email sender options*. An address on gmail.com or on the host's domain
+is treated as forged. Use one on your own domain, and add SPF and DKIM records
+for it — your mail provider gives you both.
+
+Everything the site sends is recorded, so the panel can tell you whether a
+message left WordPress at all. If it says it was handed over and nothing
+arrived, it was accepted and then filtered — that is the mail service's log to
+check, not the theme.
+
+### What gets sent, and to whom
+
+| When | To the customer | To the shop |
+|---|---|---|
+| Trade application submitted | Application received | New trade application |
+| Application approved | Your trade account is open | — |
+| More information needed / declined | About your application | — |
+| First sign-in after approval | Welcome | — |
+| Order placed and paid | WooCommerce's Processing | WooCommerce's New order |
+| Order placed, awaiting approval | Order request received | New order request |
+| Marked Shipped | Your wine is on its way | — |
+| Order completed / cancelled / refunded | WooCommerce's own | WooCommerce's own |
+| Proforma / chasing payment | Invoice, Payment required, Payment reminder — sent by hand from the order screen's Actions box | — |
+| Password or account details changed | Security notice | — |
+| Waitlisted wine back in stock | Back in stock | — |
+
+The "order request" pair exists because WooCommerce sends **nothing at all**
+while an order sits at *pending payment* — its emails hang off the move out of
+that status, which a payment gateway normally does immediately. A proforma flow
+has no gateway, so both sides would otherwise be told nothing. It is decided
+after checkout has finished, and only for orders nothing else emailed about, so
+a normal paid order never gets a duplicate.
+
 ## Trade pricing popup
 
 Appearance → Customize → **Trade Pricing Popup** — wording, button, delay, how

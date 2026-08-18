@@ -675,12 +675,50 @@ function mve_application_form() {
 	$schema = mve_application_schema();
 
 	if ( 'sent' === $sent ) {
+		$to      = mve_application_value( 'primary_email' );
+		$emailed = (bool) mve_application_value( '_emailed' );
+		$login   = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' );
 		?>
-		<div class="mvta-done">
+		<div class="mvta-done" id="mvta-done" tabindex="-1">
+			<div class="mvta-done__tick" aria-hidden="true">
+				<svg viewBox="0 0 48 48" width="48" height="48" focusable="false">
+					<circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".35"></circle>
+					<path d="M15 24.5l6.5 6.5L33 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+				</svg>
+			</div>
+
 			<p class="mvta-done__eyebrow"><?php esc_html_e( 'Application received', 'maison-vintique' ); ?></p>
-			<h2 class="mvta-done__title"><?php esc_html_e( 'Thank you.', 'maison-vintique' ); ?></h2>
+			<h2 class="mvta-done__title"><?php esc_html_e( 'Thank you — we have your application.', 'maison-vintique' ); ?></h2>
+
 			<p class="mvta-done__text">
-				<?php esc_html_e( 'Your application is with our team. We have emailed you a confirmation, and we will be in touch once it has been reviewed — usually within two working days.', 'maison-vintique' ); ?>
+				<?php
+				if ( $emailed && $to ) {
+					printf(
+						/* translators: %s: the applicant's email address */
+						esc_html__( 'A confirmation is on its way to %s. Do check the junk folder if it has not appeared within a few minutes.', 'maison-vintique' ),
+						'<strong>' . esc_html( $to ) . '</strong>'
+					);
+				} elseif ( $to ) {
+					printf(
+						/* translators: %s: the applicant's email address */
+						esc_html__( 'We have it safely, and your account has been created against %s.', 'maison-vintique' ),
+						'<strong>' . esc_html( $to ) . '</strong>'
+					);
+				} else {
+					esc_html_e( 'We have it safely and your account has been created.', 'maison-vintique' );
+				}
+				?>
+			</p>
+
+			<ol class="mvta-done__next">
+				<li><?php esc_html_e( 'We review the application by hand — usually within two working days.', 'maison-vintique' ); ?></li>
+				<li><?php esc_html_e( 'We may come back to you for a VAT number, a licence copy or a trade reference.', 'maison-vintique' ); ?></li>
+				<li><?php esc_html_e( 'Once it is approved you will be emailed, and pricing appears the moment you sign in.', 'maison-vintique' ); ?></li>
+			</ol>
+
+			<p class="mvta-done__foot">
+				<?php esc_html_e( 'Nothing further is needed from you for now.', 'maison-vintique' ); ?>
+				<a href="<?php echo esc_url( $login ); ?>"><?php esc_html_e( 'Go to sign in', 'maison-vintique' ); ?></a>
 			</p>
 		</div>
 		<?php
@@ -748,7 +786,8 @@ function mve_application_form() {
 			<p class="mvta-submit__note">
 				<?php esc_html_e( 'Submitting this creates your account in a pending state. Pricing becomes visible once we have approved it.', 'maison-vintique' ); ?>
 			</p>
-			<button type="submit" class="btn btn--primary mvta-submit__btn">
+			<button type="submit" class="btn btn--primary mvta-submit__btn"
+				data-sending="<?php esc_attr_e( 'Sending your application…', 'maison-vintique' ); ?>">
 				<?php esc_html_e( 'Submit application', 'maison-vintique' ); ?>
 			</button>
 		</div>
@@ -961,6 +1000,13 @@ function mve_handle_trade_application() {
 		? wc_create_new_customer_username( $email, array( 'first_name' => $values['signatory_name'] ) )
 		: sanitize_user( current( explode( '@', $email ) ), true );
 
+	/*
+	 * Hold the applicant's confirmation email back until every answer is
+	 * stored. It fires from inside wp_insert_user() otherwise, at which point
+	 * the business name does not exist yet and the email is poorer for it.
+	 */
+	add_filter( 'mve_defer_application_email', '__return_true' );
+
 	if ( function_exists( 'wc_create_new_customer' ) ) {
 		/*
 		 * The application does not ask for a password — the Word form doesn't
@@ -1031,16 +1077,33 @@ function mve_handle_trade_application() {
 	}
 	if ( ! empty( $values['primary_name'] ) ) {
 		$parts = explode( ' ', $values['primary_name'], 2 );
-		update_user_meta( $user_id, 'billing_first_name', $parts[0] );
-		update_user_meta( $user_id, 'billing_last_name', isset( $parts[1] ) ? $parts[1] : '' );
+		$first = $parts[0];
+		$last  = isset( $parts[1] ) ? $parts[1] : '';
+
+		update_user_meta( $user_id, 'billing_first_name', $first );
+		update_user_meta( $user_id, 'billing_last_name', $last );
+
+		// The WordPress name too, not just the billing one — every email
+		// greets by first name, and WooCommerce sets the display name to the
+		// business, so without this the customer is addressed as their own
+		// company: "Hello The Cellar Door,".
+		wp_update_user(
+			array(
+				'ID'         => $user_id,
+				'first_name' => $first,
+				'last_name'  => $last,
+			)
+		);
 	}
 
 	update_user_meta( $user_id, 'mve_app_submitted', current_time( 'mysql' ) );
 	update_user_meta( $user_id, MVE_TRADE_STATUS_KEY, 'pending' );
 
-	// The applicant's "application received" email is sent by
-	// mve_trade_application_submitted(), which fires on user_register. This is
-	// the one that goes to the shop.
+	// ---- tell both sides ------------------------------------------------
+	// Now that every answer is stored, both emails can name the business.
+	remove_filter( 'mve_defer_application_email', '__return_true' );
+
+	$to_applicant = mve_send_application_ack( $user_id );
 	mve_notify_shop_of_application( $user_id, $values );
 
 	/**
@@ -1052,7 +1115,34 @@ function mve_handle_trade_application() {
 	 */
 	do_action( 'mve_trade_application_received', $user_id, $values );
 
-	wp_safe_redirect( add_query_arg( 'mvta', 'sent', $redirect ) );
+	/*
+	 * The thank-you screen names the address the confirmation went to, so a
+	 * typo in the email field is obvious immediately rather than three days
+	 * later. Carried in a one-shot transient, not the URL — the address is not
+	 * something to leave sitting in a browser history or a referrer header.
+	 */
+	$token = wp_generate_password( 16, false, false );
+	set_transient(
+		'mve_app_' . $token,
+		array(
+			'errors' => array(),
+			'values' => array(
+				'primary_email' => $email,
+				'_emailed'      => $to_applicant ? 1 : 0,
+			),
+		),
+		15 * MINUTE_IN_SECONDS
+	);
+
+	wp_safe_redirect(
+		add_query_arg(
+			array(
+				'mvta'     => 'sent',
+				'mvta_ref' => $token,
+			),
+			$redirect
+		)
+	);
 	exit;
 }
 add_action( 'admin_post_nopriv_mve_trade_application', 'mve_handle_trade_application' );
@@ -1083,15 +1173,23 @@ function mve_application_bounce( $redirect, $errors, $values ) {
 /**
  * Tell the shop an application has landed.
  *
- * Plain text on purpose: this is an internal notification, and it goes
- * straight into whatever the office uses, not into a marketing inbox.
+ * The branded version is MVE_Email_Trade_Application_Admin, which goes to the
+ * address at the top of WooCommerce → Settings → Emails and can be switched off
+ * or re-worded there like any other. If that could not send — WooCommerce
+ * inactive, the email switched off, no recipient — a plain-text copy goes out
+ * anyway, because an application nobody is told about is an application lost.
  *
  * @param int   $user_id Applicant.
  * @param array $values  Answers.
  */
 function mve_notify_shop_of_application( $user_id, $values ) {
-	$to = apply_filters( 'mve_application_notification_email', get_option( 'admin_email' ) );
-	if ( ! is_email( $to ) ) {
+	if ( function_exists( 'mve_send_email' ) && mve_send_email( 'mve_trade_application_admin', $user_id ) ) {
+		return;
+	}
+
+	$to = function_exists( 'mve_notification_email' ) ? mve_notification_email() : get_option( 'admin_email' );
+	$to = apply_filters( 'mve_application_notification_email', $to );
+	if ( ! $to ) {
 		return;
 	}
 

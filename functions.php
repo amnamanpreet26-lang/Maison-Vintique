@@ -300,6 +300,12 @@ require_once get_stylesheet_directory() . '/inc/social.php';
 require_once get_stylesheet_directory() . '/inc/emails.php';
 
 /**
+ * One address for every notification to the shop, plus the mail log the
+ * WooCommerce → Emails screen reports from.
+ */
+require_once get_stylesheet_directory() . '/inc/email-tools.php';
+
+/**
  * The trade application lifecycle — pending, approved, more information,
  * declined — reviewed on the user's profile screen, with the matching email
  * sent on each change.

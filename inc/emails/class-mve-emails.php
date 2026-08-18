@@ -418,3 +418,210 @@ class MVE_Email_Product_Available extends MVE_Email_Base {
 			: array();
 	}
 }
+
+/* =========================================================================
+ * TO THE SHOP
+ * ---------------------------------------------------------------------
+ * Everything above goes to a customer. These three go to Maison Vintique, so
+ * the office is told when something needs attention rather than having to keep
+ * an eye on wp-admin.
+ *
+ * They all set $to_customer = false BEFORE parent::__construct(), which is what
+ * gives them a Recipient box on their WooCommerce settings screen. Left empty
+ * there they use the one address at the top of WooCommerce → Settings → Emails.
+ * ====================================================================== */
+
+/** A trade application has landed and needs reviewing. */
+class MVE_Email_Trade_Application_Admin extends MVE_Email_Base {
+
+	protected $to_customer = false;
+
+	public function __construct() {
+		$this->id             = 'mve_trade_application_admin';
+		$this->title          = __( 'Trade — new application (to the shop)', 'maison-vintique' );
+		$this->description    = __( 'Sent to you when someone submits the trade account application.', 'maison-vintique' );
+		$this->customer_email = false;
+		$this->placeholders   = array( '{business_name}' => '' );
+		parent::__construct();
+	}
+
+	/**
+	 * The subject line names the business, and the subject is built before the
+	 * body, so the placeholder has to be filled in here.
+	 */
+	protected function prepare() {
+		$business = $this->answer( 'trading_name' );
+		$business = $business ? $business : $this->answer( 'legal_name' );
+		$business = $business ? $business : ( $this->user ? $this->user->display_name : '' );
+
+		$this->placeholders['{business_name}'] = $business;
+	}
+
+	public function get_default_subject() {
+		return __( '[{site_title}] New trade application — {business_name}', 'maison-vintique' );
+	}
+
+	public function get_default_heading() {
+		return __( 'New trade application', 'maison-vintique' );
+	}
+
+	protected function show_order_details() {
+		return false;
+	}
+
+	/**
+	 * One answer, for the summary. Reads what the application stored.
+	 *
+	 * @param string $key Field name.
+	 * @return string
+	 */
+	protected function answer( $key ) {
+		if ( ! $this->user ) {
+			return '';
+		}
+		$value = get_user_meta( $this->user->ID, 'mve_app_' . $key, true );
+		return is_array( $value ) ? implode( ', ', array_map( 'strval', $value ) ) : (string) $value;
+	}
+
+	protected function body_lines() {
+		$business = $this->placeholders['{business_name}'];
+
+		$lines = array(
+			sprintf(
+				/* translators: %s: business name */
+				__( '<strong>%s</strong> has applied for a trade account.', 'maison-vintique' ),
+				esc_html( $business )
+			),
+		);
+
+		// The handful of answers that decide whether it can be approved at all.
+		$summary = array(
+			__( 'Contact', 'maison-vintique' )      => $this->answer( 'primary_name' ),
+			__( 'Email', 'maison-vintique' )        => $this->answer( 'primary_email' ),
+			__( 'Telephone', 'maison-vintique' )    => $this->answer( 'main_phone' ),
+			__( 'Company no.', 'maison-vintique' )  => $this->answer( 'company_number' ),
+			__( 'VAT no.', 'maison-vintique' )      => $this->answer( 'vat_number' ),
+			__( 'Premises licence', 'maison-vintique' ) => $this->answer( 'licence_number' ),
+			__( 'AWRS', 'maison-vintique' )         => $this->answer( 'awrs_urn' ),
+		);
+
+		$rows = '';
+		foreach ( $summary as $label => $value ) {
+			if ( '' === trim( (string) $value ) ) {
+				continue;
+			}
+			$rows .= '<tr><td style="padding:4px 16px 4px 0;color:#6f675e;white-space:nowrap">' . esc_html( $label )
+				. '</td><td style="padding:4px 0"><strong>' . esc_html( $value ) . '</strong></td></tr>';
+		}
+		if ( $rows ) {
+			$lines[] = '<table cellpadding="0" cellspacing="0" style="width:100%">' . $rows . '</table>';
+		}
+
+		$lines[] = __( 'The full application — licensing, AWRS, authorised users, delivery, payment and the signed declarations — is on their profile, along with any documents they uploaded.', 'maison-vintique' );
+
+		return $lines;
+	}
+
+	protected function cta() {
+		return $this->user
+			? array(
+				'label' => __( 'Review this application', 'maison-vintique' ),
+				'url'   => admin_url( 'user-edit.php?user_id=' . $this->user->ID ),
+			)
+			: array();
+	}
+
+	protected function note() {
+		return __( 'Approving or declining them on that screen is what emails the applicant — they are not told anything until you do.', 'maison-vintique' );
+	}
+}
+
+/**
+ * An order request has been placed but no gateway has moved it on.
+ *
+ * WooCommerce only emails once an order leaves "pending", so a proforma flow
+ * where the customer submits a request and waits would otherwise send nobody
+ * anything. inc/emails.php fires these two, and only in that case, so a normal
+ * paid order still gets WooCommerce's own emails and not a duplicate.
+ */
+class MVE_Email_Order_Request extends MVE_Email_Base {
+
+	public function __construct() {
+		$this->id             = 'mve_order_request';
+		$this->title          = __( 'Order request received (to the customer)', 'maison-vintique' );
+		$this->description    = __( 'Sent when an order is submitted for approval rather than paid for immediately.', 'maison-vintique' );
+		$this->customer_email = true;
+		parent::__construct();
+	}
+
+	public function get_default_subject() {
+		return __( 'We have your order request {order_number}', 'maison-vintique' );
+	}
+
+	public function get_default_heading() {
+		return __( 'Order request received', 'maison-vintique' );
+	}
+
+	protected function body_lines() {
+		return array(
+			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
+			__( 'Thank you — your order request is with us. Nothing has been charged.', 'maison-vintique' ),
+			__( 'We will confirm stock, pricing and a delivery window, then send a proforma invoice. Payment is taken only after you have approved that.', 'maison-vintique' ),
+		);
+	}
+
+	protected function cta() {
+		return $this->object
+			? array(
+				'label' => __( 'View this order', 'maison-vintique' ),
+				'url'   => $this->object->get_view_order_url(),
+			)
+			: array();
+	}
+}
+
+/** The same event, to the shop. */
+class MVE_Email_Order_Request_Admin extends MVE_Email_Base {
+
+	protected $to_customer = false;
+
+	public function __construct() {
+		$this->id             = 'mve_order_request_admin';
+		$this->title          = __( 'Order request received (to the shop)', 'maison-vintique' );
+		$this->description    = __( 'Sent to you when an order is submitted for approval rather than paid for immediately.', 'maison-vintique' );
+		$this->customer_email = false;
+		parent::__construct();
+	}
+
+	public function get_default_subject() {
+		return __( '[{site_title}] New order request {order_number}', 'maison-vintique' );
+	}
+
+	public function get_default_heading() {
+		return __( 'New order request', 'maison-vintique' );
+	}
+
+	protected function body_lines() {
+		$lines = array(
+			__( 'An order request has been submitted and is waiting on you. It has not been paid for.', 'maison-vintique' ),
+		);
+		if ( $this->object ) {
+			$lines[] = sprintf(
+				/* translators: 1: customer name, 2: company */
+				__( 'From: <strong>%1$s</strong>%2$s', 'maison-vintique' ),
+				esc_html( trim( $this->object->get_billing_first_name() . ' ' . $this->object->get_billing_last_name() ) ),
+				$this->object->get_billing_company() ? ' — ' . esc_html( $this->object->get_billing_company() ) : ''
+			);
+		}
+		return $lines;
+	}
+
+	protected function cta() {
+		return $this->object
+			? array(
+				'label' => __( 'Open this order', 'maison-vintique' ),
+				'url'   => $this->object->get_edit_order_url(),
+			)
+			: array();
+	}
+}

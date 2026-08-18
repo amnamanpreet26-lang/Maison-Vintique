@@ -2,15 +2,24 @@
 /**
  * inc/email-preview.php
  *
- * WooCommerce → Email Preview.
+ * WooCommerce → Emails.
  *
- * There is no way to see a transactional email without triggering the event
- * that sends it, which for most of them means placing a real order or
- * approving a real account. This screen renders any of them on demand with
- * sample data, and sends a real one to your own address.
+ * Two jobs on one screen.
  *
- * Nothing here can email a customer: the send button always goes to the
- * logged-in administrator, never to the address on the sample order.
+ * FIRST, "is mail working at all". Nine times in ten "we are not receiving
+ * emails" is the host refusing to send them, and there is nothing in a theme
+ * that can tell you that from the front end. The panel at the top reports what
+ * the site is actually configured to do — how it sends, who it claims to be
+ * from, the last message it handed over and the last one refused — so the
+ * answer is on screen instead of guessed at.
+ *
+ * SECOND, the preview. There is no way to see a transactional email without
+ * triggering the event that sends it, which for most of them means placing a
+ * real order or approving a real account. This renders any of them on demand
+ * with sample data, and can send a real copy anywhere you like for testing.
+ *
+ * The send needs manage_woocommerce, and it sends the SAMPLE, never a real
+ * customer's message — nothing here can reach a customer by accident.
  *
  * @package maison-vintique-elementor
  */
@@ -21,14 +30,50 @@ defined( 'ABSPATH' ) || exit;
 function mve_email_preview_menu() {
 	add_submenu_page(
 		'woocommerce',
-		__( 'Email Preview', 'maison-vintique' ),
-		__( 'Email Preview', 'maison-vintique' ),
+		__( 'Emails', 'maison-vintique' ),
+		__( 'Emails', 'maison-vintique' ),
 		'manage_woocommerce',
 		'mve-email-preview',
 		'mve_email_preview_screen'
 	);
 }
 add_action( 'admin_menu', 'mve_email_preview_menu', 60 );
+
+/**
+ * The "is mail working" panel.
+ *
+ * Everything here is read from the site itself — no guesses — so it can be
+ * screenshotted and sent to a host verbatim.
+ */
+function mve_email_status_panel() {
+	$colours = array(
+		'ok'   => '#2e7d5b',
+		'warn' => '#a98854',
+		'bad'  => '#9d3b3b',
+	);
+	?>
+	<h2 style="margin-top:26px"><?php esc_html_e( 'Can this site send email?', 'maison-vintique' ); ?></h2>
+	<table class="widefat striped" style="max-width:900px">
+		<tbody>
+		<?php foreach ( mve_mail_diagnosis() as $row ) : ?>
+			<?php $colour = isset( $colours[ $row['state'] ] ) ? $colours[ $row['state'] ] : '#6f675e'; ?>
+			<tr>
+				<th scope="row" style="width:230px;vertical-align:top;padding:12px">
+					<?php echo esc_html( $row['label'] ); ?>
+				</th>
+				<td style="padding:12px">
+					<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:<?php echo esc_attr( $colour ); ?>;margin-right:8px"></span>
+					<strong><?php echo esc_html( $row['value'] ); ?></strong>
+					<?php if ( ! empty( $row['note'] ) ) : ?>
+						<p class="description" style="margin:6px 0 0"><?php echo esc_html( $row['note'] ); ?></p>
+					<?php endif; ?>
+				</td>
+			</tr>
+		<?php endforeach; ?>
+		</tbody>
+	</table>
+	<?php
+}
 
 /**
  * Every email we can preview: our own, plus WooCommerce's order emails.
@@ -104,6 +149,8 @@ function mve_render_email_preview( $id ) {
 			if ( $order && $email->show_order_details_for_preview() ) {
 				$email->object = $order;
 			}
+			// Whatever the email fills in for itself before sending.
+			$email->prepare_for_preview();
 			$email->placeholders['{customer_name}'] = $user->first_name ? $user->first_name : $user->display_name;
 			if ( $order ) {
 				$email->placeholders['{order_number}'] = $order->get_order_number();
@@ -131,14 +178,20 @@ function mve_email_preview_screen() {
 
 	$emails   = mve_previewable_emails();
 	$selected = isset( $_GET['email'] ) ? sanitize_text_field( wp_unslash( $_GET['email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- read-only selection.
-	$sent     = false;
+	$sent     = null;
+	$to       = wp_get_current_user()->user_email;
 	$order    = mve_preview_sample_order();
 
-	// Send a test to the administrator.
+	// Send a real copy, to whichever address was typed in.
 	if ( isset( $_POST['mve_send_test'], $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'mve_email_preview' ) ) {
 		$selected = sanitize_text_field( wp_unslash( $_POST['mve_send_test'] ) );
-		$to       = wp_get_current_user()->user_email;
-		$html     = mve_render_email_preview( $selected );
+
+		$typed = isset( $_POST['mve_test_to'] ) ? sanitize_email( wp_unslash( $_POST['mve_test_to'] ) ) : '';
+		if ( $typed && is_email( $typed ) ) {
+			$to = $typed;
+		}
+
+		$html = mve_render_email_preview( $selected );
 
 		if ( $html && $to ) {
 			$sent = wp_mail(
@@ -151,31 +204,41 @@ function mve_email_preview_screen() {
 				$html,
 				array( 'Content-Type: text/html; charset=UTF-8' )
 			);
+		} else {
+			$sent = false;
 		}
 	}
+
+	$error = get_option( 'mve_last_mail_error', array() );
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Email Preview', 'maison-vintique' ); ?></h1>
+		<h1><?php esc_html_e( 'Emails', 'maison-vintique' ); ?></h1>
 
-		<p class="description" style="max-width:760px">
-			<?php esc_html_e( 'Renders any transactional email on demand so you can check the wording and the layout without placing a real order. Test sends always go to your own address — a customer can never receive one from this screen.', 'maison-vintique' ); ?>
+		<p class="description" style="max-width:820px">
+			<?php esc_html_e( 'Check whether the site can send mail at all, then render any transactional email on demand to see its wording and layout without placing a real order.', 'maison-vintique' ); ?>
 		</p>
 
-		<?php if ( $sent ) : ?>
+		<?php if ( true === $sent ) : ?>
 			<div class="notice notice-success"><p>
 				<?php
 				printf(
 					/* translators: %s: email address */
-					esc_html__( 'Test sent to %s. If it does not arrive, the site cannot send mail at all — see the note below.', 'maison-vintique' ),
-					'<strong>' . esc_html( wp_get_current_user()->user_email ) . '</strong>'
+					esc_html__( 'Handed to the mail server for %s. That means it left WordPress — if it never arrives, it was lost or filtered after that point, which is a mail-service problem. Check the junk folder first.', 'maison-vintique' ),
+					'<strong>' . esc_html( $to ) . '</strong>'
 				);
 				?>
 			</p></div>
-		<?php elseif ( isset( $_POST['mve_send_test'] ) ) : ?>
-			<div class="notice notice-error"><p>
-				<?php esc_html_e( 'WordPress could not hand that message to the mail server. That is a hosting/SMTP problem, not a template problem — see the note below.', 'maison-vintique' ); ?>
-			</p></div>
+		<?php elseif ( false === $sent ) : ?>
+			<div class="notice notice-error">
+				<p><?php esc_html_e( 'The mail server refused it. Nothing was sent.', 'maison-vintique' ); ?></p>
+				<?php if ( ! empty( $error['message'] ) ) : ?>
+					<p><code><?php echo esc_html( $error['message'] ); ?></code></p>
+				<?php endif; ?>
+				<p><?php esc_html_e( 'This is hosting, not the theme. See the panel below.', 'maison-vintique' ); ?></p>
+			</div>
 		<?php endif; ?>
+
+		<?php mve_email_status_panel(); ?>
 
 		<?php if ( ! $order ) : ?>
 			<div class="notice notice-warning"><p>
@@ -183,7 +246,9 @@ function mve_email_preview_screen() {
 			</p></div>
 		<?php endif; ?>
 
-		<form method="get" style="margin:18px 0">
+		<h2 style="margin-top:34px"><?php esc_html_e( 'Look at an email', 'maison-vintique' ); ?></h2>
+
+		<form method="get" style="margin:14px 0">
 			<input type="hidden" name="page" value="mve-email-preview">
 			<select name="email" style="min-width:340px">
 				<option value=""><?php esc_html_e( '— choose an email —', 'maison-vintique' ); ?></option>
@@ -197,18 +262,16 @@ function mve_email_preview_screen() {
 		<?php if ( $selected ) : ?>
 			<?php $html = mve_render_email_preview( $selected ); ?>
 
-			<form method="post" style="margin-bottom:14px">
+			<form method="post" style="margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
 				<?php wp_nonce_field( 'mve_email_preview' ); ?>
 				<input type="hidden" name="mve_send_test" value="<?php echo esc_attr( $selected ); ?>">
-				<button class="button">
-					<?php
-					printf(
-						/* translators: %s: admin email */
-						esc_html__( 'Send a test to %s', 'maison-vintique' ),
-						esc_html( wp_get_current_user()->user_email )
-					);
-					?>
-				</button>
+				<label for="mve_test_to"><?php esc_html_e( 'Send a real copy to', 'maison-vintique' ); ?></label>
+				<input type="email" id="mve_test_to" name="mve_test_to" style="min-width:280px"
+					value="<?php echo esc_attr( $to ); ?>" required>
+				<button class="button"><?php esc_html_e( 'Send it', 'maison-vintique' ); ?></button>
+				<span class="description">
+					<?php esc_html_e( 'Try a Gmail address and an Outlook one — they filter very differently.', 'maison-vintique' ); ?>
+				</span>
 			</form>
 
 			<?php if ( $html ) : ?>
@@ -221,12 +284,32 @@ function mve_email_preview_screen() {
 			<?php endif; ?>
 		<?php endif; ?>
 
-		<h2 style="margin-top:34px"><?php esc_html_e( 'If test emails never arrive', 'maison-vintique' ); ?></h2>
-		<p style="max-width:760px">
-			<?php esc_html_e( 'That is almost always the host, not WordPress. Shared hosting frequently blocks the PHP mail() function outright, and mail sent from a hosting IP without authentication is usually rejected or filed as spam by Gmail and Outlook regardless.', 'maison-vintique' ); ?>
+		<h2 style="margin-top:34px"><?php esc_html_e( 'If emails never arrive', 'maison-vintique' ); ?></h2>
+		<p style="max-width:820px">
+			<?php esc_html_e( 'Work through these in order. The first two account for nearly every case.', 'maison-vintique' ); ?>
 		</p>
-		<p style="max-width:760px">
-			<?php esc_html_e( 'The fix is to send through a real mail service: install an SMTP plugin (WP Mail SMTP, FluentSMTP) and point it at your provider — Brevo, Postmark, SendGrid or your own mailbox. Until that is done, no email from this site is reliable, whatever the template looks like here.', 'maison-vintique' ); ?>
+		<ol style="max-width:820px;line-height:1.8">
+			<li>
+				<strong><?php esc_html_e( 'Send through a real mail service.', 'maison-vintique' ); ?></strong>
+				<?php esc_html_e( 'Install WP Mail SMTP or FluentSMTP and point it at Brevo, Postmark, SendGrid, Google Workspace or your own mailbox. Shared hosting frequently blocks PHP\'s mail() outright, and mail from a hosting IP without authentication is filed as spam by Gmail and Outlook regardless of what it says. Until this is done no email from the site is reliable.', 'maison-vintique' ); ?>
+			</li>
+			<li>
+				<strong><?php esc_html_e( 'Send "from" your own domain.', 'maison-vintique' ); ?></strong>
+				<?php esc_html_e( 'WooCommerce → Settings → Emails → Email sender options. An address on gmail.com, or on the host\'s domain, is treated as forged. Add SPF and DKIM records for your domain as well — your mail provider gives you both.', 'maison-vintique' ); ?>
+			</li>
+			<li>
+				<strong><?php esc_html_e( 'Check the junk folder, then the mail service\'s own log.', 'maison-vintique' ); ?></strong>
+				<?php esc_html_e( 'If the panel above says the site handed the message over but nothing arrived, it was accepted and then filtered — the provider\'s log will say why.', 'maison-vintique' ); ?>
+			</li>
+			<li>
+				<strong><?php esc_html_e( 'Check each email is switched on.', 'maison-vintique' ); ?></strong>
+				<?php esc_html_e( 'WooCommerce → Settings → Emails lists every one with its own on/off switch, subject and heading. The ones that go to you also have their own Recipient box — leave it empty and it uses the single address at the top of that screen.', 'maison-vintique' ); ?>
+			</li>
+		</ol>
+		<p style="max-width:820px">
+			<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=wc-settings&tab=email' ) ); ?>">
+				<?php esc_html_e( 'Open WooCommerce email settings', 'maison-vintique' ); ?>
+			</a>
 		</p>
 	</div>
 	<?php

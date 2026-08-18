@@ -391,7 +391,35 @@ mvBlock(function () {
 		trigger.addEventListener('change', function () { sync(trigger); });
 	});
 
-	/* ---------- 2. Add another authorised user ---------- */
+	/* ---------- 2. Say something while it submits ---------- */
+	// The form carries file uploads, so the post can take a few seconds. With
+	// no feedback that reads as "nothing happened" and people click again.
+	form.addEventListener('submit', function () {
+		var btn = form.querySelector('.mvta-submit__btn');
+		if (!btn || btn.disabled) return;
+
+		// Let the browser's own validation stop it first — if anything is
+		// invalid the submit event still fires but the post does not happen.
+		if (typeof form.checkValidity === 'function' && !form.checkValidity()) return;
+
+		btn.dataset.mvtaLabel = btn.textContent;
+		btn.textContent = btn.getAttribute('data-sending') || 'Sending your application…';
+		btn.disabled = true;
+
+		function restore() {
+			btn.disabled = false;
+			if (btn.dataset.mvtaLabel) btn.textContent = btn.dataset.mvtaLabel;
+		}
+
+		// Going Back lands on the cached page with the button still disabled,
+		// which looks broken. Put it back.
+		window.addEventListener('pageshow', function (e) { if (e.persisted) restore(); });
+
+		// And a plain safety net, in case the post never completes at all.
+		setTimeout(restore, 30000);
+	});
+
+	/* ---------- 3. Add another authorised user ---------- */
 	var table = form.querySelector('[data-mvta-users]');
 	var add   = form.querySelector('[data-mvta-add-user]');
 	if (!table || !add) return;

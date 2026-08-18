@@ -45,6 +45,9 @@ function mve_register_emails( $emails ) {
 		'MVE_Email_Password_Changed',
 		'MVE_Email_Account_Details',
 		'MVE_Email_Product_Available',
+		'MVE_Email_Order_Request',
+		'MVE_Email_Order_Request_Admin',
+		'MVE_Email_Trade_Application_Admin',
 	) as $class ) {
 		if ( class_exists( $class ) ) {
 			$emails[ $class ] = new $class();
@@ -76,6 +79,81 @@ function mve_send_email( $id, $subject, $extra = array() ) {
 		}
 	}
 	return false;
+}
+
+/* =========================================================================
+ * THE GAP AT THE END OF CHECKOUT
+ * ---------------------------------------------------------------------
+ * WooCommerce sends nothing at all while an order is still "pending payment".
+ * Its "New order" and "Order processing" emails hang off the move OUT of that
+ * status, which a payment gateway normally does within the same request.
+ *
+ * A proforma trade flow has no gateway — the customer submits a request, it
+ * sits at pending, and both sides are told nothing. This closes exactly that
+ * case: an order still pending after checkout gets our own pair, one to the
+ * customer and one to the shop. An order a gateway has already moved on is
+ * left alone, so no email is ever duplicated.
+ * ====================================================================== */
+
+/**
+ * Note an order to look at once checkout has finished.
+ *
+ * DELIBERATELY NOT DECIDED HERE. woocommerce_checkout_order_processed fires
+ * BEFORE the payment gateway runs, so every order in the world is still
+ * "pending" at this point — deciding now would send a duplicate for every paid
+ * order on the site. The decision is made at shutdown, by which time the
+ * gateway has either moved the order on or left it exactly where it was.
+ *
+ * @param int|WC_Order $order Order, or its ID.
+ */
+function mve_watch_order_request( $order ) {
+	$id = $order instanceof WC_Order ? $order->get_id() : (int) $order;
+	if ( ! $id ) {
+		return;
+	}
+
+	if ( ! isset( $GLOBALS['mve_order_requests'] ) ) {
+		$GLOBALS['mve_order_requests'] = array();
+	}
+	$GLOBALS['mve_order_requests'][ $id ] = $id;
+
+	// Priority 5: before WordPress tears anything down, and shutdown runs even
+	// when the request ended in wp_send_json()/wp_die(), which the AJAX
+	// checkout always does.
+	add_action( 'shutdown', 'mve_flush_order_requests', 5 );
+}
+add_action( 'woocommerce_checkout_order_processed', 'mve_watch_order_request', 20 );
+add_action( 'woocommerce_store_api_checkout_order_processed', 'mve_watch_order_request', 20 );
+
+/**
+ * Now that checkout is over, email about anything still waiting.
+ */
+function mve_flush_order_requests() {
+	if ( empty( $GLOBALS['mve_order_requests'] ) ) {
+		return;
+	}
+
+	$ids = $GLOBALS['mve_order_requests'];
+	$GLOBALS['mve_order_requests'] = array();
+
+	foreach ( $ids as $id ) {
+		// Read it again rather than reusing the object from checkout — that
+		// one still holds the status it had before the gateway ran.
+		$order = wc_get_order( $id );
+		if ( ! $order || ! $order->has_status( 'pending' ) ) {
+			continue; // paid, on hold, failed — WooCommerce is emailing already
+		}
+
+		// Never twice for the same order, whatever route got here.
+		if ( $order->get_meta( '_mve_request_notified' ) ) {
+			continue;
+		}
+		$order->update_meta_data( '_mve_request_notified', current_time( 'mysql' ) );
+		$order->save();
+
+		mve_send_email( 'mve_order_request', $order );
+		mve_send_email( 'mve_order_request_admin', $order );
+	}
 }
 
 /* =========================================================================
