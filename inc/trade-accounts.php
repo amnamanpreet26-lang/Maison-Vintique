@@ -2,19 +2,26 @@
 /**
  * inc/trade-accounts.php
  *
- * The trade application lifecycle, and the emails that hang off it.
+ * STAGE TWO OF THE TRADE WORKFLOW — the due-diligence review, and the emails
+ * that hang off it. Stage one, the short enquiry, is inc/trade-enquiries.php.
  *
- *   applies            -> status "pending", "Application received" email sent
- *   admin approves     -> status "approved", "Approved" email sent
- *   admin asks for more-> "More information" email with the admin's note
- *   admin declines     -> status "declined", same email marked as declined
- *   first sign-in      -> "Welcome" email, once only
+ *   full application submitted -> status "pending", "Application received" sent
+ *   approved                   -> status "approved", "your account is open" sent
+ *                                 AND the portal is activated: only now can
+ *                                 they sign in
+ *   further information        -> "About your application" with your note
+ *   on hold                    -> "Your application is on hold"
+ *   declined                   -> same email, marked as declined
+ *   first sign-in after that   -> "Welcome", once only
  *
- * The status lives in user meta `mve_trade_status`. Pricing itself is NOT
- * gated on it — that stays "is this visitor logged in", in inc/woocommerce.php,
- * exactly as the client asked in an earlier round. This is a review workflow
- * on top, not a second gate. To make approval a hard requirement for pricing,
- * filter `mve_is_gated` — there is an example at the bottom of this file.
+ * The status lives in user meta `mve_trade_status`.
+ *
+ * TWO SEPARATE GATES, and it is worth being clear which is which:
+ *   - SIGNING IN needs approval. See mve_block_unapproved_login() below. This
+ *     is the client's "portal activation" requirement.
+ *   - SEEING PRICING needs only being signed in, in inc/woocommerce.php, as
+ *     agreed in an earlier round. Since nobody can sign in without approval,
+ *     the two now amount to the same thing in practice.
  *
  * @package maison-vintique-elementor
  */
@@ -31,8 +38,9 @@ const MVE_TRADE_STATUS_KEY = 'mve_trade_status';
 function mve_trade_statuses() {
 	return array(
 		'pending'  => __( 'Pending review', 'maison-vintique' ),
-		'approved' => __( 'Approved', 'maison-vintique' ),
-		'info'     => __( 'More information requested', 'maison-vintique' ),
+		'approved' => __( 'Approved — portal active', 'maison-vintique' ),
+		'info'     => __( 'Further information required', 'maison-vintique' ),
+		'hold'     => __( 'On hold', 'maison-vintique' ),
 		'declined' => __( 'Declined', 'maison-vintique' ),
 	);
 }
@@ -127,6 +135,16 @@ function mve_set_trade_status( $user_id, $status, $message = '' ) {
 
 	if ( 'approved' === $status ) {
 		mve_send_email( 'mve_trade_approved', $user_id );
+
+		// The enquiry that started all this shows the outcome too, so the Trade
+		// Enquiries list reads as a complete history rather than going quiet
+		// the moment the application was submitted.
+		$enquiry = (int) get_user_meta( $user_id, 'mve_enquiry_id', true );
+		if ( $enquiry ) {
+			update_post_meta( $enquiry, '_mve_status', 'account' );
+		}
+	} elseif ( 'hold' === $status ) {
+		mve_send_email( 'mve_trade_on_hold', $user_id, array( 'message' => $message ) );
 	} elseif ( 'info' === $status ) {
 		mve_send_email( 'mve_trade_more_info', $user_id, array( 'message' => $message ) );
 	} elseif ( 'declined' === $status ) {
@@ -170,6 +188,68 @@ function mve_trade_welcome_on_first_login( $login, $user = null ) {
 add_action( 'wp_login', 'mve_trade_welcome_on_first_login', 10, 2 );
 
 /* =========================================================================
+ * PORTAL ACTIVATION
+ * ---------------------------------------------------------------------
+ * "Only once the full application and due-diligence review have been approved
+ * should the trade portal account be activated."
+ *
+ * The account exists from the moment the application is submitted — it has to,
+ * because it is where the answers are stored — but it cannot be signed into
+ * until somebody approves it.
+ *
+ * SCOPED ON PURPOSE. This only ever applies to accounts that have a trade
+ * application on file. Anyone created before this workflow existed, and every
+ * administrator and shop manager, signs in exactly as they always did. A gate
+ * that locks the shop out of its own site is worse than no gate.
+ * ====================================================================== */
+
+/**
+ * Block sign-in for an application that has not been approved.
+ *
+ * @param WP_User|WP_Error $user     Authenticated user, or an error.
+ * @param string           $password Unused.
+ * @return WP_User|WP_Error
+ */
+function mve_block_unapproved_login( $user, $password = '' ) {
+	if ( ! $user instanceof WP_User ) {
+		return $user;   // wrong password etc. — not ours to answer
+	}
+
+	// Never lock out anybody who can run the shop.
+	if ( user_can( $user, 'edit_posts' ) || user_can( $user, 'manage_woocommerce' ) ) {
+		return $user;
+	}
+
+	// Only accounts created BY the full application. A legacy customer with no
+	// application on file is not part of this workflow.
+	if ( ! get_user_meta( $user->ID, 'mve_app_submitted', true ) ) {
+		return $user;
+	}
+
+	$status = mve_trade_status( $user->ID );
+	if ( 'approved' === $status ) {
+		return $user;
+	}
+
+	if ( ! apply_filters( 'mve_require_approval_to_sign_in', true, $user ) ) {
+		return $user;
+	}
+
+	$messages = array(
+		'pending'  => __( 'Thank you — your trade application is with us. Your portal opens as soon as our account review is complete, and we will email you the moment it does.', 'maison-vintique' ),
+		'info'     => __( 'We need a little more before we can open your account. Please check your email — we have written to you about it.', 'maison-vintique' ),
+		'hold'     => __( 'Your application is on hold while we complete our checks. We will be in touch as soon as we can take it further.', 'maison-vintique' ),
+		'declined' => __( 'We are not able to open a trade account on this address at the moment. Please get in touch if you think that is a mistake.', 'maison-vintique' ),
+	);
+
+	return new WP_Error(
+		'mve_not_activated',
+		isset( $messages[ $status ] ) ? $messages[ $status ] : $messages['pending']
+	);
+}
+add_filter( 'wp_authenticate_user', 'mve_block_unapproved_login', 20, 2 );
+
+/* =========================================================================
  * ADMIN — REVIEW APPLICATIONS ON THE USER SCREEN
  * ====================================================================== */
 
@@ -203,6 +283,7 @@ function mve_users_trade_column_value( $output, $column_name, $user_id ) {
 		'approved' => '#2e7d5b',
 		'pending'  => '#a98854',
 		'info'     => '#35618e',
+		'hold'     => '#8a6d3b',
 		'declined' => '#9d3b3b',
 	);
 	$colour = isset( $colours[ $status ] ) ? $colours[ $status ] : '#6f675e';

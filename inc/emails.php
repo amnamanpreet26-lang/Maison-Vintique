@@ -48,6 +48,12 @@ function mve_register_emails( $emails ) {
 		'MVE_Email_Order_Request',
 		'MVE_Email_Order_Request_Admin',
 		'MVE_Email_Trade_Application_Admin',
+		'MVE_Email_Enquiry_Received',
+		'MVE_Email_Enquiry_Admin',
+		'MVE_Email_Application_Invite',
+		'MVE_Email_Enquiry_More_Info',
+		'MVE_Email_Enquiry_Declined',
+		'MVE_Email_Trade_On_Hold',
 	) as $class ) {
 		if ( class_exists( $class ) ) {
 			$emails[ $class ] = new $class();

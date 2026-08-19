@@ -25,7 +25,8 @@ while ( have_posts() ) :
 	$mvc_note        = mve_field( 'contact_note' );
 	$mvc_apply_label = mve_field( 'contact_apply_label' );
 	$mvc_apply_link  = mve_field( 'contact_apply_link' );
-	$mvc_form_title  = mve_field( 'contact_form_title' );
+	$mvc_form_title  = mve_field( 'contact_form_title', __( 'Request a trade account application', 'maison-vintique-elementor' ) );
+	$mvc_submit      = mve_field( 'contact_submit_label', __( 'Request a Trade Account Application', 'maison-vintique-elementor' ) );
 
 	$mvc_account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' );
 
@@ -100,54 +101,65 @@ while ( have_posts() ) :
 					<?php endif; ?>
 
 					<?php if ( 'sent' === $mvc_sent ) : ?>
-						<p class="mvp-form__msg is-ok">
-							<?php esc_html_e( 'Thank you — we will be in touch.', 'maison-vintique-elementor' ); ?>
-						</p>
-					<?php elseif ( 'error' === $mvc_sent ) : ?>
-						<p class="mvp-form__msg is-error">
-							<?php esc_html_e( 'Sorry, that didn\'t send. Please check your details and try again.', 'maison-vintique-elementor' ); ?>
-						</p>
+
+						<?php // Stage one is done. Say what happens next, because the ?>
+						<?php // next step is us, not them. ?>
+						<div class="mvp-done">
+							<p class="mvp-done__eyebrow"><?php esc_html_e( 'Enquiry received', 'maison-vintique-elementor' ); ?></p>
+							<h3 class="mvp-done__title"><?php esc_html_e( 'Thank you — we have your enquiry.', 'maison-vintique-elementor' ); ?></h3>
+							<p class="mvp-done__text">
+								<?php esc_html_e( 'We have emailed you a confirmation. A member of the team reads every enquiry personally, usually within two working days.', 'maison-vintique-elementor' ); ?>
+							</p>
+							<ol class="mvp-done__next">
+								<li><?php esc_html_e( 'We review your enquiry.', 'maison-vintique-elementor' ); ?></li>
+								<li><?php esc_html_e( 'If we are a good fit, we email you a private link to the full trade account application.', 'maison-vintique-elementor' ); ?></li>
+								<li><?php esc_html_e( 'You complete that, we carry out our account checks, and your portal is opened.', 'maison-vintique-elementor' ); ?></li>
+							</ol>
+						</div>
+
+					<?php else : ?>
+
+						<?php if ( 'error' === $mvc_sent ) : ?>
+							<p class="mvp-form__msg is-error">
+								<?php
+								$mvc_flash = mve_enquiry_flash();
+								echo esc_html(
+									! empty( $mvc_flash['errors']['_form'] )
+										? $mvc_flash['errors']['_form']
+										: __( 'Please check the highlighted answers and try again.', 'maison-vintique-elementor' )
+								);
+								?>
+							</p>
+						<?php endif; ?>
+
+						<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" class="mvp-form__form">
+							<input type="hidden" name="action" value="mve_contact">
+							<input type="hidden" name="redirect_to" value="<?php echo esc_url( get_permalink() ); ?>">
+							<?php wp_nonce_field( 'mve_contact', 'mve_contact_nonce' ); ?>
+
+							<div class="mvp-grid">
+								<?php // The client's questions, defined once in mve_enquiry_fields(). ?>
+								<?php foreach ( mve_enquiry_fields() as $mvc_key => $mvc_field ) : ?>
+									<?php mve_enquiry_field( $mvc_key, $mvc_field ); ?>
+								<?php endforeach; ?>
+							</div>
+
+							<?php // Honeypot — real people never fill this in. ?>
+							<div class="mvp-hp" aria-hidden="true">
+								<label for="mvc-website-url"><?php esc_html_e( 'Leave this field empty', 'maison-vintique-elementor' ); ?></label>
+								<input type="text" id="mvc-website-url" name="mvc_website_url" tabindex="-1" autocomplete="off">
+							</div>
+
+							<button type="submit" class="btn btn--primary mvp-form__submit">
+								<?php echo esc_html( $mvc_submit ); ?>
+							</button>
+
+							<p class="mvp-form__foot">
+								<?php esc_html_e( 'This is a short enquiry, not the full application. Sending it does not create an account.', 'maison-vintique-elementor' ); ?>
+							</p>
+						</form>
+
 					<?php endif; ?>
-
-					<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
-						<input type="hidden" name="action" value="mve_contact">
-						<input type="hidden" name="redirect_to" value="<?php echo esc_url( get_permalink() ); ?>">
-						<?php wp_nonce_field( 'mve_contact', 'mve_contact_nonce' ); ?>
-
-						<div class="mvp-field">
-							<label for="mvc-name"><?php esc_html_e( 'Name', 'maison-vintique-elementor' ); ?></label>
-							<input type="text" id="mvc-name" name="mvc_name" required
-								placeholder="<?php esc_attr_e( 'Your name', 'maison-vintique-elementor' ); ?>">
-						</div>
-
-						<div class="mvp-field">
-							<label for="mvc-business"><?php esc_html_e( 'Business', 'maison-vintique-elementor' ); ?></label>
-							<input type="text" id="mvc-business" name="mvc_business"
-								placeholder="<?php esc_attr_e( 'Business name', 'maison-vintique-elementor' ); ?>">
-						</div>
-
-						<div class="mvp-field">
-							<label for="mvc-email"><?php esc_html_e( 'Email', 'maison-vintique-elementor' ); ?></label>
-							<input type="email" id="mvc-email" name="mvc_email" required
-								placeholder="you@business.com">
-						</div>
-
-						<div class="mvp-field">
-							<label for="mvc-message"><?php esc_html_e( 'Message', 'maison-vintique-elementor' ); ?></label>
-							<textarea id="mvc-message" name="mvc_message" rows="4" required
-								placeholder="<?php esc_attr_e( 'How can we help?', 'maison-vintique-elementor' ); ?>"></textarea>
-						</div>
-
-						<?php // Honeypot — real people never fill this in. ?>
-						<div class="mvp-hp" aria-hidden="true">
-							<label for="mvc-website"><?php esc_html_e( 'Leave this field empty', 'maison-vintique-elementor' ); ?></label>
-							<input type="text" id="mvc-website" name="mvc_website" tabindex="-1" autocomplete="off">
-						</div>
-
-						<button type="submit" class="btn btn--primary mvp-form__submit">
-							<?php esc_html_e( 'Send message', 'maison-vintique-elementor' ); ?>
-						</button>
-					</form>
 				</div>
 
 			</div>

@@ -20,10 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<!-- Column 1: Brand -->
 				<div class="mv-footer__col mv-footer__col--brand">
 					<div class="mv-footer__brand">
-						<span class="mv-footer__crest"><img 
-        src="https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png"
-        alt="Maison Vintique"
-    ></span>
+						<span class="mv-footer__crest"><img src="<?php echo esc_url( mve_logo_url() ); ?>" alt="<?php bloginfo( 'name' ); ?>"></span>
 						<span class="mv-footer__brand-text">
 							<span class="mv-footer__name"><?php bloginfo( 'name' ); ?></span>
 							<span class="mv-footer__subname"><?php esc_html_e( 'A House of Wine · A Legacy of Taste', 'maison-vintique' ); ?></span>

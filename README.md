@@ -593,6 +593,9 @@ check, not the theme.
 
 ### What gets sent, and to whom
 
+The trade-workflow ones are listed in full in
+[TRADE-WORKFLOW.md](TRADE-WORKFLOW.md). In summary:
+
 | When | To the customer | To the shop |
 |---|---|---|
 | Trade application submitted | Application received | New trade application |
@@ -636,28 +639,34 @@ That flag lives in the browser, not the database — to clear it, run
 
 ## Trade Account Application
 
-The nine-section form from the client's Word document, as a real page.
+**The whole workflow is written up in [TRADE-WORKFLOW.md](TRADE-WORKFLOW.md)** —
+who reviews what, which screen, which email goes to whom, and how to change any
+of it. Read that one. This is the short version for developers.
 
-**To put it live:** Pages → Add New, call it *Apply for a Trade Account*,
-then Page Attributes → Template → **Trade Account Application**. Publish.
-That is the whole setup — nothing else has to be linked by hand:
+The client's rule is that the full application must never be public:
 
-- the login page's "Apply for an account" panel becomes a button through to it
-  (and stops showing the short two-field registration form, so there is only
-  one way to apply);
-- the trade popup's button points at it;
-- if the page is ever unpublished, both fall back to `/my-account/` as before,
-  so no link ever dies.
+```
+Apply for a Trade Account  ->  short enquiry  ->  YOU REVIEW
+   ->  private expiring link  ->  full application  ->  YOU REVIEW
+   ->  portal activated
+```
 
-**What is editable.** The wording around the form — eyebrow, title, intro, the
-numbered "what happens next" steps, the side note, and a hero background image
-or video — is ACF on the page itself (`group_trade_application.json`). The page
-editor's own content shows above the steps.
+**Stage one — the short enquiry.** The Contact page. `inc/contact-form.php`
+renders it from `mve_enquiry_fields()` and stores each submission as a
+`mv_enquiry` post. Everything that says "Apply for a Trade Account" anywhere on
+the site resolves through `mve_apply_url()`, which returns the enquiry page and
+never the application.
 
-**The form fields themselves** are defined once, as data, in
-`mve_application_schema()` in `inc/trade-application.php`. The form markup, the
-validation, the storage and the admin display all read that one array, so
-adding or removing a question is a single edit. From a plugin or snippet:
+**The gate.** Approving an enquiry mints a token — unique, expiring (21 days by
+default), single-use, replaced on re-issue — and emails the link. The
+application page is `noindex`, excluded from site search and the sitemap, and
+renders a "by invitation" panel to anybody without a live token. See
+`mve_check_invite()` and `mve_application_invited()`.
+
+**Stage two — the full application.** Nine sections, defined once in
+`mve_application_schema()`; the form, the validation, the storage and the admin
+display all read that one array. Answers from the enquiry are pre-filled by
+`mve_application_prefill()`. To add a field:
 
 ```php
 add_filter( 'mve_application_schema', function ( $schema ) {
@@ -676,29 +685,14 @@ Field types: `text`, `email`, `tel`, `url`, `textarea`, `date`, `number`,
 questions that depend on it, and they stay hidden until the answer calls for
 them; `'when' => 'no'` flips that round.
 
-**What happens on submit**
+**Portal activation.** `mve_block_unapproved_login()` refuses sign-in until the
+status is `approved`, with a message that matches the actual status. Scoped to
+accounts that have `mve_app_submitted` on file — legacy customers and anyone
+who can edit posts are never affected. Turn it off with
+`add_filter( 'mve_require_approval_to_sign_in', '__return_false' );`.
 
-1. Nonce, honeypot and a one-a-minute-per-address throttle.
-2. Validation. Anything wrong comes straight back with every answer still in
-   its box — a nine-section form that empties itself is a lost application.
-3. A WooCommerce customer is created with the primary contact's email as the
-   sign-in, status **Pending review**. WooCommerce sends them their password.
-4. Every answer is stored against that user, and the uploaded documents go into
-   the media library as **private** attachments owned by them.
-5. The applicant gets "Application received"; the shop gets a plain-text
-   notification with a link straight to the review screen. Change the address
-   it goes to with the `mve_application_notification_email` filter.
-
-**To review one:** Users → the applicant → the *Trade account application*
-panel shows every answer, section by section, with the documents linked. The
-*Trade account* panel above it changes the status, and each status sends the
-matching email (see Emails). Pricing itself is still "logged in sees pricing" —
-approval is a review workflow on top of that, not a second gate. To make
-approval a hard requirement there is a commented filter at the bottom of
-`inc/trade-accounts.php`.
-
-**Hook it into a CRM** with `do_action( 'mve_trade_application_received',
-$user_id, $values )`.
+**Hooks for a CRM:** `mve_enquiry_status_changed`, `mve_contact_submitted`,
+`mve_trade_application_received`, `mve_trade_status_changed`.
 
 ## Next steps for the developer
 1. Build a **Single Product** template the same way (a `single-product.php` following this same pattern), using the Wine Details ACF tabs (Tasting, Terroir, Allergens, Awards, Downloads).

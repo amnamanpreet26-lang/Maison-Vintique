@@ -78,9 +78,10 @@ function mve_render_trade_popup() {
 	$title   = get_theme_mod( 'mve_popup_title', __( 'Trade Pricing Available', 'maison-vintique' ) );
 	$text    = get_theme_mod( 'mve_popup_text', __( 'Register for a trade account to view your exclusive pricing.', 'maison-vintique' ) );
 	$cta     = get_theme_mod( 'mve_popup_cta', __( 'Apply for Trade Account', 'maison-vintique' ) );
-	// The trade application page when there is one, the account page otherwise.
-	$account = function_exists( 'mve_trade_application_url' )
-		? mve_trade_application_url()
+	// The short trade enquiry, never the full application — that one is by
+	// invitation only. See mve_apply_url().
+	$account = function_exists( 'mve_apply_url' )
+		? mve_apply_url()
 		: ( function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' ) );
 	$url     = get_theme_mod( 'mve_popup_cta_url', '' );
 	$url     = $url ? $url : $account;

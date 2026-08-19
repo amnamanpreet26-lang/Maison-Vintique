@@ -45,13 +45,14 @@ body {
 #template_container {
 	background-color: #ffffff;
 	border: 1px solid <?php echo esc_attr( $mve_line ); ?>;
-	border-radius: 6px;
+	border-radius: 8px;
 	box-shadow: none;
+	overflow: hidden;
 }
 
 #template_header {
 	background-color: <?php echo esc_attr( $mve_dark ); ?>;
-	border-radius: 6px 6px 0 0;
+	border-radius: 0;
 	color: #ffffff;
 	font-family: <?php echo $mve_serif; // phpcs:ignore ?>;
 	font-weight: normal;
@@ -59,15 +60,16 @@ body {
 }
 
 #template_header h1 {
-	color: #ffffff;
+	color: #f6f1e7;
 	font-family: <?php echo $mve_serif; // phpcs:ignore ?>;
-	font-size: 26px;
+	font-size: 30px;
 	font-weight: normal;
-	line-height: 1.3;
+	line-height: 1.25;
 	margin: 0;
 	padding: 0;
 	text-align: center;
 	text-shadow: none;
+	letter-spacing: 0.4px;
 }
 
 #template_header_image img {
@@ -80,15 +82,24 @@ body {
 }
 
 #body_content table td {
-	padding: 34px 40px 28px;
+	padding: 40px 44px 34px;
 }
 
 #body_content p {
 	color: <?php echo esc_attr( $mve_ink ); ?>;
 	font-family: <?php echo $mve_sans; // phpcs:ignore ?>;
 	font-size: 15px;
-	line-height: 1.7;
-	margin: 0 0 16px;
+	line-height: 1.8;
+	margin: 0 0 18px;
+}
+
+/* The opening line of every email -- "Hello Claire," -- reads better a size
+   up and in the serif, the way a letter would. Applied by the base class. */
+#body_content p.mv-salute {
+	font-family: <?php echo $mve_serif; // phpcs:ignore ?>;
+	font-size: 19px;
+	color: <?php echo esc_attr( $mve_dark ); ?>;
+	margin: 0 0 20px;
 }
 
 #body_content h2 {
@@ -118,28 +129,90 @@ body {
 .mv-btn a,
 a.mv-btn {
 	background-color: <?php echo esc_attr( $mve_dark ); ?>;
+	border: 1px solid <?php echo esc_attr( $mve_dark ); ?>;
 	border-radius: 4px;
-	color: #ffffff !important;
+	color: #f6f1e7 !important;
 	display: inline-block;
 	font-family: <?php echo $mve_sans; // phpcs:ignore ?>;
 	font-size: 12px;
 	font-weight: bold;
-	letter-spacing: 1.4px;
-	padding: 15px 30px;
+	letter-spacing: 1.8px;
+	padding: 17px 38px;
 	text-decoration: none !important;
 	text-transform: uppercase;
 }
 
 .mv-note {
 	background-color: <?php echo esc_attr( $mve_panel ); ?>;
+	border: 1px solid #ece5da;
 	border-left: 3px solid <?php echo esc_attr( $mve_gold ); ?>;
-	padding: 16px 18px;
-	margin: 0 0 18px;
+	border-radius: 0 4px 4px 0;
+	padding: 18px 20px;
+	margin: 4px 0 22px;
 }
 
 .mv-note p {
 	margin: 0;
 	font-size: 14px;
+	line-height: 1.7;
+	color: <?php echo esc_attr( $mve_soft ); ?>;
+}
+
+/* A framed panel for the things worth setting apart from the prose: an
+   invitation link, a summary of an application, an amount owing. */
+.mv-panel {
+	background-color: <?php echo esc_attr( $mve_panel ); ?>;
+	border: 1px solid #e4dccf;
+	border-radius: 6px;
+	padding: 22px 24px;
+	margin: 4px 0 24px;
+}
+
+.mv-panel p {
+	margin: 0 0 10px;
+	font-size: 14px;
+}
+
+.mv-panel p:last-child {
+	margin-bottom: 0;
+}
+
+.mv-panel .mv-panel__k {
+	font-family: <?php echo $mve_sans; // phpcs:ignore ?>;
+	font-size: 10.5px;
+	letter-spacing: 1.4px;
+	text-transform: uppercase;
+	color: <?php echo esc_attr( $mve_soft ); ?>;
+}
+
+.mv-panel .mv-panel__v {
+	font-family: <?php echo $mve_serif; // phpcs:ignore ?>;
+	font-size: 17px;
+	color: <?php echo esc_attr( $mve_dark ); ?>;
+}
+
+/* A short gold rule used to close a section. */
+.mv-rule {
+	border: 0;
+	border-top: 1px solid #e4dccf;
+	margin: 26px 0 22px;
+	height: 1px;
+}
+
+/* The numbered "what happens next" list. Email clients handle <ol> badly, so
+   these are table rows the templates build by hand. */
+.mv-step__n {
+	font-family: <?php echo $mve_serif; // phpcs:ignore ?>;
+	font-size: 15px;
+	letter-spacing: 1.4px;
+	color: <?php echo esc_attr( $mve_gold ); ?>;
+}
+
+.mv-step__t {
+	font-family: <?php echo $mve_sans; // phpcs:ignore ?>;
+	font-size: 14px;
+	line-height: 1.7;
+	color: <?php echo esc_attr( $mve_ink ); ?>;
 }
 
 .mv-meta {
@@ -153,7 +226,7 @@ a.mv-btn {
 
 #template_footer td {
 	padding: 0;
-	border-radius: 0 0 6px 6px;
+	border-radius: 0;
 }
 
 #template_footer #credit {

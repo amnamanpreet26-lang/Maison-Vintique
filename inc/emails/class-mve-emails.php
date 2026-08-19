@@ -44,7 +44,6 @@ class MVE_Email_Order_Shipped extends MVE_Email_Base {
 	}
 	protected function body_lines() {
 		$lines = array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			__( 'Your order has left our bonded warehouse and is with the carrier.', 'maison-vintique' ),
 		);
 		$tracking = $this->object ? $this->object->get_meta( '_mve_tracking_number' ) : '';
@@ -96,7 +95,6 @@ class MVE_Email_Trade_Application_Received extends MVE_Email_Trade_Base {
 	protected function body_lines() {
 		$business = $this->business_name();
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			$business
 				? sprintf( __( 'Thank you for applying for a trade account for <strong>%s</strong>.', 'maison-vintique' ), esc_html( $business ) )
 				: __( 'Thank you for applying for a trade account.', 'maison-vintique' ),
@@ -126,7 +124,6 @@ class MVE_Email_Trade_Approved extends MVE_Email_Trade_Base {
 	}
 	protected function body_lines() {
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			__( 'Your trade account has been approved. Sign in and the full portfolio opens up: wholesale pricing, live availability, technical sheets and downloadable invoices.', 'maison-vintique' ),
 			__( 'Orders are placed by proforma. Your account manager will confirm terms and delivery windows on your first order.', 'maison-vintique' ),
 		);
@@ -156,7 +153,7 @@ class MVE_Email_Trade_More_Info extends MVE_Email_Trade_Base {
 	}
 	protected function body_lines() {
 		$declined = ! empty( $this->extra['declined'] );
-		$lines    = array( sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ) );
+		$lines    = array();
 
 		$lines[] = $declined
 			? __( 'Thank you for your interest. We are not able to open a trade account for you at this time.', 'maison-vintique' )
@@ -190,7 +187,6 @@ class MVE_Email_Trade_Welcome extends MVE_Email_Trade_Base {
 	}
 	protected function body_lines() {
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			__( 'A few things worth knowing now that you are trading with us:', 'maison-vintique' ),
 			__( '<strong>Pricing</strong> — wholesale prices show on every wine once you are signed in.', 'maison-vintique' ),
 			__( '<strong>Documents</strong> — technical sheets sit on each wine, and every invoice is in your account under Invoices.', 'maison-vintique' ),
@@ -226,7 +222,6 @@ class MVE_Email_Invoice extends MVE_Email_Base {
 	}
 	protected function body_lines() {
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			sprintf( __( 'Please find the invoice for order %s below.', 'maison-vintique' ), '<strong>' . esc_html( $this->placeholders['{order_number}'] ) . '</strong>' ),
 			__( 'A printable copy is always available in your account under Invoices.', 'maison-vintique' ),
 		);
@@ -259,7 +254,6 @@ class MVE_Email_Payment_Required extends MVE_Email_Base {
 	}
 	protected function body_lines() {
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			sprintf( __( 'Order %s is confirmed and reserved, and is waiting on payment before we release it from bond.', 'maison-vintique' ), '<strong>' . esc_html( $this->placeholders['{order_number}'] ) . '</strong>' ),
 		);
 	}
@@ -287,7 +281,7 @@ class MVE_Email_Payment_Reminder extends MVE_Email_Base {
 	}
 	protected function body_lines() {
 		$days  = ! empty( $this->extra['days'] ) ? (int) $this->extra['days'] : 0;
-		$lines = array( sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ) );
+		$lines = array();
 
 		$lines[] = $days
 			? sprintf(
@@ -332,7 +326,6 @@ class MVE_Email_Password_Changed extends MVE_Email_Base {
 	}
 	protected function body_lines() {
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			__( 'The password on your trade account was just changed.', 'maison-vintique' ),
 		);
 	}
@@ -362,7 +355,6 @@ class MVE_Email_Account_Details extends MVE_Email_Base {
 	protected function body_lines() {
 		$changed = ! empty( $this->extra['changed'] ) ? (array) $this->extra['changed'] : array();
 		$lines   = array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			__( 'The details on your trade account have been updated.', 'maison-vintique' ),
 		);
 		if ( $changed ) {
@@ -407,7 +399,6 @@ class MVE_Email_Product_Available extends MVE_Email_Base {
 		$name = ! empty( $this->extra['product_name'] ) ? $this->extra['product_name'] : __( 'A wine you were watching', 'maison-vintique' );
 		$this->placeholders['{product_name}'] = $name;
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			sprintf( __( '<strong>%s</strong> is available again.', 'maison-vintique' ), esc_html( $name ) ),
 			__( 'Parcels like this tend to move quickly, so it is worth ordering sooner rather than later.', 'maison-vintique' ),
 		);
@@ -564,7 +555,6 @@ class MVE_Email_Order_Request extends MVE_Email_Base {
 
 	protected function body_lines() {
 		return array(
-			sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $this->placeholders['{customer_name}'] ) ),
 			__( 'Thank you — your order request is with us. Nothing has been charged.', 'maison-vintique' ),
 			__( 'We will confirm stock, pricing and a delivery window, then send a proforma invoice. Payment is taken only after you have approved that.', 'maison-vintique' ),
 		);
@@ -623,5 +613,318 @@ class MVE_Email_Order_Request_Admin extends MVE_Email_Base {
 				'url'   => $this->object->get_edit_order_url(),
 			)
 			: array();
+	}
+}
+
+/* =========================================================================
+ * STAGE ONE — THE SHORT TRADE ENQUIRY
+ * ---------------------------------------------------------------------
+ * These hang off a Trade Enquiry rather than a user or an order — nobody has
+ * an account yet, which is the whole point of the stage. The enquiry ID is
+ * passed in $extra, and prepare() reads the answers off it.
+ * ====================================================================== */
+
+abstract class MVE_Email_Enquiry_Base extends MVE_Email_Base {
+
+	/** @var int The enquiry this email is about. */
+	protected $enquiry = 0;
+
+	protected function show_order_details() {
+		return false;
+	}
+
+	/**
+	 * One answer from the enquiry.
+	 *
+	 * @param string $key Field key, without the _mve_ prefix.
+	 * @return string
+	 */
+	protected function answer( $key ) {
+		return $this->enquiry ? (string) get_post_meta( $this->enquiry, '_mve_' . $key, true ) : '';
+	}
+
+	/**
+	 * Pull the enquiry in, and address the email at the person who sent it.
+	 */
+	protected function prepare() {
+		$this->enquiry = ! empty( $this->extra['enquiry'] ) ? (int) $this->extra['enquiry'] : 0;
+
+		$business = $this->answer( 'business' );
+		$contact  = $this->answer( 'contact' );
+
+		$this->placeholders['{business_name}'] = $business;
+		$this->placeholders['{contact_name}']  = $contact;
+
+		// First name only — "Hello Claire," not "Hello Claire Devereux,".
+		$first = $contact ? current( preg_split( '/\s+/', trim( $contact ) ) ) : '';
+		$this->placeholders['{customer_name}'] = $first;
+
+		// Emails to the enquirer go to the address they gave us. The ones to
+		// the shop already have their recipient and must not be redirected.
+		if ( $this->to_customer ) {
+			$email = $this->answer( 'email' );
+			if ( is_email( $email ) ) {
+				$this->recipient = $email;
+			}
+		}
+	}
+
+	public function __construct() {
+		$this->placeholders = array(
+			'{business_name}' => '',
+			'{contact_name}'  => '',
+		);
+		parent::__construct();
+	}
+}
+
+/** Sent the moment the short enquiry is submitted. */
+class MVE_Email_Enquiry_Received extends MVE_Email_Enquiry_Base {
+	public function __construct() {
+		$this->id             = 'mve_enquiry_received';
+		$this->title          = __( 'Trade enquiry — received', 'maison-vintique' );
+		$this->description    = __( 'Sent to somebody who submits the short trade enquiry form.', 'maison-vintique' );
+		$this->customer_email = true;
+		parent::__construct();
+	}
+	public function get_default_subject() {
+		return __( 'We have your trade enquiry — {site_title}', 'maison-vintique' );
+	}
+	public function get_default_heading() {
+		return __( 'Thank you for your enquiry', 'maison-vintique' );
+	}
+	protected function body_lines() {
+		$business = $this->placeholders['{business_name}'];
+		return array(
+			$business
+				/* translators: %s: business name */
+				? sprintf( __( 'Thank you for getting in touch about a trade account for <strong>%s</strong>.', 'maison-vintique' ), esc_html( $business ) )
+				: __( 'Thank you for getting in touch about a trade account.', 'maison-vintique' ),
+			__( 'We read every enquiry by hand rather than opening accounts automatically — it is a small portfolio and we like to know who we are selling to.', 'maison-vintique' ),
+		);
+	}
+	protected function steps() {
+		return array(
+			__( 'We review your enquiry, usually within two working days.', 'maison-vintique' ),
+			__( 'If we look like a good fit, we email you a private link to the full trade account application.', 'maison-vintique' ),
+			__( 'You complete that, we carry out our account and licensing checks, and your trade portal is opened.', 'maison-vintique' ),
+		);
+	}
+	protected function note() {
+		return __( 'Nothing further is needed from you at this stage. Do keep an eye on your junk folder in case our reply lands there.', 'maison-vintique' );
+	}
+}
+
+/** The same event, to the shop. */
+class MVE_Email_Enquiry_Admin extends MVE_Email_Enquiry_Base {
+
+	protected $to_customer = false;
+
+	public function __construct() {
+		$this->id             = 'mve_enquiry_admin';
+		$this->title          = __( 'Trade enquiry — new (to the shop)', 'maison-vintique' );
+		$this->description    = __( 'Sent to you when somebody submits the short trade enquiry form.', 'maison-vintique' );
+		$this->customer_email = false;
+		parent::__construct();
+	}
+	public function get_default_subject() {
+		return __( '[{site_title}] Trade enquiry — {business_name}', 'maison-vintique' );
+	}
+	public function get_default_heading() {
+		return __( 'New trade enquiry', 'maison-vintique' );
+	}
+	protected function body_lines() {
+		return array(
+			sprintf(
+				/* translators: %s: business name */
+				__( '<strong>%s</strong> would like to apply for a trade account.', 'maison-vintique' ),
+				esc_html( $this->placeholders['{business_name}'] )
+			),
+		);
+	}
+	protected function panel() {
+		if ( ! $this->enquiry ) {
+			return '';
+		}
+
+		$fields = function_exists( 'mve_enquiry_fields' ) ? mve_enquiry_fields() : array();
+		$rows   = '';
+
+		foreach ( $fields as $key => $field ) {
+			$value = $this->answer( $key );
+			if ( '' === trim( $value ) ) {
+				continue;
+			}
+			if ( 'select' === $field['type'] && isset( $field['options'][ $value ] ) ) {
+				$value = $field['options'][ $value ];
+			}
+			$rows .= '<tr>'
+				. '<td class="mv-panel__k" valign="top" width="150" style="padding:0 14px 8px 0;">' . esc_html( $field['label'] ) . '</td>'
+				. '<td valign="top" style="padding:0 0 8px;font-size:14px;">' . nl2br( esc_html( $value ) ) . '</td>'
+				. '</tr>';
+		}
+
+		return $rows ? '<table border="0" cellpadding="0" cellspacing="0" width="100%">' . $rows . '</table>' : '';
+	}
+	protected function cta() {
+		return $this->enquiry
+			? array(
+				'label' => __( 'Review this enquiry', 'maison-vintique' ),
+				'url'   => admin_url( 'post.php?post=' . $this->enquiry . '&action=edit' ),
+			)
+			: array();
+	}
+	protected function note() {
+		return __( 'Approving it there emails them a private, expiring link to the full application. Nothing is sent to them until you decide.', 'maison-vintique' );
+	}
+
+	/**
+	 * Record that the office was told, so the plain-text fallback in
+	 * inc/contact-form.php only fires when this genuinely did not go out.
+	 */
+	public function trigger( $subject = 0, $extra = array() ) {
+		$sent = parent::trigger( $subject, $extra );
+		if ( $sent && $this->enquiry ) {
+			update_post_meta( $this->enquiry, '_mve_shop_notified', current_time( 'mysql' ) );
+		}
+		return $sent;
+	}
+}
+
+/** THE INVITATION — the private link to the full application. */
+class MVE_Email_Application_Invite extends MVE_Email_Enquiry_Base {
+	public function __construct() {
+		$this->id             = 'mve_application_invite';
+		$this->title          = __( 'Trade enquiry — invitation to apply', 'maison-vintique' );
+		$this->description    = __( 'Sent when you approve an enquiry. Carries the private, expiring link to the full trade account application.', 'maison-vintique' );
+		$this->customer_email = true;
+		parent::__construct();
+	}
+	public function get_default_subject() {
+		return __( 'Your trade account application — {site_title}', 'maison-vintique' );
+	}
+	public function get_default_heading() {
+		return __( 'You are invited to apply', 'maison-vintique' );
+	}
+	protected function body_lines() {
+		$business = $this->placeholders['{business_name}'];
+		return array(
+			$business
+				/* translators: %s: business name */
+				? sprintf( __( 'Thank you for your enquiry about <strong>%s</strong>. We would be glad to see a full application.', 'maison-vintique' ), esc_html( $business ) )
+				: __( 'Thank you for your enquiry. We would be glad to see a full application.', 'maison-vintique' ),
+			__( 'The link below opens the trade account application. It asks about your company, alcohol licensing, AWRS registration where it applies, delivery and payment details, who may order on the account, and the declarations we are required to hold. Set aside about fifteen minutes, and have your licence details to hand.', 'maison-vintique' ),
+		);
+	}
+	protected function panel() {
+		$expires = $this->enquiry ? get_post_meta( $this->enquiry, '_mve_token_expires', true ) : '';
+		if ( ! $expires ) {
+			return '';
+		}
+
+		return '<p><span class="mv-panel__k">' . esc_html__( 'This link is yours alone', 'maison-vintique' ) . '</span></p>'
+			. '<p><span class="mv-panel__v">' . esc_html(
+				sprintf(
+					/* translators: %s: date */
+					__( 'It expires on %s', 'maison-vintique' ),
+					date_i18n( get_option( 'date_format' ), strtotime( $expires ) )
+				)
+			) . '</span></p>'
+			. '<p style="margin:0;font-size:13px;">' . esc_html__( 'Please do not forward it — it is tied to your enquiry, and it stops working once your application has been submitted.', 'maison-vintique' ) . '</p>';
+	}
+	protected function cta() {
+		$url = ( $this->enquiry && function_exists( 'mve_invite_url' ) ) ? mve_invite_url( $this->enquiry ) : '';
+		return $url
+			? array(
+				'label' => __( 'Open your application', 'maison-vintique' ),
+				'url'   => $url,
+			)
+			: array();
+	}
+	protected function note() {
+		return __( 'Being invited to apply is not the same as being approved. Your trade account is opened only once we have completed our account and due-diligence review of the full application.', 'maison-vintique' );
+	}
+}
+
+/** More information needed before we can invite them to apply. */
+class MVE_Email_Enquiry_More_Info extends MVE_Email_Enquiry_Base {
+	public function __construct() {
+		$this->id             = 'mve_enquiry_more_info';
+		$this->title          = __( 'Trade enquiry — more information', 'maison-vintique' );
+		$this->description    = __( 'Sent when you ask an enquirer for more before deciding.', 'maison-vintique' );
+		$this->customer_email = true;
+		parent::__construct();
+	}
+	public function get_default_subject() {
+		return __( 'About your trade enquiry — {site_title}', 'maison-vintique' );
+	}
+	public function get_default_heading() {
+		return __( 'A little more, please', 'maison-vintique' );
+	}
+	protected function body_lines() {
+		return array(
+			__( 'Thank you for your enquiry. Before we can move it on, we would like to know a bit more.', 'maison-vintique' ),
+		);
+	}
+	protected function note() {
+		$message = ! empty( $this->extra['message'] ) ? $this->extra['message'] : '';
+		return $message
+			? nl2br( esc_html( $message ) )
+			: __( 'Simply reply to this email and we will pick it up from there.', 'maison-vintique' );
+	}
+}
+
+/** Not suitable at present. */
+class MVE_Email_Enquiry_Declined extends MVE_Email_Enquiry_Base {
+	public function __construct() {
+		$this->id             = 'mve_enquiry_declined';
+		$this->title          = __( 'Trade enquiry — declined', 'maison-vintique' );
+		$this->description    = __( 'Sent when an enquiry is not one you can take forward at the moment.', 'maison-vintique' );
+		$this->customer_email = true;
+		parent::__construct();
+	}
+	public function get_default_subject() {
+		return __( 'About your trade enquiry — {site_title}', 'maison-vintique' );
+	}
+	public function get_default_heading() {
+		return __( 'About your enquiry', 'maison-vintique' );
+	}
+	protected function body_lines() {
+		return array(
+			__( 'Thank you for thinking of us, and for taking the time to tell us about your business.', 'maison-vintique' ),
+			__( 'We are not able to take this forward at the moment. It is a small portfolio with limited allocations, and that means saying no to businesses we would otherwise be glad to supply — it is not a reflection on yours.', 'maison-vintique' ),
+			__( 'Do come back to us if things change. We are always happy to look again.', 'maison-vintique' ),
+		);
+	}
+	protected function note() {
+		$message = ! empty( $this->extra['message'] ) ? $this->extra['message'] : '';
+		return $message ? nl2br( esc_html( $message ) ) : '';
+	}
+}
+
+/** The due-diligence review is paused. */
+class MVE_Email_Trade_On_Hold extends MVE_Email_Trade_Base {
+	public function __construct() {
+		$this->id             = 'mve_trade_on_hold';
+		$this->title          = __( 'Trade — application on hold', 'maison-vintique' );
+		$this->description    = __( 'Sent when a full application is put on hold during the due-diligence review.', 'maison-vintique' );
+		$this->customer_email = true;
+		parent::__construct();
+	}
+	public function get_default_subject() {
+		return __( 'Your trade application is on hold — {site_title}', 'maison-vintique' );
+	}
+	public function get_default_heading() {
+		return __( 'Your application is on hold', 'maison-vintique' );
+	}
+	protected function body_lines() {
+		return array(
+			__( 'Your trade account application is with us and is paused for the moment while we complete our checks. Nothing has gone wrong, and nothing is needed from you unless we ask.', 'maison-vintique' ),
+			__( 'We will be in touch as soon as we can take it further.', 'maison-vintique' ),
+		);
+	}
+	protected function note() {
+		$message = ! empty( $this->extra['message'] ) ? $this->extra['message'] : '';
+		return $message ? nl2br( esc_html( $message ) ) : '';
 	}
 }

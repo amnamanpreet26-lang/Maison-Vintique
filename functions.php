@@ -17,6 +17,72 @@ define( 'MVE_VERSION', '1.0.0' );
  * Enqueue parent + child styles.
  */
 /**
+ * The Maison Vintique crest, in one place.
+ *
+ * It used to be pasted into header.php and footer.php as a hard-coded URL, and
+ * the emails had no logo at all because their setting was never filled in.
+ * Everything now asks this, so changing the logo is one field:
+ *
+ *   Appearance → Customize → Site Identity → Crest / logo image
+ *
+ * @return string URL, or '' if there isn't one.
+ */
+function mve_logo_url() {
+	$url = get_theme_mod( 'mve_logo_url', '' );
+
+	if ( ! $url ) {
+		// The custom logo, if one has been set the WordPress way.
+		$logo_id = (int) get_theme_mod( 'custom_logo' );
+		if ( $logo_id ) {
+			$url = (string) wp_get_attachment_image_url( $logo_id, 'full' );
+		}
+	}
+
+	if ( ! $url ) {
+		$url = MVE_DEFAULT_CREST;
+	}
+
+	return (string) apply_filters( 'mve_logo_url', $url );
+}
+
+/**
+ * The crest shipped with the site, used until one is chosen in the Customizer.
+ * The white version, because it sits on the dark header, footer and email band.
+ */
+const MVE_DEFAULT_CREST = 'https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png';
+
+/**
+ * The Customizer field for it.
+ *
+ * @param WP_Customize_Manager $wp_customize Customizer.
+ */
+function mve_logo_customizer( $wp_customize ) {
+	$wp_customize->add_setting(
+		'mve_logo_url',
+		array(
+			'default'           => '',
+			'sanitize_callback' => 'esc_url_raw',
+			'transport'         => 'refresh',
+		)
+	);
+
+	$wp_customize->add_control(
+		new WP_Customize_Image_Control(
+			$wp_customize,
+			'mve_logo_url',
+			array(
+				'label'       => __( 'Crest / logo image', 'maison-vintique-elementor' ),
+				'description' => __( 'Used in the site header, the footer and at the top of every email. A white or light version works best — it sits on the dark green band. Leave empty to keep the crest the theme ships with.', 'maison-vintique-elementor' ),
+				'section'     => 'title_tagline',
+				'settings'    => 'mve_logo_url',
+				'priority'    => 8,
+			)
+		)
+	);
+}
+add_action( 'customize_register', 'mve_logo_customizer' );
+
+/**
  * Version an asset by its last-modified time.
  *
  * MVE_VERSION is a hard-coded '1.0.0' that never changes, so browsers and
@@ -311,6 +377,12 @@ require_once get_stylesheet_directory() . '/inc/email-tools.php';
  * sent on each change.
  */
 require_once get_stylesheet_directory() . '/inc/trade-accounts.php';
+
+/**
+ * Stage one of the trade workflow: the short enquiry, the initial review, and
+ * the private expiring invitation to the full application.
+ */
+require_once get_stylesheet_directory() . '/inc/trade-enquiries.php';
 
 /**
  * WooCommerce → Email Preview. Renders any transactional email on demand with

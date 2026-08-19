@@ -116,6 +116,48 @@ abstract class MVE_Email_Base extends WC_Email {
 	}
 
 	/**
+	 * How the email opens.
+	 *
+	 * Written once here rather than as the first line of eleven body_lines(),
+	 * so it is styled consistently and reads as a letter rather than a notice.
+	 * Return '' for an email that should not greet anybody — the ones that go
+	 * to the shop rather than to a person.
+	 *
+	 * @return string
+	 */
+	protected function salutation() {
+		if ( ! $this->to_customer ) {
+			return '';
+		}
+
+		$name = trim( (string) $this->placeholders['{customer_name}'] );
+
+		return $name
+			/* translators: %s: customer's first name */
+			? sprintf( __( 'Hello %s,', 'maison-vintique' ), esc_html( $name ) )
+			: __( 'Hello,', 'maison-vintique' );
+	}
+
+	/**
+	 * Optional framed panel — an invitation link, a summary, an amount owing.
+	 * Raw HTML, placed between the body and the note.
+	 *
+	 * @return string
+	 */
+	protected function panel() {
+		return '';
+	}
+
+	/**
+	 * Optional numbered "what happens next" list, one string per step.
+	 *
+	 * @return string[]
+	 */
+	protected function steps() {
+		return array();
+	}
+
+	/**
 	 * Trigger the email.
 	 *
 	 * Accepts either a user (account and trade emails) or an order
@@ -176,22 +218,57 @@ abstract class MVE_Email_Base extends WC_Email {
 
 		wc_get_template( 'emails/email-header.php', array( 'email_heading' => $this->get_heading() ), '', $this->template_base );
 
+		// The opening line, set in the serif a size up, the way a letter opens.
+		$salutation = $this->salutation();
+		if ( $salutation ) {
+			echo '<p class="mv-salute">' . wp_kses_post( $salutation ) . '</p>';
+		}
+
 		foreach ( $this->body_lines() as $line ) {
 			echo '<p>' . wp_kses_post( $line ) . '</p>';
 		}
 
-		$note = $this->note();
-		if ( $note ) {
-			echo '<div class="mv-note"><p>' . wp_kses_post( $note ) . '</p></div>';
+		$panel = $this->panel();
+		if ( $panel ) {
+			echo '<div class="mv-panel">' . wp_kses_post( $panel ) . '</div>';
 		}
 
 		$cta = $this->cta();
 		if ( ! empty( $cta['label'] ) && ! empty( $cta['url'] ) ) {
+			/*
+			 * Wrapped in a table rather than left as a bare <a>: Outlook ignores
+			 * padding on inline elements, so a plain link renders as a thin
+			 * strip of colour with the text hanging off it.
+			 */
 			printf(
-				'<p class="mv-btn" style="margin:26px 0 8px;"><a class="mv-btn" href="%1$s">%2$s</a></p>',
+				'<table border="0" cellpadding="0" cellspacing="0" style="margin:28px 0 10px;"><tr><td class="mv-btn" style="border-radius:4px;"><a class="mv-btn" href="%1$s">%2$s</a></td></tr></table>',
 				esc_url( $cta['url'] ),
 				esc_html( $cta['label'] )
 			);
+		}
+
+		$steps = $this->steps();
+		if ( $steps ) {
+			echo '<hr class="mv-rule" />';
+			echo '<p class="mv-meta">' . esc_html__( 'What happens next', 'maison-vintique' ) . '</p>';
+			echo '<table border="0" cellpadding="0" cellspacing="0" width="100%">';
+			$n = 0;
+			foreach ( $steps as $step ) {
+				$n++;
+				printf(
+					'<tr><td class="mv-step__n" valign="top" width="36" style="padding:0 0 14px;">%1$s</td><td class="mv-step__t" valign="top" style="padding:0 0 14px;">%2$s</td></tr>',
+					esc_html( str_pad( (string) $n, 2, '0', STR_PAD_LEFT ) ),
+					wp_kses_post( $step )
+				);
+			}
+			echo '</table>';
+		}
+
+		// Last, deliberately: the caveat belongs after the thing it qualifies,
+		// not between the reader and the button.
+		$note = $this->note();
+		if ( $note ) {
+			echo '<div class="mv-note"><p>' . wp_kses_post( $note ) . '</p></div>';
 		}
 
 		// Order emails get WooCommerce's own order table underneath.
@@ -213,8 +290,29 @@ abstract class MVE_Email_Base extends WC_Email {
 	public function get_content_plain() {
 		$text = $this->get_heading() . "\n" . str_repeat( '=', strlen( $this->get_heading() ) ) . "\n\n";
 
+		$salutation = $this->salutation();
+		if ( $salutation ) {
+			$text .= wp_strip_all_tags( $salutation ) . "\n\n";
+		}
+
 		foreach ( $this->body_lines() as $line ) {
 			$text .= wordwrap( wp_strip_all_tags( $line ), 72 ) . "\n\n";
+		}
+
+		$panel = $this->panel();
+		if ( $panel ) {
+			$text .= wordwrap( wp_strip_all_tags( $panel ), 72 ) . "\n\n";
+		}
+
+		$steps = $this->steps();
+		if ( $steps ) {
+			$text .= __( 'What happens next', 'maison-vintique' ) . "\n\n";
+			$n = 0;
+			foreach ( $steps as $step ) {
+				$n++;
+				$text .= $n . '. ' . wordwrap( wp_strip_all_tags( $step ), 69, "\n   " ) . "\n";
+			}
+			$text .= "\n";
 		}
 
 		$note = $this->note();

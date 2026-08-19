@@ -367,14 +367,42 @@ add_action( 'save_post_page', function () {
 } );
 
 /**
- * Once the application page exists it replaces the short registration form on
- * the login screen — two ways to apply is one too many, and the short one does
- * not collect anything the shop actually needs.
+ * WHERE "APPLY FOR A TRADE ACCOUNT" GOES.
  *
- * To keep the short form as well:
+ * The short enquiry — never the full application. That is the client's rule,
+ * and it is enforced here rather than in each template, so no button anywhere
+ * on the site can send somebody straight to the application by mistake.
+ *
+ * Order of preference:
+ *   1. the Contact page (the short trade enquiry)
+ *   2. the account page, if that page has not been made yet
+ *
+ * The application itself is deliberately NOT in this list.
+ *
+ * @return string
+ */
+function mve_apply_url() {
+	$url = function_exists( 'mve_enquiry_page_url' ) ? mve_enquiry_page_url() : '';
+
+	if ( ! $url ) {
+		$url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' );
+	}
+
+	return (string) apply_filters( 'mve_apply_url', $url );
+}
+
+/**
+ * Once the enquiry page exists it replaces the short registration form on the
+ * login screen — self-service registration would walk straight past the review
+ * the whole workflow exists for.
+ *
+ * To put the WooCommerce registration form back:
  *   add_filter( 'mve_show_registration_form', '__return_true', 20 );
  */
 add_filter( 'mve_show_registration_form', function ( $show ) {
+	if ( function_exists( 'mve_enquiry_page_url' ) && mve_enquiry_page_url() ) {
+		return false;
+	}
 	return mve_trade_application_page_url() ? false : $show;
 } );
 
@@ -428,7 +456,68 @@ function mve_application_flash() {
  */
 function mve_application_value( $name ) {
 	$flash = mve_application_flash();
-	return isset( $flash['values'][ $name ] ) ? $flash['values'][ $name ] : '';
+	if ( isset( $flash['values'][ $name ] ) ) {
+		return $flash['values'][ $name ];
+	}
+
+	// Nothing typed yet: fall back to what they already told us at the enquiry
+	// stage. Asking somebody for their business name twice is the sort of thing
+	// that makes a long form feel longer.
+	$prefill = mve_application_prefill();
+	return isset( $prefill[ $name ] ) ? $prefill[ $name ] : '';
+}
+
+/**
+ * The answers carried over from the short enquiry.
+ *
+ * @return array Field name => value.
+ */
+function mve_application_prefill() {
+	static $prefill = null;
+	if ( null !== $prefill ) {
+		return $prefill;
+	}
+
+	$prefill = array();
+
+	$invite = mve_application_invite();
+	if ( ! $invite['enquiry'] ) {
+		return $prefill;
+	}
+
+	$get = function ( $key ) use ( $invite ) {
+		return (string) get_post_meta( $invite['enquiry'], '_mve_' . $key, true );
+	};
+
+	$business = $get( 'business' );
+	$contact  = $get( 'contact' );
+	$email    = $get( 'email' );
+	$phone    = $get( 'phone' );
+	$website  = $get( 'website' );
+	$type     = $get( 'type' );
+
+	// The enquiry only knows a trading name, so it seeds both — the legal name
+	// is often the same, and where it is not they will correct it.
+	$prefill['legal_name']    = $business;
+	$prefill['trading_name']  = $business;
+	$prefill['primary_name']  = $contact;
+	$prefill['primary_email'] = $email;
+	$prefill['general_email'] = $email;
+	$prefill['main_phone']    = $phone;
+	$prefill['primary_phone'] = $phone;
+
+	if ( $website ) {
+		// They may well have typed it without a scheme.
+		$prefill['website'] = preg_match( '#^https?://#i', $website ) ? $website : 'https://' . $website;
+	}
+
+	// The enquiry's business type uses the same keys as the application's
+	// "nature of business" checkboxes, so it ticks straight through.
+	if ( $type ) {
+		$prefill['business_type'] = array( $type );
+	}
+
+	return apply_filters( 'mve_application_prefill', $prefill, $invite['enquiry'] );
 }
 
 /**
@@ -666,6 +755,194 @@ function mve_application_users_table( $name ) {
 	<?php
 }
 
+/* =========================================================================
+ * THE GATE
+ * ---------------------------------------------------------------------
+ * The client's rule: the full application must not be public, must not be in
+ * the navigation, and must not be what the "Apply for a Trade Account" button
+ * opens. It is reachable only with an invitation token, which is unique to one
+ * enquiry, expires, and is spent when the application is submitted.
+ * ====================================================================== */
+
+/**
+ * The invitation this request is carrying, if any.
+ *
+ * Read once and remembered, because it is needed several times over while the
+ * page renders — and because a rejected submit comes back with the token on
+ * the URL, so the applicant never loses their place.
+ *
+ * @return array {enquiry, problem, token}
+ */
+function mve_application_invite() {
+	static $invite = null;
+	if ( null !== $invite ) {
+		return $invite;
+	}
+
+	$token  = isset( $_GET['invite'] ) ? sanitize_text_field( wp_unslash( $_GET['invite'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- a capability token, not a form.
+	$invite = array(
+		'token'   => $token,
+		'enquiry' => 0,
+		'problem' => 'none',   // "none" = no token at all, as opposed to a bad one
+	);
+
+	if ( $token && function_exists( 'mve_check_invite' ) ) {
+		$invite = array_merge( $invite, mve_check_invite( $token ) );
+	}
+
+	return $invite;
+}
+
+/** Does this request hold a live invitation? */
+function mve_application_invited() {
+	$invite = mve_application_invite();
+	return $invite['enquiry'] && '' === $invite['problem'];
+}
+
+/**
+ * Never index the application, and never list it.
+ *
+ * Belt and braces on top of the token: a search engine that somehow met the
+ * URL should not keep it, and it should not appear in the site's own search.
+ */
+function mve_application_noindex() {
+	if ( ! is_page_template( 'template-trade-application.php' ) ) {
+		return;
+	}
+	echo "\n" . '<meta name="robots" content="noindex, nofollow, noarchive" />' . "\n";
+}
+add_action( 'wp_head', 'mve_application_noindex', 1 );
+
+/**
+ * Keep it out of menus, search results and sitemaps.
+ *
+ * @param array $args Query args.
+ * @return array
+ */
+function mve_hide_application_page( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! $query->is_search() ) {
+		return;
+	}
+
+	$page = function_exists( 'mve_trade_application_page_url' ) ? url_to_postid( mve_trade_application_page_url() ) : 0;
+	if ( $page ) {
+		$excluded   = (array) $query->get( 'post__not_in' );
+		$excluded[] = $page;
+		$query->set( 'post__not_in', $excluded );
+	}
+}
+add_action( 'pre_get_posts', 'mve_hide_application_page' );
+
+/** Out of the WordPress sitemap too. */
+add_filter( 'wp_sitemaps_posts_query_args', function ( $args, $post_type ) {
+	if ( 'page' !== $post_type ) {
+		return $args;
+	}
+	$page = function_exists( 'mve_trade_application_page_url' ) ? url_to_postid( mve_trade_application_page_url() ) : 0;
+	if ( $page ) {
+		$args['post__not_in'] = array_merge( (array) ( $args['post__not_in'] ?? array() ), array( $page ) );
+	}
+	return $args;
+}, 10, 2 );
+
+/**
+ * The "you need an invitation" screen.
+ *
+ * @param string $problem Why they cannot get in.
+ */
+function mve_application_locked( $problem ) {
+	$enquiry_url = mve_enquiry_page_url();
+	?>
+	<div class="mvta-locked">
+		<div class="mvta-locked__mark" aria-hidden="true">
+			<svg viewBox="0 0 48 48" width="44" height="44" focusable="false">
+				<rect x="13" y="21" width="22" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
+				<path d="M18 21v-4.5a6 6 0 0 1 12 0V21" fill="none" stroke="currentColor" stroke-width="1.6"></path>
+			</svg>
+		</div>
+
+		<p class="mvta-locked__eyebrow"><?php esc_html_e( 'By invitation', 'maison-vintique' ); ?></p>
+
+		<h2 class="mvta-locked__title">
+			<?php
+			switch ( $problem ) {
+				case 'expired':
+					esc_html_e( 'That invitation has expired.', 'maison-vintique' );
+					break;
+				case 'used':
+					esc_html_e( 'That application has already been submitted.', 'maison-vintique' );
+					break;
+				case 'unknown':
+					esc_html_e( 'That link is not one of ours.', 'maison-vintique' );
+					break;
+				default:
+					esc_html_e( 'The trade application is by invitation.', 'maison-vintique' );
+			}
+			?>
+		</h2>
+
+		<p class="mvta-locked__text">
+			<?php
+			switch ( $problem ) {
+				case 'expired':
+					esc_html_e( 'Invitations are time-limited. Send us a line and we will issue you a fresh one.', 'maison-vintique' );
+					break;
+				case 'used':
+					esc_html_e( 'We have it, and it is with our team for review. There is nothing further to do — we will be in touch.', 'maison-vintique' );
+					break;
+				case 'unknown':
+					esc_html_e( 'It may have been copied incompletely. Open the link straight from the email we sent, or start with a short enquiry below.', 'maison-vintique' );
+					break;
+				default:
+					esc_html_e( 'We open trade accounts by hand rather than automatically. Start with a short enquiry — it takes a couple of minutes — and if we look like a good fit we will email you a private link to this application.', 'maison-vintique' );
+			}
+			?>
+		</p>
+
+		<?php if ( 'used' !== $problem && $enquiry_url ) : ?>
+			<p>
+				<a class="btn btn--primary" href="<?php echo esc_url( $enquiry_url ); ?>">
+					<?php esc_html_e( 'Request a Trade Account Application', 'maison-vintique' ); ?>
+				</a>
+			</p>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
+/**
+ * Where the short enquiry lives — the Contact page.
+ *
+ * @return string
+ */
+function mve_enquiry_page_url() {
+	$cached = get_transient( 'mve_enquiry_page_url' );
+	if ( null !== $cached && false !== $cached ) {
+		return (string) $cached;
+	}
+
+	$pages = get_posts(
+		array(
+			'post_type'        => 'page',
+			'numberposts'      => 1,
+			'meta_key'         => '_wp_page_template',   // phpcs:ignore WordPress.DB.SlowDBQuery
+			'meta_value'       => 'template-contact.php', // phpcs:ignore WordPress.DB.SlowDBQuery
+			'post_status'      => 'publish',
+			'suppress_filters' => false,
+		)
+	);
+
+	$url = $pages ? (string) get_permalink( $pages[0] ) : '';
+	set_transient( 'mve_enquiry_page_url', $url, HOUR_IN_SECONDS );
+
+	return (string) apply_filters( 'mve_enquiry_page_url', $url );
+}
+
+/** Forget both cached page URLs whenever a page is saved. */
+add_action( 'save_post_page', function () {
+	delete_transient( 'mve_enquiry_page_url' );
+} );
+
 /**
  * The whole form.
  */
@@ -737,6 +1014,15 @@ function mve_application_form() {
 		<?php
 		return;
 	}
+
+	// THE GATE. Without a live invitation there is no form on this page at all.
+	if ( ! mve_application_invited() ) {
+		$invite = mve_application_invite();
+		mve_application_locked( $invite['problem'] );
+		return;
+	}
+
+	$invite = mve_application_invite();
 	?>
 
 	<?php if ( $flash['errors'] ) : ?>
@@ -753,6 +1039,8 @@ function mve_application_form() {
 
 		<input type="hidden" name="action" value="mve_trade_application">
 		<input type="hidden" name="redirect_to" value="<?php echo esc_url( get_permalink() ); ?>">
+		<?php // Carried through the post so the handler can check it again and spend it. ?>
+		<input type="hidden" name="mvta_invite" value="<?php echo esc_attr( $invite['token'] ); ?>">
 		<?php wp_nonce_field( 'mve_trade_application', 'mvta_nonce' ); ?>
 
 		<?php $n = 0; ?>
@@ -784,7 +1072,9 @@ function mve_application_form() {
 
 		<div class="mvta-submit">
 			<p class="mvta-submit__note">
-				<?php esc_html_e( 'Submitting this creates your account in a pending state. Pricing becomes visible once we have approved it.', 'maison-vintique' ); ?>
+				<?php // The client's requirement, in as many words. ?>
+				<strong><?php esc_html_e( 'Completing this form does not guarantee approval.', 'maison-vintique' ); ?></strong>
+				<?php esc_html_e( 'Trade access is activated only once Maison Vintique has completed its account and due-diligence review.', 'maison-vintique' ); ?>
 			</p>
 			<button type="submit" class="btn btn--primary mvta-submit__btn"
 				data-sending="<?php esc_attr_e( 'Sending your application…', 'maison-vintique' ); ?>">
@@ -931,6 +1221,29 @@ function mve_handle_trade_application() {
 	$redirect = isset( $_POST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_POST['redirect_to'] ) ) : '';
 	if ( ! $redirect || 0 !== strpos( $redirect, home_url() ) ) {
 		$redirect = mve_trade_application_url();
+	}
+
+	// The invitation. Checked again here, not just when the page rendered —
+	// a form can be saved and posted later, and the token may have expired or
+	// been spent in the meantime.
+	$token  = isset( $_POST['mvta_invite'] ) ? sanitize_text_field( wp_unslash( $_POST['mvta_invite'] ) ) : '';
+	$invite = function_exists( 'mve_check_invite' ) ? mve_check_invite( $token ) : array(
+		'enquiry' => 0,
+		'problem' => 'unknown',
+	);
+
+	// Everything below bounces back to the same page WITH the token, so a
+	// rejected submit never locks the applicant out of their own application.
+	if ( $token ) {
+		$redirect = add_query_arg( 'invite', rawurlencode( $token ), $redirect );
+	}
+
+	if ( ! $invite['enquiry'] || '' !== $invite['problem'] ) {
+		mve_application_bounce(
+			$redirect,
+			array( '_form' => __( 'This application link is no longer valid. Please get in touch and we will issue a new one.', 'maison-vintique' ) ),
+			array()
+		);
 	}
 
 	if ( ! isset( $_POST['mvta_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['mvta_nonce'] ) ), 'mve_trade_application' ) ) {
@@ -1098,6 +1411,13 @@ function mve_handle_trade_application() {
 
 	update_user_meta( $user_id, 'mve_app_submitted', current_time( 'mysql' ) );
 	update_user_meta( $user_id, MVE_TRADE_STATUS_KEY, 'pending' );
+
+	// ---- spend the invitation -------------------------------------------
+	// Done before the emails: the enquiry now shows "full application
+	// submitted", and the link stops opening anything.
+	if ( function_exists( 'mve_spend_invite' ) ) {
+		mve_spend_invite( $invite['enquiry'], $user_id );
+	}
 
 	// ---- tell both sides ------------------------------------------------
 	// Now that every answer is stored, both emails can name the business.

@@ -35,11 +35,9 @@ $mve_cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : ho
 
 		<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="mv-header__brand" aria-label="<?php bloginfo( 'name' ); ?> — Home">
 			<span class="mv-header__crest">
-    <img 
-        src="https://lightsteelblue-toad-208486.hostingersite.com/wp-content/uploads/2026/08/crest-white.png"
-        alt="Maison Vintique"
-    >
-</span>
+				<?php // One source for the crest, shared with the footer and the emails. ?>
+				<img src="<?php echo esc_url( mve_logo_url() ); ?>" alt="<?php bloginfo( 'name' ); ?>">
+			</span>
 			<span class="mv-header__wordmark">
 				<span class="mv-header__name">MAISON VINTIQUE</span>
 				<span class="mv-header__place">A House of Wine · A Legacy of Taste</span>

@@ -21,31 +21,33 @@ defined( 'ABSPATH' ) || exit;
 do_action( 'woocommerce_before_customer_login_form' );
 
 /**
- * "Apply for an account" goes one of two places, and never nowhere.
+ * "Apply for an account" opens the SHORT TRADE ENQUIRY.
  *
- * If a page is using the "Trade Account Application" template, this becomes a
- * button through to it — that is the real nine-section application, and it
- * collects the licensing, AWRS and delivery detail the shop has to have before
- * it can open an account.
+ * Not the full application, and not a self-service registration form. Trade
+ * accounts are opened by hand: somebody enquires, Maison Vintique decides
+ * whether to invite them to apply, and only then does a private link to the
+ * nine-section application go out. Registering here would walk straight past
+ * that review, so with an enquiry page published this panel is a button, not
+ * a form.
  *
- * If that page has not been made yet, the short WooCommerce registration form
- * is rendered here instead, exactly as before, so the panel is never a dead
- * end. (It used to link at /trade/ — a page that doesn't exist — which is why
- * "Apply for an account" 404'd.)
+ * With no enquiry page made yet the WooCommerce registration form renders here
+ * instead, exactly as before, so the panel is never a dead end. (It used to
+ * link at /trade/ — a page that doesn't exist — which is why "Apply for an
+ * account" 404'd.)
  *
- * WooCommerce still does the actual work for the short form:
- * WC_Form_Handler::process_registration() fires on wp_loaded whenever
- * $_POST['register'] is set with a valid nonce, so validation, account
- * creation, the welcome email and the automatic sign-in all behave normally.
- *
- * To force the short form back on even with the application page published:
+ * To put the registration form back:
  *   add_filter( 'mve_show_registration_form', '__return_true', 20 );
  */
 $mve_show_registration = (bool) apply_filters( 'mve_show_registration_form', true );
 
-/** Used when the form is switched off — see inc/trade-application.php. */
-$mve_apply_url = function_exists( 'mve_trade_application_url' )
-	? mve_trade_application_url()
+/**
+ * Used when the form is switched off — see inc/trade-application.php.
+ *
+ * This is the SHORT ENQUIRY, never the full application: the application is by
+ * invitation only, so no public button may open it.
+ */
+$mve_apply_url = function_exists( 'mve_apply_url' )
+	? mve_apply_url()
 	: wc_get_page_permalink( 'myaccount' );
 ?>
 <section class="section login-page">

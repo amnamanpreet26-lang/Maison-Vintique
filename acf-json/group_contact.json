@@ -98,6 +98,16 @@
       }
     },
     {
+      "key": "field_c_submit",
+      "label": "Submit Button Label",
+      "name": "contact_submit_label",
+      "type": "text",
+      "instructions": "Defaults to “Request a Trade Account Application”. This form is stage one of the trade workflow — a short enquiry, reviewed by hand before anyone is invited to complete the full application.",
+      "wrapper": {
+        "width": "50"
+      }
+    },
+    {
       "key": "field_c_form_to",
       "label": "Send Enquiries To",
       "name": "contact_form_recipient",
@@ -124,7 +134,7 @@
   "instruction_placement": "label",
   "hide_on_screen": "",
   "active": true,
-  "description": "Content for the Contact page template. The enquiry form posts to admin-post.php and emails the address above.",
+  "description": "Wording around the short trade enquiry form. The questions themselves are defined in mve_enquiry_fields() (inc/trade-enquiries.php); each submission is stored under Trade Enquiries for review.",
   "show_in_rest": 1,
-  "modified": 1785369600
+  "modified": 1787443200
 }
