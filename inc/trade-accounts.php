@@ -104,12 +104,76 @@ function mve_send_application_ack( $user_id ) {
 
 	$sent = mve_send_email( 'mve_trade_application_received', $user_id );
 
+	/*
+	 * Belt and braces, the same as the shop's copy gets.
+	 *
+	 * mve_send_email() returns false whenever the branded email could not go —
+	 * WooCommerce inactive, that email switched off on its settings screen, the
+	 * template erroring — and it says so silently. Without this, the applicant
+	 * who has just spent twenty minutes on a nine-section form gets nothing at
+	 * all and assumes the submit failed. Plain text is not as handsome, but it
+	 * arrives.
+	 */
+	if ( ! $sent ) {
+		$sent = mve_plain_application_ack( $user_id );
+	}
+
 	// Recorded even when the mailer refused it, so a broken mail server does
 	// not turn one application into a stream of retries. The Emails screen
 	// under WooCommerce reports the refusal.
 	update_user_meta( $user_id, 'mve_app_ack_sent', current_time( 'mysql' ) );
 
 	return (bool) $sent;
+}
+
+/**
+ * The fallback acknowledgement — plain text, no WooCommerce needed.
+ *
+ * @param int $user_id Applicant.
+ * @return bool
+ */
+function mve_plain_application_ack( $user_id ) {
+	$user = get_userdata( $user_id );
+	if ( ! $user || ! $user->user_email ) {
+		return false;
+	}
+
+	$business = get_user_meta( $user_id, 'mve_business_name', true );
+	$name     = $user->first_name ? $user->first_name : $user->display_name;
+
+	$lines = array(
+		sprintf(
+			/* translators: %s: the applicant's name */
+			__( 'Dear %s,', 'maison-vintique' ),
+			$name
+		),
+		'',
+		__( 'Thank you — we have your trade account application and it is with us safely.', 'maison-vintique' ),
+		'',
+		__( 'WHAT HAPPENS NEXT', 'maison-vintique' ),
+		__( '1. We review the application by hand, usually within two working days.', 'maison-vintique' ),
+		__( '2. We may come back to you for a VAT number, a licence copy or a trade reference.', 'maison-vintique' ),
+		__( '3. Once it is approved you will be emailed, and your pricing appears the moment you sign in.', 'maison-vintique' ),
+		'',
+		__( 'Completing the application does not guarantee approval — trade access is activated only once our account and due-diligence review is complete.', 'maison-vintique' ),
+		'',
+		__( 'Nothing further is needed from you for now.', 'maison-vintique' ),
+		'',
+		get_bloginfo( 'name' ),
+		home_url( '/' ),
+	);
+
+	return (bool) wp_mail(
+		$user->user_email,
+		sprintf(
+			/* translators: 1: site name, 2: business name */
+			__( '[%1$s] We have your trade account application — %2$s', 'maison-vintique' ),
+			get_bloginfo( 'name' ),
+			$business ? $business : $user->display_name
+		),
+		implode( "\n", $lines ),
+		array( 'Content-Type: text/plain; charset=UTF-8' )
+	);
 }
 
 /**
@@ -133,16 +197,15 @@ function mve_set_trade_status( $user_id, $status, $message = '' ) {
 		return true; // no email for a no-op
 	}
 
+	/*
+	 * The enquiry that started all this shows the outcome too, so the Trade
+	 * Enquiries list reads as a complete history rather than going quiet the
+	 * moment the application was submitted. Done on the action below rather
+	 * than here, so it covers every outcome and works no matter where the
+	 * decision was taken — see mve_sync_enquiry_from_account().
+	 */
 	if ( 'approved' === $status ) {
 		mve_send_email( 'mve_trade_approved', $user_id );
-
-		// The enquiry that started all this shows the outcome too, so the Trade
-		// Enquiries list reads as a complete history rather than going quiet
-		// the moment the application was submitted.
-		$enquiry = (int) get_user_meta( $user_id, 'mve_enquiry_id', true );
-		if ( $enquiry ) {
-			update_post_meta( $enquiry, '_mve_status', 'account' );
-		}
 	} elseif ( 'hold' === $status ) {
 		mve_send_email( 'mve_trade_on_hold', $user_id, array( 'message' => $message ) );
 	} elseif ( 'info' === $status ) {

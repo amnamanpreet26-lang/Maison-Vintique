@@ -560,84 +560,141 @@ mvBlock(function () {
 });
 
 /* ==========================================================================
-   WINE ENQUIRY POPUP
+   THE POPUPS
    --------------------------------------------------------------------------
-   One dialog, shared by every Enquire button on the page — a shop grid of
-   thirty wines would otherwise carry thirty copies of the same form.
+   Two of them share this code and this markup:
 
-   Each button is a real link to the enquiry page, so with scripts off it still
-   goes somewhere useful. This intercepts the click and opens the popup with
-   the wine already named.
+     #mv-enquiry        "Enquire" on a wine — the card, the grid, the product page
+     #mv-trade-enquiry  "Apply for a Trade Account" — the short trade enquiry
+
+   One dialog each per page, shared by every button that opens it. A shop grid
+   of thirty wines would otherwise carry thirty copies of the same form.
+
+   Every button is a real link to a page that answers properly, so with scripts
+   off nothing is lost. This intercepts the click and opens the popup instead —
+   for the wine popup, with the wine already named.
+
+   Which popup a button opens is data-mv-popup; without one it is #mv-enquiry,
+   so the wine buttons did not have to change. Links pointing at the enquiry
+   page are upgraded too, so a menu item or an Elementor button opens the trade
+   popup without anybody having to edit it.
    ========================================================================== */
 mvBlock(function () {
-	var popup = document.getElementById('mv-enquiry');
-	if (!popup) return;
+	var popups = document.querySelectorAll('.mv-enq');
+	if (!popups.length) return;
 
-	var form    = popup.querySelector('.mv-enq__form');
-	var body    = popup.querySelector('[data-mv-enq-body]');
-	var done    = popup.querySelector('[data-mv-enq-done]');
-	var wineEl  = popup.querySelector('[data-mv-enq-wine]');
-	var product = popup.querySelector('[data-mv-enq-product]');
-	var errorEl = popup.querySelector('[data-mv-enq-error]');
-	var back    = popup.querySelector('input[name="redirect_to"]');
-	if (!form) return;
+	var open = null;   // the popup currently showing
+	var opener = null; // what opened it, so focus can go back
 
-	var opener = null;
+	/* Where the trade enquiry page lives, for upgrading links nobody tagged. */
+	var tradePopup = document.getElementById('mv-trade-enquiry');
+	var tradePage  = tradePopup ? (tradePopup.getAttribute('data-mv-enq-page') || '') : '';
 
-	function open(trigger) {
-		opener = trigger;
+	function parts(popup) {
+		return {
+			form:    popup.querySelector('.mv-enq__form'),
+			body:    popup.querySelector('[data-mv-enq-body]'),
+			done:    popup.querySelector('[data-mv-enq-done]'),
+			wine:    popup.querySelector('[data-mv-enq-wine]'),
+			product: popup.querySelector('[data-mv-enq-product]'),
+			error:   popup.querySelector('[data-mv-enq-error]'),
+			back:    popup.querySelector('input[name="redirect_to"]')
+		};
+	}
+
+	function show(popup, trigger) {
+		var p = parts(popup);
+		if (!p.form) return false;
+
+		opener = trigger || null;
+		open   = popup;
+
+		// The trade pricing popup's CTA leads here. Close it first, or the two
+		// overlays stack and the page has two backdrops.
+		var standing = document.getElementById('mv-trade-popup');
+		if (standing && standing.open && typeof standing.close === 'function') {
+			try { standing.close(); } catch (e) {}
+		}
 
 		// Reset — the same dialog may already have been used on this page.
-		if (body) body.hidden = false;
-		if (done) done.hidden = true;
-		if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+		if (p.body) p.body.hidden = false;
+		if (p.done) p.done.hidden = true;
+		if (p.error) { p.error.hidden = true; p.error.textContent = ''; }
 
-		var wine = trigger.getAttribute('data-wine') || '';
-		if (wineEl) {
-			wineEl.textContent = wine;
-			wineEl.hidden = !wine;
+		// The wine popup names the wine; the trade popup keeps its standing
+		// intro, so only fill this in when the button carried one.
+		var wine = trigger ? (trigger.getAttribute('data-wine') || '') : '';
+		if (p.wine && trigger && trigger.hasAttribute('data-product')) {
+			p.wine.textContent = wine;
+			p.wine.hidden = !wine;
 		}
-		if (product) product.value = trigger.getAttribute('data-product') || '';
-		if (back) back.value = window.location.href;
+		if (p.product && trigger) p.product.value = trigger.getAttribute('data-product') || '';
+		if (p.back && popup.id === 'mv-enquiry') p.back.value = window.location.href;
 
 		popup.hidden = false;
 		document.documentElement.classList.add('mv-enq-open');
 
-		var first = form.querySelector('input:not([type="hidden"]):not([tabindex="-1"]), textarea, select');
+		var first = p.form.querySelector('input:not([type="hidden"]):not([tabindex="-1"]), textarea, select');
 		if (first) { try { first.focus({ preventScroll: true }); } catch (e) { first.focus(); } }
+		return true;
 	}
 
 	function close() {
-		popup.hidden = true;
+		if (!open) return;
+		open.hidden = true;
+		open = null;
 		document.documentElement.classList.remove('mv-enq-open');
 		if (opener) { try { opener.focus(); } catch (e) {} }
 		opener = null;
 	}
 
+	/* Does this link go to the trade enquiry page? Compared without the query
+	   string or hash, so /trade-enquiry/?utm=... still counts. */
+	function goesToEnquiryPage(link) {
+		if (!tradePage || !link.href) return false;
+		var strip = function (url) { return url.split('#')[0].split('?')[0].replace(/\/+$/, ''); };
+		return strip(link.href) === strip(tradePage);
+	}
+
 	// Delegated, so buttons added later — an AJAX-loaded page of the shop, an
 	// Elementor widget rebuilt in the editor — work without rebinding.
 	document.addEventListener('click', function (e) {
-		var trigger = e.target.closest('[data-mv-enquire]');
-		if (trigger) {
-			e.preventDefault();
-			open(trigger);
-			return;
-		}
 		if (e.target.closest('[data-mv-enq-close]')) {
 			e.preventDefault();
 			close();
+			return;
+		}
+
+		var trigger = e.target.closest('[data-mv-enquire]');
+		if (trigger) {
+			var id = trigger.getAttribute('data-mv-popup') || 'mv-enquiry';
+			var target = document.getElementById(id);
+			// No popup on the page? Leave the link alone — it still goes
+			// somewhere useful.
+			if (target && show(target, trigger)) e.preventDefault();
+			return;
+		}
+
+		// Untagged links to the enquiry page open the trade popup too.
+		var link = e.target.closest('a[href]');
+		if (link && tradePopup && goesToEnquiryPage(link)) {
+			// Except on the enquiry page itself, where the full form is right
+			// there and a popup over it would be absurd.
+			if (goesToEnquiryPage({ href: window.location.href })) return;
+			if (link.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey) return;
+			if (show(tradePopup, link)) e.preventDefault();
 		}
 	});
 
 	document.addEventListener('keydown', function (e) {
-		if (e.key === 'Escape' && !popup.hidden) close();
+		if (e.key === 'Escape' && open) close();
 	});
 
 	// Keep the keyboard inside the dialog while it is open.
 	document.addEventListener('keydown', function (e) {
-		if (popup.hidden || e.key !== 'Tab') return;
+		if (!open || e.key !== 'Tab') return;
 
-		var items = popup.querySelectorAll('button, [href], input:not([type="hidden"]), select, textarea');
+		var items = open.querySelectorAll('button, [href], input:not([type="hidden"]), select, textarea');
 		items = Array.prototype.filter.call(items, function (el) {
 			return el.offsetParent !== null && el.tabIndex !== -1;
 		});
@@ -650,47 +707,63 @@ mvBlock(function () {
 		else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 	});
 
-	form.addEventListener('submit', function (e) {
-		// Let the browser's own validation speak first.
-		if (typeof form.checkValidity === 'function' && !form.checkValidity()) return;
+	Array.prototype.forEach.call(popups, function (popup) {
+		var p = parts(popup);
+		if (!p.form) return;
 
-		// Without fetch, fall through to a normal post — the handler answers
-		// both ways.
-		if (!window.fetch || !window.FormData) return;
+		/* WHERE TO POST.
 
-		e.preventDefault();
+		   Not p.form.action. Both forms carry <input name="action"> — WordPress
+		   needs it to route admin-post.php — and a form's named controls
+		   override its own properties, so form.action hands back that input
+		   element rather than the URL. fetch() then has nothing to send to and
+		   the popup silently reports "that did not send".
 
-		var button = form.querySelector('.mv-enq__submit');
-		var label  = button ? button.textContent : '';
-		if (button) {
-			button.disabled = true;
-			button.textContent = button.getAttribute('data-sending') || 'Sending…';
-		}
-		if (errorEl) errorEl.hidden = true;
+		   getAttribute is not overridable, so it gives the real thing. */
+		var endpoint = p.form.getAttribute('action') || window.location.href;
 
-		var data = new FormData(form);
-		data.append('ajax', '1');
+		p.form.addEventListener('submit', function (e) {
+			// Let the browser's own validation speak first.
+			if (typeof p.form.checkValidity === 'function' && !p.form.checkValidity()) return;
 
-		function fail(message) {
-			if (button) { button.disabled = false; button.textContent = label; }
-			if (errorEl) {
-				errorEl.textContent = message || 'Sorry, that did not send. Please try again.';
-				errorEl.hidden = false;
+			// Without fetch, fall through to a normal post — both handlers
+			// answer either way.
+			if (!window.fetch || !window.FormData) return;
+
+			e.preventDefault();
+
+			var button = p.form.querySelector('.mv-enq__submit');
+			var label  = button ? button.textContent : '';
+			if (button) {
+				button.disabled = true;
+				button.textContent = button.getAttribute('data-sending') || 'Sending…';
 			}
-		}
+			if (p.error) p.error.hidden = true;
 
-		fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin' })
-			.then(function (r) { return r.json().catch(function () { return null; }); })
-			.then(function (json) {
-				if (!json || !json.success) {
-					fail(json && json.data && json.data.message);
-					return;
-				}
-				form.reset();
-				if (body) body.hidden = true;
-				if (done) { done.hidden = false; try { done.focus(); } catch (e) {} }
+			var data = new FormData(p.form);
+			data.append('ajax', '1');
+
+			function fail(message) {
 				if (button) { button.disabled = false; button.textContent = label; }
-			})
-			.catch(function () { fail(); });
+				if (p.error) {
+					p.error.textContent = message || 'Sorry, that did not send. Please try again.';
+					p.error.hidden = false;
+				}
+			}
+
+			fetch(endpoint, { method: 'POST', body: data, credentials: 'same-origin' })
+				.then(function (r) { return r.json().catch(function () { return null; }); })
+				.then(function (json) {
+					if (!json || !json.success) {
+						fail(json && json.data && json.data.message);
+						return;
+					}
+					p.form.reset();
+					if (p.body) p.body.hidden = true;
+					if (p.done) { p.done.hidden = false; try { p.done.focus(); } catch (e) {} }
+					if (button) { button.disabled = false; button.textContent = label; }
+				})
+				.catch(function () { fail(); });
+		});
 	});
 });

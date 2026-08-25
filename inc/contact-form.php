@@ -20,9 +20,17 @@
  *   3. The enquirer gets an acknowledgement; the shop gets a notification with
  *      a button straight to the review screen.
  *
+ * TWO WAYS IN, ONE FORM
+ *   Every "Apply for a Trade Account" button now opens this as a POPUP rather
+ *   than sending somebody off to the Contact page and losing them. The popup is
+ *   the same questions, the same handler and the same validation — see
+ *   mve_render_trade_enquiry_popup() below. The Contact page is still there and
+ *   still works, which is what happens with scripts off: the buttons are real
+ *   links, and JavaScript upgrades them into the popup.
+ *
  * The fields are defined once, in mve_enquiry_fields(). Adding a question is a
- * single edit there and it appears on the form, in the validation, in the
- * emails and on the review screen.
+ * single edit there and it appears on the form, in the popup, in the
+ * validation, in the emails and on the review screen.
  *
  * Hook `mve_contact_submitted` to push an enquiry into a CRM as well.
  *
@@ -172,12 +180,57 @@ function mve_handle_contact_form() {
 		$redirect = home_url( '/' );
 	}
 
+	/*
+	 * The same handler serves the page and the popup. The popup posts with
+	 * ajax=1 and wants JSON back; the page wants a redirect with the answers
+	 * kept. Everything between here and the end is shared, so the two can
+	 * never validate differently.
+	 */
+	$ajax = ! empty( $_POST['ajax'] );
+
+	$stop = function ( $errors, $values = array() ) use ( $ajax, $redirect ) {
+		if ( $ajax ) {
+			/*
+			 * The popup has one line to say what went wrong, so name the field.
+			 * "This is required." on its own is no help when nine boxes could
+			 * have been the one.
+			 */
+			$errors = (array) $errors;
+			$key    = key( $errors );
+			$first  = (string) reset( $errors );
+
+			if ( '_form' !== $key ) {
+				$fields = mve_enquiry_fields();
+				if ( isset( $fields[ $key ]['label'] ) ) {
+					$first = sprintf(
+						/* translators: 1: field name, 2: what is wrong with it */
+						__( '%1$s: %2$s', 'maison-vintique-elementor' ),
+						$fields[ $key ]['label'],
+						$first
+					);
+				}
+			}
+
+			wp_send_json_error(
+				array(
+					'message' => $first,
+					'fields'  => $errors,
+				),
+				400
+			);
+		}
+		mve_enquiry_bounce( $redirect, $errors, $values );
+	};
+
 	if ( ! isset( $_POST['mve_contact_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['mve_contact_nonce'] ) ), 'mve_contact' ) ) {
-		mve_enquiry_bounce( $redirect, array( '_form' => __( 'Your session expired. Please send it again.', 'maison-vintique-elementor' ) ), array() );
+		$stop( array( '_form' => __( 'Your session expired. Please send it again.', 'maison-vintique-elementor' ) ) );
 	}
 
 	// Honeypot — bots fill everything in, so silently pretend it worked.
 	if ( ! empty( $_POST['mvc_website_url'] ) ) {
+		if ( $ajax ) {
+			wp_send_json_success( array( 'ok' => true ) );
+		}
 		wp_safe_redirect( add_query_arg( 'contact', 'sent', $redirect ) . '#contact-form' );
 		exit;
 	}
@@ -185,7 +238,7 @@ function mve_handle_contact_form() {
 	// Light per-IP throttle.
 	$throttle = 'mve_contact_' . md5( function_exists( 'mve_get_client_ip' ) ? mve_get_client_ip() : '' );
 	if ( get_transient( $throttle ) ) {
-		mve_enquiry_bounce( $redirect, array( '_form' => __( 'That looked like a duplicate. Please wait a moment and try again.', 'maison-vintique-elementor' ) ), array() );
+		$stop( array( '_form' => __( 'That looked like a duplicate. Please wait a moment and try again.', 'maison-vintique-elementor' ) ) );
 	}
 
 	$fields = mve_enquiry_fields();
@@ -207,7 +260,7 @@ function mve_handle_contact_form() {
 	}
 
 	if ( $errors ) {
-		mve_enquiry_bounce( $redirect, $errors, $values );
+		$stop( $errors, $values );
 	}
 
 	set_transient( $throttle, 1, 30 );
@@ -236,6 +289,10 @@ function mve_handle_contact_form() {
 	 * @param int   $enquiry_id The stored enquiry.
 	 */
 	do_action( 'mve_contact_submitted', $values, $sent, $enquiry_id );
+
+	if ( $ajax ) {
+		wp_send_json_success( array( 'ok' => true ) );
+	}
 
 	wp_safe_redirect( add_query_arg( 'contact', 'sent', $redirect ) . '#contact-form' );
 	exit;
@@ -316,3 +373,153 @@ function mve_enquiry_bounce( $redirect, $errors, $values ) {
 	);
 	exit;
 }
+
+/* =========================================================================
+ * THE POPUP
+ * ---------------------------------------------------------------------
+ * "Apply for a Trade Account" used to send people to the Contact page. That is
+ * a page load away from whatever they were reading, and most of them never came
+ * back. Now the same form opens over the page.
+ *
+ * It reuses the wine-enquiry popup's shell (.mv-enq), so there is one dialog
+ * design on the site rather than two that drift apart, and one CSS block.
+ *
+ * IT DEGRADES. Every button is a real link to the Contact page. JavaScript
+ * intercepts the click. With scripts off the Contact page answers exactly as it
+ * did before.
+ * ====================================================================== */
+
+/**
+ * Attributes that turn any link into a trade-enquiry popup opener.
+ *
+ * Echo this inside an <a> that already points at the enquiry page:
+ *   <a href="..." <?php mve_trade_enquiry_attrs(); ?>>Apply for a Trade Account</a>
+ */
+function mve_trade_enquiry_attrs() {
+	echo ' data-mv-enquire data-mv-popup="mv-trade-enquiry"';
+}
+
+/**
+ * One field inside the popup.
+ *
+ * Deliberately the .mv-enq__* classes rather than the page form's .mvp-*: this
+ * is the popup shell, and it is styled once for both popups.
+ *
+ * @param string $name  Field key.
+ * @param array  $field Definition from mve_enquiry_fields().
+ */
+function mve_trade_enquiry_popup_field( $name, $field ) {
+	$id    = 'mv-tenq-' . str_replace( '_', '-', $name );
+	$width = ! empty( $field['width'] ) ? $field['width'] : 'full';
+	$req   = ! empty( $field['required'] );
+	$place = isset( $field['placeholder'] ) ? $field['placeholder'] : '';
+	?>
+	<div class="mv-enq__field mv-enq__field--<?php echo esc_attr( $width ); ?>">
+		<label for="<?php echo esc_attr( $id ); ?>">
+			<?php echo esc_html( $field['label'] ); ?>
+			<?php echo $req ? '<span class="mv-enq__req" aria-hidden="true">*</span>' : ''; ?>
+		</label>
+
+		<?php if ( 'textarea' === $field['type'] ) : ?>
+			<textarea id="<?php echo esc_attr( $id ); ?>" name="mvc_<?php echo esc_attr( $name ); ?>" rows="3"
+				placeholder="<?php echo esc_attr( $place ); ?>"
+				<?php echo $req ? 'required' : ''; ?>></textarea>
+
+		<?php elseif ( 'select' === $field['type'] ) : ?>
+			<select id="<?php echo esc_attr( $id ); ?>" name="mvc_<?php echo esc_attr( $name ); ?>"
+				<?php echo $req ? 'required' : ''; ?>>
+				<?php foreach ( $field['options'] as $key => $option ) : ?>
+					<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $option ); ?></option>
+				<?php endforeach; ?>
+			</select>
+
+		<?php else : ?>
+			<input type="<?php echo esc_attr( $field['type'] ); ?>" id="<?php echo esc_attr( $id ); ?>"
+				name="mvc_<?php echo esc_attr( $name ); ?>"
+				placeholder="<?php echo esc_attr( $place ); ?>"
+				<?php echo $req ? 'required' : ''; ?>>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
+/**
+ * The trade enquiry popup, printed once per page.
+ *
+ * Carries the enquiry page URL on the wrapper so the script can also upgrade
+ * links that this theme did not write — a menu item, an Elementor button —
+ * without anybody having to add an attribute to them.
+ */
+function mve_render_trade_enquiry_popup() {
+	if ( is_admin() ) {
+		return;
+	}
+
+	$page = function_exists( 'mve_enquiry_page_url' ) ? mve_enquiry_page_url() : '';
+	?>
+	<div class="mv-enq" id="mv-trade-enquiry" hidden
+		data-mv-enq-page="<?php echo esc_attr( $page ); ?>">
+		<div class="mv-enq__backdrop" data-mv-enq-close></div>
+
+		<div class="mv-enq__dialog" role="dialog" aria-modal="true" aria-labelledby="mv-tenq-title">
+			<button type="button" class="mv-enq__close" data-mv-enq-close
+				aria-label="<?php esc_attr_e( 'Close', 'maison-vintique-elementor' ); ?>">&times;</button>
+
+			<div class="mv-enq__body" data-mv-enq-body>
+				<p class="mv-enq__eyebrow"><?php esc_html_e( 'Trade account', 'maison-vintique-elementor' ); ?></p>
+				<h2 class="mv-enq__title" id="mv-tenq-title"><?php esc_html_e( 'Request a trade account application', 'maison-vintique-elementor' ); ?></h2>
+				<p class="mv-enq__wine">
+					<?php esc_html_e( 'Tell us a little about your business. We read every enquiry ourselves, and if we are a good fit we will send you the full application.', 'maison-vintique-elementor' ); ?>
+				</p>
+
+				<form class="mv-enq__form" method="post"
+					action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+
+					<input type="hidden" name="action" value="mve_contact">
+					<input type="hidden" name="redirect_to" value="<?php echo esc_url( $page ? $page : home_url( '/' ) ); ?>">
+					<?php wp_nonce_field( 'mve_contact', 'mve_contact_nonce' ); ?>
+
+					<div class="mv-enq__grid">
+						<?php foreach ( mve_enquiry_fields() as $name => $field ) : ?>
+							<?php mve_trade_enquiry_popup_field( $name, $field ); ?>
+						<?php endforeach; ?>
+					</div>
+
+					<?php // Honeypot — the same field name the page form uses. ?>
+					<div class="mv-enq__hp" aria-hidden="true">
+						<label for="mv-tenq-url"><?php esc_html_e( 'Leave this field empty', 'maison-vintique-elementor' ); ?></label>
+						<input type="text" id="mv-tenq-url" name="mvc_website_url" tabindex="-1" autocomplete="off">
+					</div>
+
+					<p class="mv-enq__error" data-mv-enq-error hidden></p>
+
+					<button type="submit" class="mv-enq__submit"
+						data-sending="<?php esc_attr_e( 'Sending…', 'maison-vintique-elementor' ); ?>">
+						<?php esc_html_e( 'Request an application', 'maison-vintique-elementor' ); ?>
+					</button>
+
+					<p class="mv-enq__foot">
+						<?php esc_html_e( 'Trade only. Submitting this does not open an account — it asks us for the application.', 'maison-vintique-elementor' ); ?>
+					</p>
+				</form>
+			</div>
+
+			<?php // Swapped in once it has been sent. ?>
+			<div class="mv-enq__done" data-mv-enq-done hidden tabindex="-1">
+				<div class="mv-enq__tick" aria-hidden="true">
+					<svg viewBox="0 0 48 48" width="44" height="44" focusable="false">
+						<circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".35"></circle>
+						<path d="M15 24.5l6.5 6.5L33 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+					</svg>
+				</div>
+				<h2 class="mv-enq__title"><?php esc_html_e( 'Thank you — we have your enquiry.', 'maison-vintique-elementor' ); ?></h2>
+				<p class="mv-enq__text">
+					<?php esc_html_e( 'A confirmation is on its way to you now. We review enquiries personally, and if we are a good fit we will email you a private link to the full trade application.', 'maison-vintique-elementor' ); ?>
+				</p>
+				<button type="button" class="mv-enq__submit" data-mv-enq-close><?php esc_html_e( 'Close', 'maison-vintique-elementor' ); ?></button>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+add_action( 'wp_footer', 'mve_render_trade_enquiry_popup', 21 );

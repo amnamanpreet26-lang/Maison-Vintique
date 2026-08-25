@@ -1082,6 +1082,89 @@ function mve_application_form() {
 			</button>
 		</div>
 	</form>
+
+	<?php mve_application_size_script(); ?>
+	<?php
+}
+
+/**
+ * Weigh the attachments before the browser sends them.
+ *
+ * The server catches an oversized submission (see
+ * mve_catch_oversized_application), but catching it there means the applicant
+ * has already sat through the upload and lost the page. This weighs the files
+ * as they are chosen and says so on the spot.
+ *
+ * Inline and dependency-free on purpose: it belongs to this one page, and it
+ * has to work whether or not the theme's main script loaded.
+ */
+function mve_application_size_script() {
+	$limit = mve_application_post_limit();
+	if ( ! $limit ) {
+		return; // no limit to warn about
+	}
+
+	// Leave room for the answers themselves and multipart overhead — the limit
+	// covers the whole request, not just the files.
+	$budget = max( 0, $limit - 512 * 1024 );
+	?>
+	<script>
+	(function () {
+		var form = document.querySelector('.mvta-form');
+		if (!form || !window.FileList) return;
+
+		var budget = <?php echo (int) $budget; ?>;
+		var note   = document.createElement('p');
+		note.className = 'mvta-alert is-error';
+		note.hidden = true;
+
+		/* ABOVE the submit block, not inside it. .mvta-submit is a flex row
+		   holding the note and the button side by side, so anything dropped in
+		   there becomes a third column and is squashed. Put here it reads like
+		   every other alert on the page and needs no styling of its own. */
+		var box = form.querySelector('.mvta-submit');
+		if (box && box.parentNode) { box.parentNode.insertBefore(note, box); }
+		else { form.appendChild(note); }
+
+		function pretty(bytes) {
+			return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+		}
+
+		function total() {
+			var sum = 0;
+			var inputs = form.querySelectorAll('input[type="file"]');
+			Array.prototype.forEach.call(inputs, function (input) {
+				Array.prototype.forEach.call(input.files || [], function (file) {
+					sum += file.size || 0;
+				});
+			});
+			return sum;
+		}
+
+		function check() {
+			var sum = total();
+			var over = sum > budget;
+			note.hidden = !over;
+			if (over) {
+				note.textContent = 'Your attachments come to ' + pretty(sum) +
+					', and this server accepts at most ' + pretty(budget) +
+					' in one submission. Please attach smaller copies — or send the documents to us by email afterwards — before submitting.';
+			}
+			return !over;
+		}
+
+		form.addEventListener('change', function (e) {
+			if (e.target && e.target.type === 'file') check();
+		});
+
+		form.addEventListener('submit', function (e) {
+			if (!check()) {
+				e.preventDefault();
+				try { note.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) { note.scrollIntoView(); }
+			}
+		});
+	}());
+	</script>
 	<?php
 }
 
@@ -1213,6 +1296,87 @@ function mve_application_store_file( $key ) {
 
 	return (int) $id;
 }
+
+/**
+ * The size limit a submission has to fit inside, in bytes.
+ *
+ * The binding one is post_max_size — it covers the whole request, every answer
+ * and every attachment together — so upload_max_filesize alone is not the
+ * number to quote at anybody.
+ *
+ * @return int Bytes, or 0 when PHP has no limit.
+ */
+function mve_application_post_limit() {
+	$raw = function_exists( 'ini_get' ) ? ini_get( 'post_max_size' ) : '';
+	if ( ! $raw ) {
+		return 0;
+	}
+	$bytes = function_exists( 'wp_convert_hr_to_bytes' ) ? wp_convert_hr_to_bytes( $raw ) : (int) $raw;
+	return (int) $bytes;
+}
+
+/**
+ * THE SILENT FAILURE.
+ *
+ * When a POST is bigger than post_max_size, PHP throws the entire request body
+ * away before any code runs — $_POST and $_FILES both come back empty. On
+ * admin-post.php that means there is no `action`, so WordPress fires no hook at
+ * all: the applicant is dropped on a blank screen, no confirmation, no emails,
+ * nothing in the log. It looks exactly like "I pressed submit and nothing
+ * happened", which is what was reported.
+ *
+ * A nine-section application with company documents attached goes past a 8M
+ * post_max_size easily, and most shared hosting ships 8M.
+ *
+ * So catch it here, before the missing action can be missed, and send them back
+ * to their own application with an explanation and their invitation intact.
+ * Scoped to a POST that arrived with a body and lost it — nothing else can be
+ * in that state — and only when it came from our own form.
+ */
+function mve_catch_oversized_application() {
+	if ( empty( $_SERVER['REQUEST_METHOD'] ) || 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+		return;
+	}
+	if ( ! empty( $_POST ) || ! empty( $_FILES ) ) {
+		return; // the body arrived; nothing to rescue
+	}
+
+	$length = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+	if ( $length < 1 ) {
+		return; // a genuinely empty POST, not a discarded one
+	}
+
+	// Only our own form. Somebody else's oversized upload is their business.
+	$referer = wp_get_referer();
+	$page    = mve_trade_application_url();
+	if ( ! $referer || ! $page ) {
+		return;
+	}
+	$strip = static function ( $url ) {
+		return untrailingslashit( strtok( (string) $url, '?#' ) );
+	};
+	if ( $strip( $referer ) !== $strip( $page ) ) {
+		return;
+	}
+
+	$limit = mve_application_post_limit();
+
+	mve_application_bounce(
+		$referer,
+		array(
+			'_form' => $limit
+				? sprintf(
+					/* translators: 1: size of what they sent, 2: the server's limit */
+					__( 'Your application was too large for the server to accept — it came to %1$s, and the limit here is %2$s. Nothing was saved. Please attach smaller copies of your documents, or send them to us by email afterwards, and submit again.', 'maison-vintique' ),
+					size_format( $length ),
+					size_format( $limit )
+				)
+				: __( 'Your application was too large for the server to accept. Nothing was saved. Please attach smaller copies of your documents and submit again.', 'maison-vintique' ),
+		),
+		array()
+	);
+}
+add_action( 'admin_init', 'mve_catch_oversized_application', 1 );
 
 /**
  * Handle the application.
@@ -1608,11 +1772,17 @@ function mve_application_display_value( $field, $value ) {
 }
 
 /**
- * The application, on the user's profile.
+ * The application, as submitted.
  *
- * @param WP_User $user User.
+ * Rendered in two places from this one function — the user's own profile, and
+ * the Trade Enquiries screen, which is where the review actually happens. One
+ * renderer, so the two can never disagree about what was submitted.
+ *
+ * @param WP_User $user    User.
+ * @param bool    $heading Print the "Trade account application" heading. The
+ *                         enquiry screen supplies its own, from the metabox.
  */
-function mve_user_application_panel( $user ) {
+function mve_user_application_panel( $user, $heading = true ) {
 	if ( ! current_user_can( 'edit_users' ) ) {
 		return;
 	}
@@ -1625,8 +1795,10 @@ function mve_user_application_panel( $user ) {
 	$documents = (array) get_user_meta( $user->ID, 'mve_app_documents', true );
 	$fields    = mve_application_fields();
 	?>
-	<h2><?php esc_html_e( 'Trade account application', 'maison-vintique' ); ?></h2>
-	<p class="description" style="margin:-6px 0 12px">
+	<?php if ( $heading ) : ?>
+		<h2><?php esc_html_e( 'Trade account application', 'maison-vintique' ); ?></h2>
+	<?php endif; ?>
+	<p class="description" style="margin:<?php echo $heading ? '-6px 0 12px' : '0 0 12px'; ?>">
 		<?php
 		printf(
 			/* translators: %s: date and time */

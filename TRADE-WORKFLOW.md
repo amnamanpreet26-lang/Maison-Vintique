@@ -13,7 +13,7 @@ twice.
 ```
 Apply for a Trade Account   (a button, anywhere on the site)
       ↓
-Short trade enquiry         (the Contact page)
+Short trade enquiry         (a popup — the Contact page without JavaScript)
       ↓
 YOU REVIEW IT               Trade Enquiries → the enquiry
       ↓                     approve to apply · more info · decline
@@ -21,10 +21,15 @@ Private invitation          (a unique link, emailed, expires)
       ↓
 Full trade application      (nine sections — invitation only)
       ↓
-YOU REVIEW IT AGAIN         Users → the applicant
+YOU REVIEW IT AGAIN         Trade Enquiries → the same enquiry
       ↓                     approve · more info · on hold · decline
 Portal opens                they can now sign in and see pricing
 ```
+
+**One screen for all of it.** Trade Enquiries carries the enquiry, the
+invitation, the full application, both reviews and a dated history of
+everything that has happened. You never have to go looking somewhere else to
+find out where a business has got to.
 
 Two reviews, and they mean different things:
 
@@ -35,8 +40,17 @@ Two reviews, and they mean different things:
 
 ## Step 1 — Somebody clicks "Apply for a Trade Account"
 
-Every one of those buttons — on the login page, in the popup, anywhere you put
-one — goes to the **short enquiry**, which is the Contact page.
+Every one of those buttons — on the login page, in the trade pricing popup, a
+menu item, an Elementor button, anywhere you put one — **opens the short
+enquiry as a popup, over whatever they were reading**. They do not leave the
+page.
+
+You do not have to do anything to a button to get this. Any link pointing at
+the enquiry page is upgraded automatically.
+
+With JavaScript switched off, every one of those buttons is still a real link
+to the enquiry page, and that page still works exactly as it did. Nothing is
+lost, it is just a page load instead of a popup.
 
 None of them goes to the full application, and none of them can. The
 destination is worked out in one place in the code, and the application is
@@ -126,23 +140,56 @@ approval.*
 - Every answer is stored against that account; uploaded documents go into the
   media library as **private** files.
 - The invitation is spent and the enquiry moves to "Full application submitted".
-- They get a confirmation email; you get a notification with a button straight
-  to the review screen.
+- **They see a thank-you panel** naming the address the confirmation went to.
+- **They get a confirmation email. You get a notification** with a button
+  straight to the review screen. If the branded email cannot go out for any
+  reason, a plain-text copy goes instead — both sides are told either way.
+
+**If the submit seems to do nothing**
+
+There is one way a submit can vanish that is not the theme's doing: if the
+application plus its attachments is larger than the server's `post_max_size`,
+PHP throws the whole request away before any code runs. The applicant lands on
+a blank screen — no message, no emails, nothing recorded.
+
+That is now caught in two places:
+
+- **Before it is sent.** Attachments are weighed as they are chosen, and if
+  they come to more than the server will take, the form says so and refuses to
+  submit until they are smaller.
+- **After it arrives.** If a discarded submission gets through anyway, they are
+  sent back to their own application — invitation intact — with a message
+  naming the size they sent and the limit here.
+
+Raising the limit is a hosting setting (`post_max_size`, and
+`upload_max_filesize`), not a theme one. 8MB is a common default and is tight
+for an application with several documents attached; 32MB is comfortable.
 
 ## Step 6 — The due-diligence review
 
-**Users → click the applicant.** Two panels:
+**Trade Enquiries → click the business.** The same screen you did the first
+review on — the whole process is in one place, and it updates as you go.
 
-- **Trade account** — the decision, and a note box.
-- **Trade account application** — every answer, section by section, with the
+- **The enquiry** — what they first told you.
+- **The full application** — every answer, section by section, with the
   documents linked.
+- **Where this has got to** — the whole history, with dates.
+- **Due-diligence review** (the box on the right) — the decision, and a note
+  box. The box's title changes with the stage, so it never claims to be the
+  initial review when it is offering the account decision.
 
 | Choice | What it does |
 |---|---|
-| **Approved — portal active** | Emails "your trade account is open" **and lets them sign in** |
-| **Further information required** | Emails them your note |
-| **On hold** | Emails "your application is on hold" |
-| **Declined** | Emails a decline with your note |
+| **Approve the trade account** | Emails "your trade account is open" **and lets them sign in** |
+| **Request further information** | Emails them your note. The account stays closed |
+| **Put on hold** | Emails "your application is on hold" |
+| **Decline the application** | Emails a decline with your note |
+
+Choose one, then **Update**. The email goes out as you save.
+
+The applicant's own profile under **Users** still shows the application and
+still takes the same decision — the two screens are the same data and stay in
+step whichever one you use. You should not need to go there.
 
 ## Step 7 — The portal opens
 
@@ -164,8 +211,8 @@ in exactly as before. Nobody gets locked out of the site by it.
 
 | Screen | For |
 |---|---|
-| **Trade Enquiries** (sidebar) | Stage one — the pipeline, and the first review |
-| **Users** | Stage two — the applications, and the account decision |
+| **Trade Enquiries** (sidebar) | **The whole process, start to finish** — the pipeline, both reviews, the full application and the history |
+| **Users** | The account itself. The same application and the same decision also appear here; you should not need them |
 | **WooCommerce → Settings → Emails** | Who gets notified, every email's wording, invitation expiry |
 | **WooCommerce → Emails** | Look at any email; send yourself a test; check mail is working at all |
 | **Appearance → Customize → Site Identity** | The crest used in the header, the footer and every email |

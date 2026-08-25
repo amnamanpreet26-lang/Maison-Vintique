@@ -174,7 +174,9 @@ $mve_apply_url = function_exists( 'mve_apply_url' )
 
 			<?php else : ?>
 
-				<a class="btn btn-o btn-block" href="<?php echo esc_url( $mve_apply_url ); ?>">
+				<?php // Opens the trade enquiry popup; still a real link with scripts off. ?>
+				<a class="btn btn-o btn-block" href="<?php echo esc_url( $mve_apply_url ); ?>"
+					<?php if ( function_exists( 'mve_trade_enquiry_attrs' ) ) { mve_trade_enquiry_attrs(); } ?>>
 					<?php esc_html_e( 'Apply for an account', 'maison-vintique-elementor' ); ?>
 				</a>
 
