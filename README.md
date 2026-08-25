@@ -89,7 +89,7 @@ Appearance → Menus → create **Primary** (Home, Shop, Producers, Journal, Our
 | Wine detail fields | ACF `Wine Details` (`acf-json/group_wine_details.json`) |
 | Producers | `producer` CPT + ACF `Producer Details` |
 | Price on login / trade gating | `inc/woocommerce.php` (`mve_is_gated` — logged in or not) |
-| Minimum order (by the case) | ACF `min_order_qty` → `mve_min_order_qty()`. The minimum is a **floor**, not a multiple: a case of 6 opens the box on 6 and counts up in ones. To sell in whole cases only, `add_filter( 'mve_quantity_step', fn( $step, $moq ) => $moq, 10, 2 );` |
+| Minimum order (by the case) | ACF `min_order_qty` → `mve_min_order_qty()`. The minimum is a **floor**, not a multiple: a case of 6 opens the box on 6 and counts up in ones. See **Quantity box** below. |
 | VCIS stock matching | ACF `sku_ehd` (the code matched against EHD's stock CSV) |
 | Brand design tokens | `style.css` + the Customizer CSS (see **Where the CSS lives**) |
 | Layouts | `/elementor-templates` + Elementor Theme Builder |
@@ -569,6 +569,26 @@ switch, subject line and heading. The body copy lives in
 copy to any address you type in. Try one Gmail address and one Outlook address —
 they filter very differently.
 
+### Footer newsletter — where do signups go?
+
+**WooCommerce → Settings → Emails → "Newsletter signups go to"**. Leave it empty
+and it uses the main notifications address above it.
+
+Every signup is also **stored**, and can be seen and downloaded at
+**WooCommerce → Newsletter**: the whole list with dates, a **Download CSV**
+button for importing into Mailchimp / Brevo / Klaviyo, and a Remove link.
+Previously the list existed in the database but there was no screen for it, so
+missing the notification email meant the signup was effectively invisible.
+
+This is a list, not a mailing tool — nothing in the theme sends a campaign. To
+push signups into an ESP automatically as they arrive:
+
+```php
+add_action( 'mve_newsletter_subscribed', function ( $email ) {
+    // call your provider's API with $email
+} );
+```
+
 ### Nothing is arriving
 
 The same screen answers this. The panel at the top reports what the site is
@@ -616,6 +636,34 @@ that status, which a payment gateway normally does immediately. A proforma flow
 has no gateway, so both sides would otherwise be told nothing. It is decided
 after checkout has finished, and only for orders nothing else emailed about, so
 a normal paid order never gets a duplicate.
+
+## Quantity box
+
+`min_order_qty` sets the **minimum**, and the minimum is a floor — not a
+multiple. A case of 6 opens the box on 6 and counts 6, 7, 8. To sell in whole
+cases only:
+
+```php
+add_filter( 'mve_quantity_step', function ( $step, $moq ) { return $moq; }, 10, 2 );
+```
+
+It is enforced in four places on purpose, because plenty of things can set a
+quantity step and the last one to run wins:
+
+1. `woocommerce_quantity_input_args` at priority **9999**, so it runs after any
+   plugin that hooks the same filter.
+2. `woocommerce_quantity_input_step` and `woocommerce_quantity_input_min`, for
+   anything that hooks those narrower filters instead.
+3. The intended min and step travel to the browser as `data-min` / `data-step`
+   on the `.qty` wrapper, and the stepper writes them back onto the input before
+   doing anything else — so the box counts correctly even from a cached page,
+   and the browser's own arrow keys agree with the − and + buttons.
+
+**"It still counts in sixes."** Add `?mv_qty=debug` to any product page while
+signed in as an administrator. A panel reports the ACF value, what the theme
+intends, what WooCommerce actually built, and — expandable — everything on the
+site hooked onto those three filters. If something else is setting the step, it
+names itself there.
 
 ## Age verification
 

@@ -42,6 +42,23 @@ function mve_notification_email() {
 }
 
 /**
+ * Where footer newsletter signups are emailed.
+ *
+ * Its own setting, because signups often go somewhere different from orders —
+ * marketing rather than the office. Empty means "wherever everything else
+ * goes".
+ *
+ * @return string
+ */
+function mve_newsletter_email() {
+	$value = trim( (string) get_option( 'mve_newsletter_email', '' ) );
+	if ( '' === $value ) {
+		$value = mve_notification_email();
+	}
+	return apply_filters( 'mve_newsletter_email', $value );
+}
+
+/**
  * Put that setting at the top of WooCommerce → Settings → Emails.
  *
  * First thing on the screen, because "where do I put my email address" is the
@@ -67,6 +84,15 @@ function mve_email_settings( $settings ) {
 			'css'      => 'min-width:340px;',
 			'desc_tip' => false,
 			'placeholder' => get_option( 'admin_email' ),
+		),
+		array(
+			'title'       => __( 'Newsletter signups go to', 'maison-vintique' ),
+			'desc'        => __( 'Who is emailed when somebody subscribes in the footer. Leave empty to use the address above. Every signup is also kept under WooCommerce → Newsletter, where the whole list can be downloaded.', 'maison-vintique' ),
+			'id'          => 'mve_newsletter_email',
+			'type'        => 'text',
+			'default'     => '',
+			'css'         => 'min-width:340px;',
+			'placeholder' => __( 'the same as above', 'maison-vintique' ),
 		),
 		array(
 			'title'       => __( 'Address shown in the email footer', 'maison-vintique' ),

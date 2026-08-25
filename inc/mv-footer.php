@@ -134,14 +134,31 @@ function mve_handle_newsletter_subscribe() {
 	 */
 	do_action( 'mve_newsletter_subscribed', $email );
 
-	// Optional: let the site admin know.
-	$admin_email = get_option( 'admin_email' );
-	if ( $admin_email ) {
-		wp_mail(
-			$admin_email,
-			sprintf( '[%s] New newsletter subscriber', get_bloginfo( 'name' ) ),
-			sprintf( 'New subscriber: %s', $email )
-		);
+	/*
+	 * Tell whoever looks after the mailing list.
+	 *
+	 * The address is a setting now — WooCommerce → Settings → Emails, "Newsletter
+	 * signups go to" — because signups usually belong with marketing rather than
+	 * with the office that gets the orders. It used to go to the WordPress admin
+	 * email with nothing to change it.
+	 *
+	 * The branded version is MVE_Email_Newsletter_Signup. If that could not send
+	 * — WooCommerce inactive, the email switched off — a plain-text copy goes
+	 * anyway, because a signup nobody is told about is a signup lost.
+	 */
+	$notified = function_exists( 'mve_send_email' )
+		&& mve_send_email( 'mve_newsletter_signup', 0, array( 'subscriber' => $email ) );
+
+	if ( ! $notified ) {
+		$to = function_exists( 'mve_newsletter_email' ) ? mve_newsletter_email() : get_option( 'admin_email' );
+		if ( $to ) {
+			wp_mail(
+				$to,
+				sprintf( '[%s] New newsletter subscriber', get_bloginfo( 'name' ) ),
+				sprintf( "New subscriber: %s\n\nThe whole list: %s", $email, admin_url( 'admin.php?page=mve-newsletter' ) ),
+				array( 'Content-Type: text/plain; charset=UTF-8' )
+			);
+		}
 	}
 
 	wp_send_json_success( array( 'email' => $email ) );

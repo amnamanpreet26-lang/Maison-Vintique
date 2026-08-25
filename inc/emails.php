@@ -54,6 +54,7 @@ function mve_register_emails( $emails ) {
 		'MVE_Email_Enquiry_More_Info',
 		'MVE_Email_Enquiry_Declined',
 		'MVE_Email_Trade_On_Hold',
+		'MVE_Email_Newsletter_Signup',
 	) as $class ) {
 		if ( class_exists( $class ) ) {
 			$emails[ $class ] = new $class();

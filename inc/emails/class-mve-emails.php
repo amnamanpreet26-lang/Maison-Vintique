@@ -928,3 +928,82 @@ class MVE_Email_Trade_On_Hold extends MVE_Email_Trade_Base {
 		return $message ? nl2br( esc_html( $message ) ) : '';
 	}
 }
+
+/**
+ * Somebody subscribed in the footer.
+ *
+ * Goes to whoever looks after the mailing list — its own address, set at
+ * WooCommerce → Settings → Emails, because signups usually belong with
+ * marketing rather than with the office that gets the orders.
+ */
+class MVE_Email_Newsletter_Signup extends MVE_Email_Base {
+
+	protected $to_customer = false;
+
+	public function __construct() {
+		$this->id             = 'mve_newsletter_signup';
+		$this->title          = __( 'Newsletter — new subscriber (to the shop)', 'maison-vintique' );
+		$this->description    = __( 'Sent to you when somebody subscribes in the footer.', 'maison-vintique' );
+		$this->customer_email = false;
+		$this->placeholders   = array( '{subscriber}' => '' );
+		parent::__construct();
+	}
+
+	public function get_default_subject() {
+		return __( '[{site_title}] New newsletter subscriber', 'maison-vintique' );
+	}
+
+	public function get_default_heading() {
+		return __( 'New subscriber', 'maison-vintique' );
+	}
+
+	protected function show_order_details() {
+		return false;
+	}
+
+	/**
+	 * The list address wins over the general notifications one.
+	 */
+	protected function shop_recipient() {
+		$own = trim( (string) $this->get_option( 'recipient', '' ) );
+		if ( '' !== $own ) {
+			return $own;
+		}
+		return function_exists( 'mve_newsletter_email' )
+			? mve_newsletter_email()
+			: parent::shop_recipient();
+	}
+
+	protected function prepare() {
+		$this->placeholders['{subscriber}'] = ! empty( $this->extra['subscriber'] ) ? $this->extra['subscriber'] : '';
+	}
+
+	protected function body_lines() {
+		$email = $this->placeholders['{subscriber}'];
+		$total = count( (array) get_option( 'mve_newsletter_subscribers', array() ) );
+
+		return array(
+			sprintf(
+				/* translators: %s: email address */
+				__( '<strong>%s</strong> has signed up to hear from you.', 'maison-vintique' ),
+				esc_html( $email )
+			),
+			sprintf(
+				/* translators: %s: number of subscribers */
+				_n( 'That makes %s subscriber in all.', 'That makes %s subscribers in all.', $total, 'maison-vintique' ),
+				'<strong>' . esc_html( number_format_i18n( $total ) ) . '</strong>'
+			),
+		);
+	}
+
+	protected function cta() {
+		return array(
+			'label' => __( 'See the whole list', 'maison-vintique' ),
+			'url'   => admin_url( 'admin.php?page=mve-newsletter' ),
+		);
+	}
+
+	protected function note() {
+		return __( 'The list can be downloaded as a CSV from that screen, ready to import into Mailchimp, Brevo or whatever you send from.', 'maison-vintique' );
+	}
+}

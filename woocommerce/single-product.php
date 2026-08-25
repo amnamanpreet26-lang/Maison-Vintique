@@ -185,8 +185,18 @@ while ( have_posts() ) :
 				<?php if ( $is_trade ) : ?>
 
 					<form class="cart" action="<?php echo esc_url( apply_filters( 'woocommerce_add_to_cart_form_action', $product->get_permalink() ) ); ?>" method="post" enctype="multipart/form-data">
+						<?php $mve_qty_rules = mve_quantity_rules( $product ); ?>
 						<div class="buybar">
-							<div class="qty">
+							<?php
+							/*
+							 * The rules travel to the browser on the wrapper. The
+							 * stepper puts them back on the input before it does
+							 * anything else, so the box counts correctly even if a
+							 * plugin, or a cached copy of this page, printed a
+							 * different step into the markup.
+							 */
+							?>
+							<div class="qty" data-min="<?php echo esc_attr( $mve_qty_rules['min'] ); ?>" data-step="<?php echo esc_attr( $mve_qty_rules['step'] ); ?>">
 								<button type="button" class="qty-minus" aria-label="<?php esc_attr_e( 'Decrease quantity', 'maison-vintique' ); ?>">−</button>
 								<?php
 								/*
@@ -527,6 +537,22 @@ $closure = get_field( 'closure' );
 		var minus = qtyWrap.querySelector('.qty-minus');
 		var plus  = qtyWrap.querySelector('.qty-plus');
 		if (!input || !minus || !plus) { return; }
+
+		/* THE LAST WORD ON min AND step.
+		   Whatever PHP put in the markup, the numbers the theme intends are on
+		   the wrapper. Writing them onto the input here means the browser's own
+		   validation, its arrow keys and this stepper all agree — and it works
+		   even if the page came from a cache, or a plugin set the step after we
+		   did. Without this, "the theme is fixed but the site still counts in
+		   sixes" is a real outcome. */
+		var wantMin  = parseFloat(qtyWrap.getAttribute('data-min'));
+		var wantStep = parseFloat(qtyWrap.getAttribute('data-step'));
+
+		if (!isNaN(wantStep) && wantStep > 0) { input.setAttribute('step', String(wantStep)); }
+		if (!isNaN(wantMin)) {
+			input.setAttribute('min', String(wantMin));
+			if (!input.value || parseFloat(input.value) < wantMin) { input.value = String(wantMin); }
+		}
 
 		function num(attr, fallback) {
 			var n = parseFloat(input.getAttribute(attr));

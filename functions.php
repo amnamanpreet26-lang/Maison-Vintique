@@ -391,6 +391,9 @@ require_once get_stylesheet_directory() . '/inc/trade-enquiries.php';
  */
 if ( is_admin() ) {
 	require_once get_stylesheet_directory() . '/inc/email-preview.php';
+
+	/** WooCommerce → Newsletter: the footer signups, and a CSV of them. */
+	require_once get_stylesheet_directory() . '/inc/newsletter-admin.php';
 }
 
 /**
