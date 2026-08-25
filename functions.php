@@ -406,6 +406,13 @@ require_once get_stylesheet_directory() . '/inc/invoices.php';
 require_once get_stylesheet_directory() . '/inc/trade-popup.php';
 
 /**
+ * "Are you 18 or over?" — the legal-drinking-age gate. Covers the site until
+ * it is answered, and fails closed if scripts do not run.
+ * Wording at Appearance → Customize → Age Verification.
+ */
+require_once get_stylesheet_directory() . '/inc/age-gate.php';
+
+/**
  * The full Trade Account Application — the web version of the client's
  * nine-section form. Make a page with the "Trade Account Application" template
  * and everything else finds it on its own.

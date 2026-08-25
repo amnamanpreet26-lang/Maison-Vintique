@@ -448,3 +448,113 @@ mvBlock(function () {
 		if (first) first.focus();
 	});
 });
+
+/* ==========================================================================
+   AGE VERIFICATION
+   --------------------------------------------------------------------------
+   The overlay is already on screen when this runs — CSS puts it there, so the
+   site is covered even if this file never loads. All this does is take it
+   away, or replace it with the goodbye panel.
+
+   Answering "No" is final: the panel is swapped, the buttons go, and there is
+   no handler left that can uncover the page.
+   ========================================================================== */
+mvBlock(function () {
+	var gate = document.getElementById('mv-age-gate');
+	if (!gate) return;
+
+	var root = document.documentElement;
+	var key  = gate.getAttribute('data-key') || 'mvAgeConfirmed';
+	var days = parseInt(gate.getAttribute('data-days'), 10);
+	if (isNaN(days)) days = 30;
+
+	// Private browsing throws on storage access, and an age check is not worth
+	// breaking the site over — they simply get asked again next visit.
+	function remember() {
+		try { window.localStorage.setItem(key, String(Date.now())); } catch (e) {}
+	}
+
+	function open() {
+		// If the early script in <head> already cleared it, there is nothing
+		// to open — this is a page they have confirmed.
+		if (root.classList.contains('mv-age-ok')) return false;
+		gate.classList.add('is-open');
+		return true;
+	}
+
+	function accept() {
+		remember();
+		root.classList.add('mv-age-ok');
+		root.classList.remove('mv-age-locked');
+		gate.classList.remove('is-open');
+
+		// Taken out of the document entirely once it has served its purpose,
+		// so nothing can tab into it and no stray CSS can bring it back.
+		if (gate.parentNode) gate.parentNode.removeChild(gate);
+	}
+
+	function decline() {
+		var panel = gate.querySelector('[data-mv-age-panel]');
+		var bye   = gate.querySelector('[data-mv-age-bye]');
+		if (panel) panel.hidden = true;
+		if (bye) {
+			bye.hidden = false;
+			bye.setAttribute('tabindex', '-1');
+			try { bye.focus(); } catch (e) {}
+		}
+		gate.classList.add('is-declined');
+
+		/* Best effort: if we opened this window ourselves we can close it, and
+		   otherwise go back where they came from. Browsers refuse both in most
+		   cases, which is why the overlay staying put is the real answer. */
+		try {
+			if (window.history.length > 1) {
+				window.setTimeout(function () { window.history.back(); }, 1200);
+			}
+		} catch (e) {}
+	}
+
+	if (!open()) return;
+
+	gate.addEventListener('click', function (e) {
+		var btn = e.target.closest('[data-mv-age]');
+		if (!btn) return;
+		e.preventDefault();
+		if (btn.getAttribute('data-mv-age') === 'yes') { accept(); } else { decline(); }
+	});
+
+	/* Keep focus inside the gate. Nothing behind it should be reachable with a
+	   keyboard while the question is unanswered. */
+	function focusables() {
+		return gate.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])');
+	}
+
+	document.addEventListener('keydown', function (e) {
+		if (!gate.parentNode || e.key !== 'Tab') return;
+
+		var items = focusables();
+		if (!items.length) return;
+
+		var first = items[0];
+		var last  = items[items.length - 1];
+
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
+		} else if (!gate.contains(document.activeElement)) {
+			e.preventDefault();
+			first.focus();
+		}
+	});
+
+	// Escape must NOT dismiss an age check.
+	document.addEventListener('keydown', function (e) {
+		if (gate.parentNode && e.key === 'Escape') e.preventDefault();
+	});
+
+	var yes = gate.querySelector('[data-mv-age="yes"]');
+	if (yes) { try { yes.focus({ preventScroll: true }); } catch (e) { yes.focus(); } }
+});

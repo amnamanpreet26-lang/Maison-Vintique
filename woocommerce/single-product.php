@@ -189,11 +189,18 @@ while ( have_posts() ) :
 							<div class="qty">
 								<button type="button" class="qty-minus" aria-label="<?php esc_attr_e( 'Decrease quantity', 'maison-vintique' ); ?>">−</button>
 								<?php
+								/*
+								 * min_value and input_value are deliberately NOT set
+								 * here. mve_min_order_qty() in inc/woocommerce.php
+								 * owns both: it reads the case size off the product
+								 * and opens the box on it. Hard-coding 1 here meant
+								 * the box started below its own minimum, which is
+								 * what made the first press of + jump to the case
+								 * size and the second one double it.
+								 */
 								woocommerce_quantity_input(
 									array(
-										'min_value'   => apply_filters( 'woocommerce_quantity_input_min', 1, $product ),
-										'max_value'   => apply_filters( 'woocommerce_quantity_input_max', $product->get_max_purchase_quantity(), $product ),
-										'input_value' => 1,
+										'max_value' => apply_filters( 'woocommerce_quantity_input_max', $product->get_max_purchase_quantity(), $product ),
 									),
 									$product
 								);
@@ -508,7 +515,11 @@ $closure = get_field( 'closure' );
 			}
 		}
 
-		/* ---- Quantity stepper ---- */
+		/* ---- Quantity stepper ----
+		   Reads min, max and step off the input rather than assuming 1, so it
+		   always agrees with what the browser's own validation will accept. It
+		   used to add 1 blindly: on a wine with a case minimum that produced a
+		   number the form then refused to submit. */
 		var qtyWrap = document.querySelector('.qty');
 		if (!qtyWrap) { return; }
 
@@ -517,17 +528,66 @@ $closure = get_field( 'closure' );
 		var plus  = qtyWrap.querySelector('.qty-plus');
 		if (!input || !minus || !plus) { return; }
 
-		minus.addEventListener('click', function () {
-			var val = parseInt(input.value, 10) || 1;
-			var min = parseInt(input.getAttribute('min'), 10) || 1;
-			input.value = Math.max(min, val - 1);
-			input.dispatchEvent(new Event('change'));
+		function num(attr, fallback) {
+			var n = parseFloat(input.getAttribute(attr));
+			return isNaN(n) ? fallback : n;
+		}
+
+		function refresh() {
+			var min = num('min', 1);
+			var max = num('max', Infinity);
+			var val = parseFloat(input.value);
+			minus.disabled = !isNaN(val) && val <= min;
+			plus.disabled  = !isNaN(val) && max !== Infinity && val >= max;
+		}
+
+		function set(next) {
+			input.value = String(next);
+			// bubbles: true — WooCommerce and any cart script listen further up
+			// the tree, and a non-bubbling event never reaches them.
+			input.dispatchEvent(new Event('change', { bubbles: true }));
+			input.dispatchEvent(new Event('input', { bubbles: true }));
+			refresh();
+		}
+
+		function step(direction) {
+			var min  = num('min', 1);
+			var max  = num('max', Infinity);
+			var by   = Math.max(1, num('step', 1));
+			var val  = parseFloat(input.value);
+			if (isNaN(val)) { val = min; }
+
+			// Stay on the ladder the browser expects: valid values are
+			// min, min+step, min+2*step … so snap to it before moving.
+			var steps = Math.round((val - min) / by);
+			var next  = min + (steps + direction) * by;
+
+			if (next < min) { next = min; }
+			if (max !== Infinity && next > max) { next = max; }
+
+			set(next);
+		}
+
+		minus.addEventListener('click', function () { step(-1); });
+		plus.addEventListener('click', function () { step(1); });
+
+		// Whatever they type by hand still has to be a value the form accepts —
+		// and the two buttons have to agree with it afterwards, or one of them
+		// can be left disabled on a number it should not be.
+		input.addEventListener('blur', function () {
+			var min = num('min', 1);
+			var max = num('max', Infinity);
+			var by  = Math.max(1, num('step', 1));
+			var val = parseFloat(input.value);
+
+			if (isNaN(val) || val < min) { set(min); return; }
+
+			var snapped = min + Math.round((val - min) / by) * by;
+			if (max !== Infinity && snapped > max) { snapped = max; }
+			set(snapped);
 		});
-		plus.addEventListener('click', function () {
-			var val = parseInt(input.value, 10) || 1;
-			input.value = val + 1;
-			input.dispatchEvent(new Event('change'));
-		});
+
+		refresh();
 	})();
 	</script>
 

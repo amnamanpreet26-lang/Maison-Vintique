@@ -89,7 +89,7 @@ Appearance → Menus → create **Primary** (Home, Shop, Producers, Journal, Our
 | Wine detail fields | ACF `Wine Details` (`acf-json/group_wine_details.json`) |
 | Producers | `producer` CPT + ACF `Producer Details` |
 | Price on login / trade gating | `inc/woocommerce.php` (`mve_is_gated` — logged in or not) |
-| Minimum order (by the case) | ACF `min_order_qty` → `mve_min_order_qty()` |
+| Minimum order (by the case) | ACF `min_order_qty` → `mve_min_order_qty()`. The minimum is a **floor**, not a multiple: a case of 6 opens the box on 6 and counts up in ones. To sell in whole cases only, `add_filter( 'mve_quantity_step', fn( $step, $moq ) => $moq, 10, 2 );` |
 | VCIS stock matching | ACF `sku_ehd` (the code matched against EHD's stock CSV) |
 | Brand design tokens | `style.css` + the Customizer CSS (see **Where the CSS lives**) |
 | Layouts | `/elementor-templates` + Elementor Theme Builder |
@@ -616,6 +616,30 @@ that status, which a payment gateway normally does immediately. A proforma flow
 has no gateway, so both sides would otherwise be told nothing. It is decided
 after checkout has finished, and only for orders nothing else emailed about, so
 a normal paid order never gets a duplicate.
+
+## Age verification
+
+**Appearance → Customize → Age Verification** — the question, the two button
+labels, the goodbye wording, the Terms and Privacy links, a decorative image,
+and how many days an answer is remembered (30 by default; 0 means never ask
+again).
+
+It **fails closed**. The overlay is on screen because of CSS, and JavaScript
+takes it away — not the other way round. A blocked or slow script leaves the
+site covered rather than flashing it into view, which for an alcohol retailer
+is the only safe direction. Answering **No** swaps the panel for a goodbye and
+never uncovers the page.
+
+Escape does not dismiss it, focus is trapped inside it, and it is printed at
+`wp_body_open` (with a `wp_footer` fallback, in case a Theme Builder header
+omits that hook).
+
+To see it again after answering, add `?mv_age=preview` to any address — that
+ignores the stored answer and does not write a new one. To clear it properly,
+run `localStorage.removeItem('mvAgeConfirmed')` in the browser console.
+
+The trade-pricing popup below is suppressed while the age check is switched on
+— two overlays stacked on a first visit is nobody's idea of a welcome.
 
 ## Trade pricing popup
 

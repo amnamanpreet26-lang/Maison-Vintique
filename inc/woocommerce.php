@@ -66,14 +66,49 @@ add_filter( 'woocommerce_product_add_to_cart_text', 'mve_gated_add_to_cart_text'
 add_filter( 'woocommerce_product_single_add_to_cart_text', 'mve_gated_add_to_cart_text', 10, 2 );
 
 /**
- * Wine ordering is by the case — enforce minimum order quantity from ACF `min_order_qty`.
+ * Minimum order quantity, from ACF `min_order_qty`.
+ *
+ * THE MINIMUM IS A FLOOR, NOT A MULTIPLE.
+ *
+ * This used to set `step` to the minimum as well, so a wine with a case of 6
+ * counted 6, 12, 18 — press + once and the order doubled. That was two
+ * separate problems:
+ *
+ *   1. The box opened on 1 (the template's default) while the minimum was 6.
+ *      1 is not a valid step from 6, so the first press jumped to 6 and the
+ *      second to 12 — which is exactly what "it goes to 12, not 7" describes.
+ *   2. Anything typed between the steps — 7, 8, 9 — failed the browser's own
+ *      validation, and Chrome refused to submit the form at all with
+ *      "the two nearest valid values are 6 and 12".
+ *
+ * So: the box now OPENS on the minimum and counts up in ones from there.
+ * 6, 7, 8. To go back to whole cases only:
+ *
+ *   add_filter( 'mve_quantity_step', function ( $step, $moq ) { return $moq; }, 10, 2 );
+ *
+ * @param array      $args    Quantity input arguments.
+ * @param WC_Product $product Product.
+ * @return array
  */
 function mve_min_order_qty( $args, $product ) {
 	$moq = function_exists( 'get_field' ) ? (int) get_field( 'min_order_qty', $product->get_id() ) : 0;
-	if ( $moq > 1 ) {
-		$args['min_value'] = $moq;
-		$args['step']      = $moq;
+	if ( $moq <= 1 ) {
+		return $args;
 	}
+
+	$args['min_value'] = $moq;
+	$args['step']      = max( 1, (int) apply_filters( 'mve_quantity_step', 1, $moq, $product ) );
+
+	/*
+	 * Open on the minimum rather than below it — but only when the value is
+	 * below it. The basket passes each line's real quantity through this same
+	 * filter, and overwriting that would reset every basket line to the
+	 * minimum the moment the page rendered.
+	 */
+	if ( isset( $args['input_value'] ) && (int) $args['input_value'] < $moq ) {
+		$args['input_value'] = $moq;
+	}
+
 	return $args;
 }
 add_filter( 'woocommerce_quantity_input_args', 'mve_min_order_qty', 10, 2 );
