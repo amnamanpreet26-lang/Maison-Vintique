@@ -1007,3 +1007,193 @@ class MVE_Email_Newsletter_Signup extends MVE_Email_Base {
 		return __( 'The list can be downloaded as a CSV from that screen, ready to import into Mailchimp, Brevo or whatever you send from.', 'maison-vintique' );
 	}
 }
+
+/* =========================================================================
+ * PRODUCT ENQUIRIES
+ * ---------------------------------------------------------------------
+ * The "Enquire" button on a wine — the card on the homepage and the shop, and
+ * the product page. Nobody has an account, so these hang off nothing but the
+ * answers in $extra.
+ * ====================================================================== */
+
+abstract class MVE_Email_Enquiry_Product_Base extends MVE_Email_Base {
+
+	/** @var array The answers. */
+	protected $answers = array();
+
+	/** @var WC_Product|null The wine. */
+	protected $wine = null;
+
+	protected function show_order_details() {
+		return false;
+	}
+
+	public function __construct() {
+		$this->placeholders = array(
+			'{wine}'          => '',
+			'{enquirer}'      => '',
+			'{business_name}' => '',
+		);
+		parent::__construct();
+	}
+
+	protected function prepare() {
+		$this->answers = ! empty( $this->extra['enquiry'] ) ? (array) $this->extra['enquiry'] : array();
+
+		$id         = ! empty( $this->extra['product'] ) ? (int) $this->extra['product'] : 0;
+		$this->wine = ( $id && function_exists( 'wc_get_product' ) ) ? wc_get_product( $id ) : null;
+
+		$name = isset( $this->answers['name'] ) ? $this->answers['name'] : '';
+
+		$this->placeholders['{wine}']          = $this->wine instanceof WC_Product ? $this->wine->get_name() : __( 'a wine', 'maison-vintique' );
+		$this->placeholders['{enquirer}']      = $name;
+		$this->placeholders['{business_name}'] = isset( $this->answers['business'] ) ? $this->answers['business'] : '';
+
+		// First name only — "Hello Claire," not "Hello Claire Devereux,".
+		$this->placeholders['{customer_name}'] = $name ? current( preg_split( '/\s+/', trim( $name ) ) ) : '';
+	}
+}
+
+/** The enquiry itself, to whoever knows the portfolio. */
+class MVE_Email_Product_Enquiry extends MVE_Email_Enquiry_Product_Base {
+
+	protected $to_customer = false;
+
+	public function __construct() {
+		$this->id             = 'mve_product_enquiry';
+		$this->title          = __( 'Wine enquiry (to the shop)', 'maison-vintique' );
+		$this->description    = __( 'Sent to you when somebody uses the Enquire button on a wine.', 'maison-vintique' );
+		$this->customer_email = false;
+		parent::__construct();
+	}
+
+	public function get_default_subject() {
+		return __( '[{site_title}] Enquiry — {wine}', 'maison-vintique' );
+	}
+
+	public function get_default_heading() {
+		return __( 'Enquiry about a wine', 'maison-vintique' );
+	}
+
+	/** Its own address, so enquiries need not land in the accounts inbox. */
+	protected function shop_recipient() {
+		$own = trim( (string) $this->get_option( 'recipient', '' ) );
+		if ( '' !== $own ) {
+			return $own;
+		}
+		return function_exists( 'mve_enquiry_email' ) ? mve_enquiry_email() : parent::shop_recipient();
+	}
+
+	/** Replies go straight back to the person who asked. */
+	public function get_headers() {
+		$headers = parent::get_headers();
+
+		$name  = isset( $this->answers['name'] ) ? $this->answers['name'] : '';
+		$email = isset( $this->answers['email'] ) ? $this->answers['email'] : '';
+
+		if ( $email && is_email( $email ) ) {
+			$headers .= sprintf( "Reply-To: %s <%s>\r\n", $name, $email );
+		}
+
+		return $headers;
+	}
+
+	protected function body_lines() {
+		return array(
+			sprintf(
+				/* translators: 1: person, 2: wine */
+				__( '<strong>%1$s</strong> has asked about <strong>%2$s</strong>.', 'maison-vintique' ),
+				esc_html( $this->placeholders['{enquirer}'] ),
+				esc_html( $this->placeholders['{wine}'] )
+			),
+		);
+	}
+
+	protected function panel() {
+		$fields = function_exists( 'mve_enquiry_form_fields' ) ? mve_enquiry_form_fields() : array();
+		$rows   = '';
+
+		foreach ( $fields as $key => $field ) {
+			$value = isset( $this->answers[ $key ] ) ? $this->answers[ $key ] : '';
+			if ( '' === trim( (string) $value ) ) {
+				continue;
+			}
+			if ( 'select' === $field['type'] && isset( $field['options'][ $value ] ) ) {
+				$value = $field['options'][ $value ];
+			}
+			$rows .= '<tr>'
+				. '<td class="mv-panel__k" valign="top" width="170" style="padding:0 14px 8px 0;">' . esc_html( $field['label'] ) . '</td>'
+				. '<td valign="top" style="padding:0 0 8px;font-size:14px;">' . nl2br( esc_html( $value ) ) . '</td>'
+				. '</tr>';
+		}
+
+		return $rows ? '<table border="0" cellpadding="0" cellspacing="0" width="100%">' . $rows . '</table>' : '';
+	}
+
+	protected function cta() {
+		return $this->wine instanceof WC_Product
+			? array(
+				'label' => __( 'Open this wine', 'maison-vintique' ),
+				'url'   => $this->wine->get_permalink(),
+			)
+			: array();
+	}
+
+	protected function note() {
+		return __( 'Replying to this email goes straight back to them — the reply address is theirs, not ours.', 'maison-vintique' );
+	}
+}
+
+/** A short acknowledgement to the person who asked. */
+class MVE_Email_Product_Enquiry_Ack extends MVE_Email_Enquiry_Product_Base {
+
+	public function __construct() {
+		$this->id             = 'mve_product_enquiry_ack';
+		$this->title          = __( 'Wine enquiry — acknowledgement', 'maison-vintique' );
+		$this->description    = __( 'Sent to somebody who enquires about a wine, so they know it arrived.', 'maison-vintique' );
+		$this->customer_email = true;
+		parent::__construct();
+	}
+
+	public function get_default_subject() {
+		return __( 'We have your enquiry — {site_title}', 'maison-vintique' );
+	}
+
+	public function get_default_heading() {
+		return __( 'Thank you for your enquiry', 'maison-vintique' );
+	}
+
+	protected function prepare() {
+		parent::prepare();
+
+		// Nobody has an account here, so the address comes from the form.
+		$email = isset( $this->answers['email'] ) ? $this->answers['email'] : '';
+		if ( is_email( $email ) ) {
+			$this->recipient = $email;
+		}
+	}
+
+	protected function body_lines() {
+		return array(
+			sprintf(
+				/* translators: %s: wine name */
+				__( 'Thank you for asking about <strong>%s</strong>. Your enquiry is with us.', 'maison-vintique' ),
+				esc_html( $this->placeholders['{wine}'] )
+			),
+			__( 'Somebody who knows the portfolio will come back to you personally — usually the same working day.', 'maison-vintique' ),
+		);
+	}
+
+	protected function cta() {
+		return $this->wine instanceof WC_Product
+			? array(
+				'label' => __( 'View this wine again', 'maison-vintique' ),
+				'url'   => $this->wine->get_permalink(),
+			)
+			: array();
+	}
+
+	protected function note() {
+		return __( 'No need to do anything else. If it is urgent, simply reply to this email.', 'maison-vintique' );
+	}
+}

@@ -558,3 +558,139 @@ mvBlock(function () {
 	var yes = gate.querySelector('[data-mv-age="yes"]');
 	if (yes) { try { yes.focus({ preventScroll: true }); } catch (e) { yes.focus(); } }
 });
+
+/* ==========================================================================
+   WINE ENQUIRY POPUP
+   --------------------------------------------------------------------------
+   One dialog, shared by every Enquire button on the page — a shop grid of
+   thirty wines would otherwise carry thirty copies of the same form.
+
+   Each button is a real link to the enquiry page, so with scripts off it still
+   goes somewhere useful. This intercepts the click and opens the popup with
+   the wine already named.
+   ========================================================================== */
+mvBlock(function () {
+	var popup = document.getElementById('mv-enquiry');
+	if (!popup) return;
+
+	var form    = popup.querySelector('.mv-enq__form');
+	var body    = popup.querySelector('[data-mv-enq-body]');
+	var done    = popup.querySelector('[data-mv-enq-done]');
+	var wineEl  = popup.querySelector('[data-mv-enq-wine]');
+	var product = popup.querySelector('[data-mv-enq-product]');
+	var errorEl = popup.querySelector('[data-mv-enq-error]');
+	var back    = popup.querySelector('input[name="redirect_to"]');
+	if (!form) return;
+
+	var opener = null;
+
+	function open(trigger) {
+		opener = trigger;
+
+		// Reset — the same dialog may already have been used on this page.
+		if (body) body.hidden = false;
+		if (done) done.hidden = true;
+		if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+
+		var wine = trigger.getAttribute('data-wine') || '';
+		if (wineEl) {
+			wineEl.textContent = wine;
+			wineEl.hidden = !wine;
+		}
+		if (product) product.value = trigger.getAttribute('data-product') || '';
+		if (back) back.value = window.location.href;
+
+		popup.hidden = false;
+		document.documentElement.classList.add('mv-enq-open');
+
+		var first = form.querySelector('input:not([type="hidden"]):not([tabindex="-1"]), textarea, select');
+		if (first) { try { first.focus({ preventScroll: true }); } catch (e) { first.focus(); } }
+	}
+
+	function close() {
+		popup.hidden = true;
+		document.documentElement.classList.remove('mv-enq-open');
+		if (opener) { try { opener.focus(); } catch (e) {} }
+		opener = null;
+	}
+
+	// Delegated, so buttons added later — an AJAX-loaded page of the shop, an
+	// Elementor widget rebuilt in the editor — work without rebinding.
+	document.addEventListener('click', function (e) {
+		var trigger = e.target.closest('[data-mv-enquire]');
+		if (trigger) {
+			e.preventDefault();
+			open(trigger);
+			return;
+		}
+		if (e.target.closest('[data-mv-enq-close]')) {
+			e.preventDefault();
+			close();
+		}
+	});
+
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && !popup.hidden) close();
+	});
+
+	// Keep the keyboard inside the dialog while it is open.
+	document.addEventListener('keydown', function (e) {
+		if (popup.hidden || e.key !== 'Tab') return;
+
+		var items = popup.querySelectorAll('button, [href], input:not([type="hidden"]), select, textarea');
+		items = Array.prototype.filter.call(items, function (el) {
+			return el.offsetParent !== null && el.tabIndex !== -1;
+		});
+		if (!items.length) return;
+
+		var first = items[0];
+		var last  = items[items.length - 1];
+
+		if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+		else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+	});
+
+	form.addEventListener('submit', function (e) {
+		// Let the browser's own validation speak first.
+		if (typeof form.checkValidity === 'function' && !form.checkValidity()) return;
+
+		// Without fetch, fall through to a normal post — the handler answers
+		// both ways.
+		if (!window.fetch || !window.FormData) return;
+
+		e.preventDefault();
+
+		var button = form.querySelector('.mv-enq__submit');
+		var label  = button ? button.textContent : '';
+		if (button) {
+			button.disabled = true;
+			button.textContent = button.getAttribute('data-sending') || 'Sending…';
+		}
+		if (errorEl) errorEl.hidden = true;
+
+		var data = new FormData(form);
+		data.append('ajax', '1');
+
+		function fail(message) {
+			if (button) { button.disabled = false; button.textContent = label; }
+			if (errorEl) {
+				errorEl.textContent = message || 'Sorry, that did not send. Please try again.';
+				errorEl.hidden = false;
+			}
+		}
+
+		fetch(form.action, { method: 'POST', body: data, credentials: 'same-origin' })
+			.then(function (r) { return r.json().catch(function () { return null; }); })
+			.then(function (json) {
+				if (!json || !json.success) {
+					fail(json && json.data && json.data.message);
+					return;
+				}
+				form.reset();
+				if (body) body.hidden = true;
+				if (done) { done.hidden = false; try { done.focus(); } catch (e) {} }
+				if (button) { button.disabled = false; button.textContent = label; }
+			})
+			.catch(function () { fail(); });
+	});
+});

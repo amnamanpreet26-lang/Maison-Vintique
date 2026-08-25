@@ -200,14 +200,12 @@ if ( function_exists( 'get_field' ) ) {
 
 /* ---------------------------------------------------------------------------
  * INLINE LINKS — Technical Details deep-links to the Technical tab on the
- * single product page; Enquire uses the same ?enquire=ID pattern as the PDP.
+ * single product page; Enquire opens the enquiry popup (inc/product-enquiry.php)
+ * with this wine already named.
  * ------------------------------------------------------------------------- */
 // Both forms: ?tab=tech survives anything that strips the fragment, and the
 // hash keeps the link working if JavaScript is off. main.js reads either.
 $mvc_tech_url    = add_query_arg( 'tab', 'tech', $mvc_permalink ) . '#tab-tech';
-$mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
-	? add_query_arg( 'enquire', $mvc_id, wc_get_page_permalink( 'shop' ) )
-	: $mvc_permalink;
 ?>
 <article class="mvcard" id="mvcard-<?php echo esc_attr( $mvc_id ); ?>">
 
@@ -281,9 +279,17 @@ $mvc_enquire_url = function_exists( 'wc_get_page_permalink' )
 					<?php esc_html_e( 'Technical Details', 'maison-vintique-elementor' ); ?>
 				</a>
 			<?php endif; ?>
-			<a class="mvcard__link" href="<?php echo esc_url( $mvc_enquire_url ); ?>">
-				<?php esc_html_e( 'Enquire', 'maison-vintique-elementor' ); ?>
-			</a>
+			<?php
+			/*
+			 * Opens the enquiry popup with this wine already named. It is a real
+			 * link, so with scripts off it still goes to the enquiry page rather
+			 * than doing nothing — which is what the old ?enquire=ID link did,
+			 * because nothing ever handled that query string.
+			 */
+			if ( function_exists( 'mve_enquiry_button' ) ) {
+				mve_enquiry_button( $product, 'mvcard__link' );
+			}
+			?>
 		</div>
 
 	</div>

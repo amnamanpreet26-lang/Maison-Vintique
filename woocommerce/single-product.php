@@ -221,9 +221,7 @@ while ( have_posts() ) :
 							<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() ); ?>" class="btn btn-p">
 								<?php esc_html_e( 'Add to Case', 'maison-vintique' ); ?>
 							</button>
-							<a class="btn btn-o" href="<?php echo esc_url( add_query_arg( 'enquire', $product->get_id(), wc_get_page_permalink( 'shop' ) ) ); ?>">
-								<?php esc_html_e( 'Enquire', 'maison-vintique' ); ?>
-							</a>
+							<?php mve_enquiry_button( $product, 'btn btn-o' ); ?>
 						</div>
 					</form>
 
@@ -231,7 +229,7 @@ while ( have_posts() ) :
 
 					<div class="buybar">
 						<a class="btn btn-p" href="<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) ); ?>"><?php esc_html_e( 'View Trade Pricing', 'maison-vintique' ); ?></a>
-						<a class="btn btn-o" href="<?php echo esc_url( add_query_arg( 'enquire', $product->get_id(), wc_get_page_permalink( 'shop' ) ) ); ?>"><?php esc_html_e( 'Enquire', 'maison-vintique' ); ?></a>
+						<?php mve_enquiry_button( $product, 'btn btn-o' ); ?>
 					</div>
 
 				<?php endif; ?>

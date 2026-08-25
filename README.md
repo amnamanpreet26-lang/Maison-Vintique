@@ -637,6 +637,35 @@ has no gateway, so both sides would otherwise be told nothing. It is decided
 after checkout has finished, and only for orders nothing else emailed about, so
 a normal paid order never gets a duplicate.
 
+## Wine enquiries ("Enquire")
+
+An **Enquire** button on every wine, in three places — all fed by the same code:
+
+| Where | File |
+|---|---|
+| Homepage "Curated Portfolio" cards | `template-parts/wine-card.php` |
+| Shop / collection page cards | the same file — one card partial, so they cannot drift apart |
+| Single product page, beside Add to Case | `woocommerce/single-product.php` |
+
+It opens a popup with the wine already named. Fields: name, business, email,
+telephone, cases wanted, when they need it, and the enquiry itself. Change them
+in `mve_enquiry_form_fields()` (`inc/product-enquiry.php`) or through the
+`mve_enquiry_form_fields` filter.
+
+**Where enquiries go:** WooCommerce → Settings → Emails → **"Product enquiries
+go to"**. Empty falls back to the main notifications address — enquiries about
+a wine usually want whoever knows the portfolio rather than the accounts inbox.
+The email carries every answer and its **Reply-To is the enquirer**, so hitting
+reply answers them directly. They also get a short acknowledgement.
+
+**It degrades.** Each button is a real link to the enquiry page, and JavaScript
+turns it into a popup opener — so with scripts off it still goes somewhere
+useful. It replaces a button that linked at `/shop/?enquire=123`, a query string
+nothing ever handled, so the old one did nothing at all.
+
+`do_action( 'mve_product_enquiry_received', $values, $product )` to push them
+into a CRM.
+
 ## Quantity box
 
 `min_order_qty` sets the **minimum**, and the minimum is a floor — not a
@@ -658,12 +687,22 @@ quantity step and the last one to run wins:
    on the `.qty` wrapper, and the stepper writes them back onto the input before
    doing anything else — so the box counts correctly even from a cached page,
    and the browser's own arrow keys agree with the − and + buttons.
+4. **`mve_quantity_enforcer()` in `inc/woocommerce.php`, printed in the footer
+   of every page that could hold a quantity box.** This is the one that matters:
+   the other three all live in the theme's `woocommerce/single-product.php`, and
+   if the product page is rendered by anything else — an **Elementor Theme
+   Builder** single-product template (which this README tells you to build), a
+   page-builder widget, a plugin's template — then that file never runs and none
+   of them apply. The enforcer finds the quantity inputs itself, whatever drew
+   them, and corrects them. It also watches for boxes added later over AJAX (the
+   basket, a variation form), so there is no template it can be bypassed by.
 
 **"It still counts in sixes."** Add `?mv_qty=debug` to any product page while
-signed in as an administrator. A panel reports the ACF value, what the theme
-intends, what WooCommerce actually built, and — expandable — everything on the
-site hooked onto those three filters. If something else is setting the step, it
-names itself there.
+signed in as an administrator. A panel reports **which template file is drawing the
+page**, the ACF value, what the theme intends, what WooCommerce actually built,
+and — expandable — everything on the site hooked onto those three filters. If
+something else is setting the step, it names itself there; and if the template
+is not the theme's own, that line says so.
 
 ## Age verification
 

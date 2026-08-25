@@ -195,6 +195,147 @@ function mve_quantity_rules( $product ) {
  * of by guesswork.
  * ====================================================================== */
 
+/* =========================================================================
+ * THE QUANTITY BOX, ENFORCED FROM OUTSIDE THE TEMPLATE
+ * ---------------------------------------------------------------------
+ * This has now been reported three times, and the reason the last two fixes
+ * did not land is almost certainly that they lived in the theme's own
+ * woocommerce/single-product.php. If the product page is rendered by anything
+ * else — an Elementor Theme Builder single-product template, which this
+ * project's own README tells you to build; a page builder widget; a plugin's
+ * template — then that file never runs, its markup never appears, and the
+ * script inside it never executes. The PHP filters still apply, but if a
+ * plugin is also setting the step there is nothing on the page to correct it.
+ *
+ * So the enforcement moved OUT of the template and into the footer of every
+ * page that could contain a quantity box. It finds the inputs itself, whatever
+ * rendered them, and writes the right min and step onto them. There is no
+ * longer any template it can be bypassed by.
+ * ====================================================================== */
+
+/**
+ * The rules for every product that could have a quantity box on this page.
+ *
+ * @return array Product ID => array( min, step ).
+ */
+function mve_quantity_rules_on_page() {
+	$rules = array();
+
+	// The product page itself.
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		$product = wc_get_product( get_queried_object_id() );
+		if ( $product instanceof WC_Product ) {
+			$rules[ $product->get_id() ] = mve_quantity_rules( $product );
+
+			// A variable product's children each have their own box.
+			if ( $product->is_type( 'variable' ) ) {
+				foreach ( $product->get_children() as $child_id ) {
+					$child = wc_get_product( $child_id );
+					if ( $child instanceof WC_Product ) {
+						$rules[ $child_id ] = mve_quantity_rules( $child );
+					}
+				}
+			}
+		}
+	}
+
+	// The basket, where every line has its own box.
+	if ( function_exists( 'is_cart' ) && is_cart() && WC()->cart ) {
+		foreach ( WC()->cart->get_cart() as $item ) {
+			$product = isset( $item['data'] ) ? $item['data'] : null;
+			if ( $product instanceof WC_Product ) {
+				$rules[ $product->get_id() ] = mve_quantity_rules( $product );
+			}
+		}
+	}
+
+	return apply_filters( 'mve_quantity_rules_on_page', $rules );
+}
+
+/**
+ * Put the rules on the page, and make the browser obey them.
+ */
+function mve_quantity_enforcer() {
+	$rules = mve_quantity_rules_on_page();
+	if ( ! $rules ) {
+		return;
+	}
+	?>
+	<script id="mv-quantity-rules">
+	(function () {
+		var RULES = <?php echo wp_json_encode( $rules ); ?>;
+
+		/* Which product does this quantity box belong to?
+		   Every route WooCommerce and the page builders use is checked, because
+		   the markup differs between the theme template, an Elementor widget,
+		   the cart and the blocks checkout. */
+		function productFor(input) {
+			var form = input.closest('form');
+			if (form) {
+				var add = form.querySelector('[name="add-to-cart"], [name="variation_id"], button[name="add-to-cart"]');
+				if (add && add.value) { return String(add.value); }
+			}
+
+			var wrap = input.closest('[data-product_id], [data-product-id]');
+			if (wrap) { return String(wrap.getAttribute('data-product_id') || wrap.getAttribute('data-product-id')); }
+
+			var row = input.closest('tr, li, .wc-block-cart-item');
+			if (row) {
+				var link = row.querySelector('a.remove[data-product_id]');
+				if (link) { return String(link.getAttribute('data-product_id')); }
+			}
+
+			// One product on the page and one box: it can only be that one.
+			var ids = Object.keys(RULES);
+			return ids.length === 1 ? ids[0] : null;
+		}
+
+		function apply(input) {
+			var id = productFor(input);
+			var rule = id && RULES[id];
+			if (!rule) { return; }
+
+			if (rule.step > 0) { input.setAttribute('step', String(rule.step)); }
+			input.setAttribute('min', String(rule.min));
+
+			var val = parseFloat(input.value);
+			if (isNaN(val) || val < rule.min) { input.value = String(rule.min); }
+		}
+
+		function sweep() {
+			document.querySelectorAll('input.qty, input[name="quantity"], input[name^="cart["]').forEach(apply);
+		}
+
+		sweep();
+
+		/* WooCommerce replaces the basket and the variation form over AJAX, and
+		   Elementor rebuilds widgets in the editor preview — so a one-off pass
+		   is not enough. Anything added later is corrected as it appears. */
+		if (window.MutationObserver) {
+			new MutationObserver(function (records) {
+				for (var i = 0; i < records.length; i++) {
+					for (var j = 0; j < records[i].addedNodes.length; j++) {
+						var node = records[i].addedNodes[j];
+						if (node.nodeType !== 1) { continue; }
+						if (node.matches && node.matches('input')) { apply(node); }
+						else if (node.querySelectorAll) { node.querySelectorAll('input.qty, input[name="quantity"]').forEach(apply); }
+					}
+				}
+			}).observe(document.body, { childList: true, subtree: true });
+		}
+
+		document.addEventListener('click', function (e) {
+			// After anything that might have redrawn a box.
+			if (e.target.closest('.qty-plus, .qty-minus, .quantity, .single_add_to_cart_button')) {
+				window.setTimeout(sweep, 60);
+			}
+		}, true);
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_footer', 'mve_quantity_enforcer', 5 );
+
 /**
  * The panel.
  */
@@ -250,6 +391,7 @@ function mve_quantity_debug() {
 	?>
 	<div style="position:fixed;bottom:16px;left:16px;z-index:99998;max-width:520px;background:#17251f;color:#f6f1e7;font:12px/1.6 monospace;padding:16px 18px;border-radius:8px;box-shadow:0 18px 40px -20px rgba(0,0,0,.6)">
 		<strong style="display:block;margin-bottom:8px;color:#a98854">QUANTITY — <?php echo esc_html( $product->get_name() ); ?></strong>
+		<div>rendered by ............ <?php echo esc_html( $GLOBALS['mve_template_in_use'] ?? 'unknown' ); ?></div>
 		<div>ACF min_order_qty ....... <?php echo esc_html( null === $moq || '' === $moq ? 'not set' : var_export( $moq, true ) ); ?></div>
 		<div>theme says ............. min <?php echo esc_html( $rules['min'] ); ?>, step <?php echo esc_html( $rules['step'] ); ?></div>
 		<div>WooCommerce builds ..... min <?php echo esc_html( $args['min_value'] ); ?>, step <?php echo esc_html( $args['step'] ); ?>, opens on <?php echo esc_html( $args['input_value'] ); ?></div>
@@ -271,6 +413,22 @@ function mve_quantity_debug() {
 	<?php
 }
 add_action( 'wp_footer', 'mve_quantity_debug', 99 );
+
+/**
+ * Remember which template WordPress actually loaded.
+ *
+ * The debug panel reports it, because "which file is drawing this page" is the
+ * first question when a fix that is definitely in the theme has no effect —
+ * and a page builder answers it differently from a theme template.
+ *
+ * @param string $template Template path.
+ * @return string
+ */
+function mve_note_template( $template ) {
+	$GLOBALS['mve_template_in_use'] = str_replace( ABSPATH, '', (string) $template );
+	return $template;
+}
+add_filter( 'template_include', 'mve_note_template', 1 );
 
 
 /**

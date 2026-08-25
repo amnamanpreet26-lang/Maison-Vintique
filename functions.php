@@ -416,6 +416,13 @@ require_once get_stylesheet_directory() . '/inc/trade-popup.php';
 require_once get_stylesheet_directory() . '/inc/age-gate.php';
 
 /**
+ * The "Enquire" button on every wine — homepage portfolio, shop cards and the
+ * product page — and the popup behind it.
+ * Where enquiries go: WooCommerce → Settings → Emails.
+ */
+require_once get_stylesheet_directory() . '/inc/product-enquiry.php';
+
+/**
  * The full Trade Account Application — the web version of the client's
  * nine-section form. Make a page with the "Trade Account Application" template
  * and everything else finds it on its own.
