@@ -32,6 +32,16 @@
             "instructions": "ONE AWARD PER LINE, for example: Gold - IWC 2023 (new line) 92 pts - Decanter. Fill this in and the wine card gets the round \"Award Winning\" medallion over the bottle on hover, and the product page lists every line in full. Leave it empty and neither appears - an empty field is the usual reason the medallion does not show."
         },
         {
+            "key": "field_mv_label_artwork",
+            "label": "Label Artwork",
+            "name": "label_artwork",
+            "type": "file",
+            "instructions": "The bottle label artwork - a JPG, PNG or PDF. Upload one and it appears on the product page in the \"Awards & Label\" block, in the same list as the awards, with a label icon. Leave it empty and only the awards show.",
+            "return_format": "array",
+            "library": "all",
+            "mime_types": "jpg,jpeg,png,pdf,svg"
+        },
+        {
             "key": "field_mv_vintage_year",
             "label": "Vintage",
             "name": "vintage_year",
@@ -137,6 +147,77 @@
             "default_value": "Natural cork"
         },
         {
+            "key": "field_mv_ageing",
+            "label": "Ageing",
+            "name": "ageing",
+            "type": "text",
+            "instructions": "How it was aged, in words - for example \"12 months in French oak, 30% new\".",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mv_drinking_window",
+            "label": "Drinking Window",
+            "name": "drinking_window",
+            "type": "text",
+            "instructions": "When it drinks best - for example \"2025-2032\".",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mv_box_orientation",
+            "label": "Box Orientation",
+            "name": "box_orientation",
+            "type": "text",
+            "instructions": "How the case should be stored or shipped - for example \"Lying down\" or \"Upright\".",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mv_residual_sugar",
+            "label": "Residual Sugar",
+            "name": "residual_sugar",
+            "type": "text",
+            "instructions": "Include the unit, for example \"2.4 g/l\".",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mv_total_acidity",
+            "label": "Total Acidity",
+            "name": "total_acidity",
+            "type": "text",
+            "instructions": "Include the unit, for example \"5.6 g/l\".",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mv_ph_level",
+            "label": "pH",
+            "name": "ph_level",
+            "type": "text",
+            "instructions": "For example \"3.45\".",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mv_organic",
+            "label": "Organic",
+            "name": "organic",
+            "type": "true_false",
+            "instructions": "Switch on and the Technical tab shows \"Organic: Yes\". Off and the row is hidden.",
+            "ui": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_mv_sustainability",
             "label": "Sustainability",
             "name": "sustainability",
@@ -187,5 +268,5 @@
     "active": true,
     "description": "Editorial and trade attributes for wine products, organized by tab. Pricing visibility is not set here — prices are hidden from logged-out visitors site-wide (inc/woocommerce.php).",
     "show_in_rest": 1,
-    "modified": 1785283200
+    "modified": 1756000000
 }

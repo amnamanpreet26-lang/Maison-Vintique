@@ -43,6 +43,28 @@ while ( have_posts() ) :
 	$awards_raw     = get_field( 'awards' ); // textarea, one award per line
 	$awards         = $awards_raw ? array_filter( array_map( 'trim', explode( "\n", $awards_raw ) ) ) : array();
 
+	/*
+	 * Label artwork sits with the awards rather than in the Downloads tab: it is
+	 * something to show off, not a document to file. It appears as one more line
+	 * in the same list, with a label icon instead of a medal, which is why the
+	 * block is headed "Awards & Label" rather than "Awards & Recognition".
+	 *
+	 * Returned as an array so the filename and the file type are available, not
+	 * just the URL — an ACF file field set to "URL" would give us a link with
+	 * nothing to call it.
+	 */
+	$label_artwork      = get_field( 'label_artwork' );
+	$label_artwork_url  = '';
+	$label_artwork_name = '';
+	if ( is_array( $label_artwork ) && ! empty( $label_artwork['url'] ) ) {
+		$label_artwork_url  = $label_artwork['url'];
+		$label_artwork_name = ! empty( $label_artwork['title'] ) ? $label_artwork['title'] : $label_artwork['filename'];
+	} elseif ( is_string( $label_artwork ) && '' !== $label_artwork ) {
+		// The field was left on "URL" return format; still usable.
+		$label_artwork_url  = $label_artwork;
+		$label_artwork_name = basename( wp_parse_url( $label_artwork, PHP_URL_PATH ) );
+	}
+
 	$vintage        = get_field( 'vintage_year' );
 	$abv            = get_field( 'abv' ); // number, append % ourselves
 	$allergens      = get_field( 'allergens' );
@@ -52,6 +74,15 @@ while ( have_posts() ) :
 	$sustainability = get_field( 'sustainability' );
 	$serving        = get_field( 'serving' );
 	$technical_sheet = get_field( 'technical_sheet' ); // file URL
+
+	// Technical tab — the analysis and cellaring detail.
+	$ageing          = get_field( 'ageing' );
+	$drinking_window = get_field( 'drinking_window' );
+	$box_orientation = get_field( 'box_orientation' );
+	$residual_sugar  = get_field( 'residual_sugar' );
+	$total_acidity   = get_field( 'total_acidity' );
+	$ph_level        = get_field( 'ph_level' );
+	$organic         = get_field( 'organic' );
 
 	// 2) WooCommerce global attribute — Grape is seeded as an attribute, not an ACF field.
 	$grape  = $product->get_attribute( 'grape' );
@@ -127,14 +158,22 @@ while ( have_posts() ) :
 
 				<?php
 				/*
-				 * Awards. The card shows a single "Award Winning" medallion
-				 * because there is no room for more; here there is, so every
-				 * line of the ACF field gets its own medal and its full text.
+				 * Awards and label artwork, in one block.
+				 *
+				 * The card shows a single "Award Winning" medallion because there
+				 * is no room for more; here there is, so every line of the ACF
+				 * field gets its own medal and its full text. The label artwork
+				 * joins the same list as one more line, with a label icon rather
+				 * than a medal — same markup, same classes, so it inherits the
+				 * styling that is already there and needs none of its own.
+				 *
+				 * The block shows if EITHER exists, so a wine with artwork but no
+				 * awards still gets it.
 				 */
-				if ( ! empty( $awards ) ) :
+				if ( ! empty( $awards ) || $label_artwork_url ) :
 					?>
 					<div class="mv-awards">
-						<p class="mv-awards__label"><?php esc_html_e( 'Awards &amp; recognition', 'maison-vintique' ); ?></p>
+						<p class="mv-awards__label"><?php esc_html_e( 'Awards & Label', 'maison-vintique' ); ?></p>
 						<ul class="mv-awards__list">
 							<?php foreach ( $awards as $award ) : ?>
 								<li class="mv-awards__item">
@@ -145,6 +184,30 @@ while ( have_posts() ) :
 									<span class="mv-awards__text"><?php echo esc_html( $award ); ?></span>
 								</li>
 							<?php endforeach; ?>
+
+							<?php if ( $label_artwork_url ) : ?>
+								<li class="mv-awards__item">
+									<?php // A luggage-label tag, so it reads as "label" at a glance next to the medals. ?>
+									<svg class="mv-awards__medal" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+										<path d="M12.6 3H20a1 1 0 0 1 1 1v7.4a1 1 0 0 1-.3.7l-8.6 8.6a1 1 0 0 1-1.4 0l-7.4-7.4a1 1 0 0 1 0-1.4l8.6-8.6a1 1 0 0 1 .7-.3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+										<circle cx="16.6" cy="7.4" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+									</svg>
+									<span class="mv-awards__text">
+										<?php
+										/*
+										 * The link says "Label artwork" and nothing else. The
+										 * attachment's own title is usually the file name, which
+										 * reads as noise next to award lines this short — it is
+										 * kept below only as the download's suggested name.
+										 */
+										?>
+										<a href="<?php echo esc_url( $label_artwork_url ); ?>" target="_blank" rel="noopener"
+											<?php echo $label_artwork_name ? 'download="' . esc_attr( $label_artwork_name ) . '"' : ''; ?>>
+											<?php esc_html_e( 'Label artwork', 'maison-vintique' ); ?>
+										</a>
+									</span>
+								</li>
+							<?php endif; ?>
 						</ul>
 					</div>
 				<?php endif; ?>
@@ -156,8 +219,33 @@ while ( have_posts() ) :
 				<div class="pdp-stockline">
 					<?php // Stock is trade information — hidden until the visitor logs in. ?>
 					<?php if ( $is_trade ) : ?>
-						<span class="stock <?php echo $product->is_in_stock() ? 'available' : 'out'; ?>" style="position:static">
-							<?php echo $product->is_in_stock() ? esc_html__( 'Available', 'maison-vintique' ) : esc_html__( 'Out of stock', 'maison-vintique' ); ?>
+<?php
+$mv_pdp_avail = array(
+	'available' => 'Available', 'limited' => 'Limited', 'incoming' => 'Incoming',
+	'available_to_order' => 'Available to Order', 'preorder' => 'Pre-Order / Allocation', 'outofstock' => 'Out of Stock',
+);
+$mv_pdp_states = array(
+	'available' => 'available', 'limited' => 'low', 'incoming' => 'inc',
+	'available_to_order' => 'ato', 'preorder' => 'pre', 'outofstock' => 'out',
+);
+$mv_pdp_key = function_exists( 'mv_avail' ) ? mv_avail( $product->get_id() ) : ( $product->is_in_stock() ? 'available' : 'outofstock' );
+if ( ! isset( $mv_pdp_avail[ $mv_pdp_key ] ) ) { $mv_pdp_key = $product->is_in_stock() ? 'available' : 'outofstock'; }
+$mv_pdp_state = $mv_pdp_states[ $mv_pdp_key ];
+?>
+						<span class="stock <?php echo esc_attr( $mv_pdp_state ); ?>" style="position:static">
+				<?php
+				$mv_pdp_avail = array(
+					'available'          => 'Available',
+					'limited'            => 'Limited',
+					'incoming'           => 'Incoming',
+					'available_to_order' => 'Available to Order',
+					'preorder'           => 'Pre-Order / Allocation',
+					'outofstock'         => 'Out of Stock',
+				);
+				$mv_pdp_key = function_exists( 'mv_avail' ) ? mv_avail( $product->get_id() ) : ( $product->is_in_stock() ? 'available' : 'outofstock' );
+				if ( ! isset( $mv_pdp_avail[ $mv_pdp_key ] ) ) { $mv_pdp_key = $product->is_in_stock() ? 'available' : 'outofstock'; }
+				echo esc_html( $mv_pdp_avail[ $mv_pdp_key ] );
+				?>
 						</span>
 					<?php endif; ?>
 					<?php if ( ! $is_trade ) : ?>
@@ -166,9 +254,26 @@ while ( have_posts() ) :
 				</div>
 
 				<?php if ( $is_trade ) : ?>
-					<p class="pdp-price">
-						<?php echo wp_kses_post( $product->get_price_html() ); ?>
-						<small><?php esc_html_e( 'per case', 'maison-vintique' ); ?></small>
+				<?php
+				$mv_bpc   = (int) get_post_meta( $product->get_id(), '_mv_bottles_per_case', true );
+				if ( $mv_bpc < 1 ) { $mv_bpc = 6; }
+				$mv_case_price = (float) $product->get_price();
+				$mv_btl_price  = $mv_bpc > 0 ? $mv_case_price / $mv_bpc : 0;
+				$mv_min  = ( 12 === $mv_bpc ) ? 1 : 2;
+				$mv_step = ( 12 === $mv_bpc ) ? 1 : 2;
+				?>
+				<div class="mv-price-row" style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:4px 0 14px">
+					<div><span style="font-size:26px;font-weight:600"><?php echo wp_kses_post( wc_price( $mv_case_price ) ); ?></span>
+					<small style="margin-left:8px;letter-spacing:.08em;text-transform:uppercase;color:#8A8072;font-size:11px"><?php printf( esc_html__( 'per case (%d x 75cl)', 'maison-vintique' ), (int) $mv_bpc ); ?></small></div>
+					<div style="width:1px;height:30px;background:#E7E1D6"></div>
+					<div><span style="font-size:20px;font-weight:600;color:#5C5450"><?php echo wp_kses_post( wc_price( $mv_btl_price ) ); ?></span>
+					<small style="margin-left:8px;letter-spacing:.08em;text-transform:uppercase;color:#8A8072;font-size:11px"><?php esc_html_e( 'per bottle', 'maison-vintique' ); ?></small></div>
+				</div>
+				<div class="mv-moq" style="display:flex;gap:12px;align-items:flex-start;border:1px solid #E7E1D6;background:#F6F4EE;border-radius:10px;padding:14px 16px;margin:0 0 16px">
+					<span style="font-size:17px;line-height:1">&#128722;</span><div>
+					<div style="font-weight:600;font-size:14px"><?php printf( esc_html__( 'Minimum order: %d case%s (%d bottles)', 'maison-vintique' ), (int) $mv_min, 1 === $mv_min ? '' : 's', (int) ( $mv_min * $mv_bpc ) ); ?></div>
+					<div style="font-size:13px;color:#6b635e"><?php printf( esc_html__( 'Orders must be placed in increments of %d case%s.', 'maison-vintique' ), (int) $mv_step, 1 === $mv_step ? '' : 's' ); ?></div>
+					</div></div>
 					</p>
 				<?php endif; ?>
 
@@ -182,7 +287,43 @@ while ( have_posts() ) :
 				 */
 				?>
 
-				<?php if ( $is_trade ) : ?>
+<?php
+$mv_poo = function_exists( 'mv_is_pull_to_order' ) && mv_is_pull_to_order( $product->get_id() );
+if ( $mv_poo ) :
+	$mv_pre  = 'preorder' === mv_avail( $product->get_id() );
+	$mv_mine = ( function_exists( 'mv_user_request_for' ) && is_user_logged_in() ) ? mv_user_request_for( get_current_user_id(), $product->get_id() ) : null;
+?>
+<div class="mv-poo" style="border:1px solid #E7E1D6;background:#FBF9F4;border-radius:12px;padding:18px;margin:0 0 18px">
+<strong><?php echo esc_html( $mv_pre ? 'Pre-Order' : 'Available to Order' ); ?></strong>
+<p style="margin:8px 0 14px;font-size:14px"><?php echo esc_html( $mv_pre ? 'Reserve your required quantity from our next producer shipment. Availability and expected delivery will be confirmed by Maison Vintique before the order becomes binding.' : 'This wine is available through our estate partner but is not currently held in UK stock. Register your required quantity and we will contact you once sufficient demand has been reached to confirm availability, pricing and expected delivery.' ); ?></p>
+<?php if ( ! is_user_logged_in() ) : ?>
+<a class="btn" href="<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) ); ?>">Sign in to register interest</a>
+<?php elseif ( $mv_mine ) : ?>
+<p style="font-weight:600">Interest Registered &mdash; <?php echo (int) $mv_mine['cases']; ?> cases</p>
+<p style="font-size:13px">Status: <?php echo esc_html( $mv_mine['status'] ); ?>. Amend or cancel in <a href="<?php echo esc_url( wc_get_account_endpoint_url( 'wine-requests' ) ); ?>">My Wine Requests</a> until we confirm.</p>
+<?php else : ?>
+<form method="post" class="mv-register-interest-form">
+<?php wp_nonce_field( 'mv_reg_interest', 'mv_ri_nonce' ); ?>
+
+<input type="hidden" name="mv_ri_product" value="<?php echo esc_attr( $product->get_id() ); ?>">
+
+<label class="mv-ri-label">Quantity (cases)</label>
+<input type="number" name="mv_ri_cases" min="1" value="1" class="mv-ri-input">
+
+<label class="mv-ri-label">Preferred delivery (optional)</label>
+<input type="text" name="mv_ri_delivery" placeholder="No preference" class="mv-ri-input">
+
+<label class="mv-ri-label">Notes (optional)</label>
+<textarea name="mv_ri_note" rows="2" class="mv-ri-input mv-ri-textarea"></textarea><br>
+
+<button type="submit" class="btn mv-ri-button">Register Interest</button>
+
+<p class="mv-ri-note">Registering interest does not place an order or guarantee availability.</p>
+</form>
+<?php endif; ?>
+</div>
+<?php endif; ?>
+				<?php if ( ! $mv_poo && $is_trade ) : ?>
 
 					<form class="cart" action="<?php echo esc_url( apply_filters( 'woocommerce_add_to_cart_form_action', $product->get_permalink() ) ); ?>" method="post" enctype="multipart/form-data">
 						<?php $mve_qty_rules = mve_quantity_rules( $product ); ?>
@@ -210,6 +351,9 @@ while ( have_posts() ) :
 								 */
 								woocommerce_quantity_input(
 									array(
+										'min_value'   => $mv_min,
+										'step'        => $mv_step,
+										'input_value' => $mv_min,
 										'max_value' => apply_filters( 'woocommerce_quantity_input_max', $product->get_max_purchase_quantity(), $product ),
 									),
 									$product
@@ -219,9 +363,32 @@ while ( have_posts() ) :
 							</div>
 
 							<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() ); ?>" class="btn btn-p">
-								<?php esc_html_e( 'Add to Case', 'maison-vintique' ); ?>
+								<?php esc_html_e( 'Add to Order', 'maison-vintique' ); ?>
 							</button>
 							<?php mve_enquiry_button( $product, 'btn btn-o' ); ?>
+					<?php
+					$mv_next = array();
+					for ( $i = 1; $i <= 4; $i++ ) { $mv_next[] = ( $mv_min + $i * $mv_step ) . ' cases'; }
+					?>
+					<p class="mv-next-qty" style="font-size:13px;color:#6b635e;margin:10px 0 0;flex-basis:100%">
+						<?php esc_html_e( 'Next available quantities:', 'maison-vintique' ); ?>
+						<span style="color:#2E7D5B;font-weight:600"><?php echo esc_html( implode( ', ', $mv_next ) ); ?>&hellip;</span>
+					</p>
+					<script>
+					(function(){
+						var f=document.querySelector('form.cart'); if(!f) return;
+						var qi=f.querySelector('input.qty'); if(!qi||qi.dataset.mvCases) return;
+						qi.dataset.mvCases='1';
+						qi.setAttribute('min','<?php echo (int) $mv_min; ?>');
+						qi.setAttribute('step','<?php echo (int) $mv_step; ?>');
+						if(parseInt(qi.value,10)<<?php echo (int) $mv_min; ?>) qi.value='<?php echo (int) $mv_min; ?>';
+						var tag=document.createElement('span');
+						tag.style.cssText='margin-left:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b635e';
+						function paint(){tag.textContent=(parseInt(qi.value,10)===1?'case':'cases');}
+						paint(); qi.addEventListener('change',paint); qi.addEventListener('input',paint);
+						qi.insertAdjacentElement('afterend',tag);
+					})();
+					</script>
 						</div>
 					</form>
 
@@ -327,37 +494,61 @@ $closure = get_field( 'closure' );
         <b><?php echo esc_html( $closure ); ?></b>
     </div>
 <?php endif; ?>
+					<?php
+					/*
+					 * Cellaring and analysis. Each row appears only when the field
+					 * has been filled in — the same rule the rows above already
+					 * follow, so a wine with no lab figures does not show a column
+					 * of blanks. Fill any of these in on the product and it shows
+					 * here immediately.
+					 */
+					?>
+					<?php if ( $ageing ) : ?><div><span><?php esc_html_e( 'Ageing', 'maison-vintique' ); ?></span><b><?php echo esc_html( $ageing ); ?></b></div><?php endif; ?>
+					<?php if ( $drinking_window ) : ?><div><span><?php esc_html_e( 'Drinking Window', 'maison-vintique' ); ?></span><b><?php echo esc_html( $drinking_window ); ?></b></div><?php endif; ?>
 					<div><span><?php esc_html_e( 'Bottles per case', 'maison-vintique' ); ?></span><b><?php echo esc_html( $bottles_per_case ); ?></b></div>
+					<?php if ( $box_orientation ) : ?><div><span><?php esc_html_e( 'Box Orientation', 'maison-vintique' ); ?></span><b><?php echo esc_html( $box_orientation ); ?></b></div><?php endif; ?>
+					<?php if ( '' !== (string) $residual_sugar ) : ?><div><span><?php esc_html_e( 'Residual Sugar', 'maison-vintique' ); ?></span><b><?php echo esc_html( $residual_sugar ); ?></b></div><?php endif; ?>
+					<?php if ( '' !== (string) $total_acidity ) : ?><div><span><?php esc_html_e( 'Total Acidity', 'maison-vintique' ); ?></span><b><?php echo esc_html( $total_acidity ); ?></b></div><?php endif; ?>
+					<?php // "pH" keeps its lower-case p — it is a unit, not a word to title-case. ?>
+					<?php if ( '' !== (string) $ph_level ) : ?><div><span><?php esc_html_e( 'pH', 'maison-vintique' ); ?></span><b><?php echo esc_html( $ph_level ); ?></b></div><?php endif; ?>
+					<?php if ( $organic ) : ?><div><span><?php esc_html_e( 'Organic', 'maison-vintique' ); ?></span><b><?php esc_html_e( 'Yes', 'maison-vintique' ); ?></b></div><?php endif; ?>
 					<?php if ( $sustainability ) : ?><div><span><?php esc_html_e( 'Sustainability', 'maison-vintique' ); ?></span><b><?php echo esc_html( $sustainability ); ?></b></div><?php endif; ?>
 					<?php if ( $serving ) : ?><div><span><?php esc_html_e( 'Serving', 'maison-vintique' ); ?></span><b><?php echo esc_html( $serving ); ?></b></div><?php endif; ?>
 				</div>
 			</div>
 
 			<div class="tabpane" id="tab-dl">
-				<?php if ( $is_trade ) : ?>
-					<?php if ( $technical_sheet ) : ?>
-						<div class="dl">
-							DOC
-							<div><b><?php esc_html_e( 'Technical Sheet', 'maison-vintique' ); ?></b><div style="font-size:12px;color:var(--taupe)">PDF</div></div>
-							<a class="btn btn-o" style="margin-left:auto;padding:8px 14px" href="<?php echo esc_url( $technical_sheet ); ?>" download>
-								<?php esc_html_e( 'Download', 'maison-vintique' ); ?>
-							</a>
-						</div>
-					<?php endif; ?>
-				
-					<?php if ( ! $technical_sheet ) : ?>
-						<p style="font-size:12.5px;color:var(--taupe)"><?php esc_html_e( 'No documents uploaded for this wine yet.', 'maison-vintique' ); ?></p>
-					<?php endif; ?>
-				<?php else : ?>
+				<?php
+				/*
+				 * THE TECHNICAL SHEET IS PUBLIC.
+				 *
+				 * It used to be behind the trade login along with everything else,
+				 * which meant a sommelier deciding whether to enquire could not read
+				 * the one document that would help them decide. It is a spec sheet,
+				 * not a price list — nothing commercially sensitive is on it — so it
+				 * downloads for anybody, signed in or not.
+				 *
+				 * Pricing and stock are still trade-only. That is decided further up
+				 * this file by $is_trade and is untouched by this.
+				 */
+				?>
+				<?php if ( $technical_sheet ) : ?>
 					<div class="dl">
 						DOC
 						<div><b><?php esc_html_e( 'Technical Sheet', 'maison-vintique' ); ?></b><div style="font-size:12px;color:var(--taupe)">PDF</div></div>
-						<button class="btn btn-o" style="margin-left:auto;padding:8px 14px" disabled><?php esc_html_e( 'Trade only', 'maison-vintique' ); ?></button>
+						<a class="btn btn-o" style="margin-left:auto;padding:8px 14px" href="<?php echo esc_url( $technical_sheet ); ?>" download>
+							<?php esc_html_e( 'Download', 'maison-vintique' ); ?>
+						</a>
 					</div>
+				<?php else : ?>
+					<p style="font-size:12.5px;color:var(--taupe)"><?php esc_html_e( 'No documents uploaded for this wine yet.', 'maison-vintique' ); ?></p>
+				<?php endif; ?>
 
+				<?php if ( ! $is_trade ) : ?>
+					<?php // Reworded: it no longer claims the technical sheet is locked, because it is not. ?>
 					<div class="gate">
-						<b><?php esc_html_e( 'Trade documents are locked', 'maison-vintique' ); ?></b>
-						<p><?php esc_html_e( 'Log in with an approved trade account to download technical sheets and hi-res imagery.', 'maison-vintique' ); ?></p>
+						<b><?php esc_html_e( 'Trade pricing is locked', 'maison-vintique' ); ?></b>
+						<p><?php esc_html_e( 'The technical sheet above is free to download. Log in with an approved trade account to see pricing, stock and allocation, and to order by the case.', 'maison-vintique' ); ?></p>
 						<a class="btn btn-p" href="<?php echo esc_url( wc_get_page_permalink( 'myaccount' ) ); ?>"><?php esc_html_e( 'Trade Login', 'maison-vintique' ); ?></a>
 					</div>
 				<?php endif; ?>
