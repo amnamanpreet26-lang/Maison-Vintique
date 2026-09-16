@@ -1,0 +1,260 @@
+/* ==========================================================================
+   MAISON VINTIQUE - OUR STORY, REDESIGNED
+   --------------------------------------------------------------------------
+   PASTE THIS AT THE VERY END of Appearance - Customize - Additional CSS,
+   AFTER everything that is already there. Nothing is removed and nothing is
+   replaced: every rule below is new, and they only work if they come last.
+
+   Two things:
+     1. The three numbered columns, which replaced the long paragraphs
+     2. The full-width band, when its copy is set to sit bottom left
+
+   Nothing else on the site is touched. The band's centred layout - the way it
+   has always looked, and the way every other page uses it - is left exactly
+   as it is; the rules here only apply once you choose "Bottom left".
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. THE THREE COLUMNS
+   --------------------------------------------------------------------------
+   The old block was a heading and four full paragraphs. This is the same
+   thinking in three short columns, divided by a hairline rather than boxed
+   into cards, each one ending in a link that gives the idea somewhere to go.
+
+   Deliberately NOT .mvp-card: those are white boxes with a border and a
+   shadow, which is the right treatment for a grid of items and the wrong one
+   for a single band of editorial columns.
+   ========================================================================== */
+
+.mvos-pillars__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0;
+	align-items: start;
+}
+
+.mvos-pillar {
+	padding: 4px 34px 0;
+}
+
+/* The hairline between columns, on every one but the first. Using a border
+   rather than a gap with a background means it disappears by itself when the
+   grid folds to one column on a phone. */
+.mvos-pillar + .mvos-pillar {
+	border-left: 1px solid var(--mv2-line, #d6cec1);
+}
+
+.mvos-pillar:first-child {
+	padding-left: 0;
+}
+
+.mvos-pillar:last-child {
+	padding-right: 0;
+}
+
+/* ---- the number, with its rule running off to the right ---- */
+.mvos-pillar__n {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 0 16px;
+
+	/* The column sets align-items:flex-start, which would shrink this row to
+	   the width of "01" and leave the rule beside it nothing to grow into.
+	   Stretching it back gives the rule its width. */
+	align-self: stretch;
+}
+
+.mvos-pillar__num {
+	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .18em;
+	color: var(--mv2-gold, #a98854);
+}
+
+.mvos-pillar__rule {
+	flex: 1 1 auto;
+	max-width: 54px;
+	height: 1px;
+	background: var(--mv2-gold, #a98854);
+	opacity: .55;
+}
+
+.mvos-pillar__title {
+	font-family: var(--mv2-serif, "Cormorant Garamond", Georgia, serif);
+	font-weight: 400;
+	font-size: clamp(21px, 2.2vw, 26px);
+	line-height: 1.25;
+	color: var(--mv2-ink, #5e5a51);
+	margin: 0 0 14px;
+}
+
+.mvos-pillar__text {
+	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
+	font-size: 14px;
+	line-height: 1.8;
+	color: var(--mv2-ink-soft, #5e5a51);
+	margin: 0 0 20px;
+}
+
+/* A column with no link still needs the same foot as the ones that have one,
+   or the links sit at different heights across the row. Columns are a flex
+   column so `margin-top:auto` on the link can push it to the bottom.
+
+   align-items:flex-start matters more than it looks: without it every child
+   stretches to the full width of the column, and .link-arrow draws its
+   underline right across the page instead of under its own words. */
+.mvos-pillar {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	min-height: 100%;
+}
+
+/* .link-arrow already carries the type and the underline. This places it and
+   warms it to the gold used by the numbers above, which is what the design
+   asks for here - the dark house link is still what every other page uses. */
+.mvos-pillar__link {
+	margin-top: auto;
+	color: var(--mv2-gold, #a98854);
+	border-bottom-color: var(--mv2-gold, #a98854);
+}
+
+.mvos-pillar__link span {
+	margin-left: 6px;
+}
+
+@media (max-width: 1024px) {
+	.mvos-pillars__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		row-gap: 40px;
+	}
+
+	/* Two across: the divider belongs on the second of each pair, not on
+	   whichever one happens to be third. */
+	.mvos-pillar + .mvos-pillar {
+		border-left: 0;
+	}
+
+	.mvos-pillar:nth-child(2n) {
+		border-left: 1px solid var(--mv2-line, #d6cec1);
+	}
+
+	.mvos-pillar:nth-child(2n + 1) {
+		padding-left: 0;
+	}
+}
+
+@media (max-width: 720px) {
+	.mvos-pillars__grid {
+		grid-template-columns: minmax(0, 1fr);
+		row-gap: 0;
+	}
+
+	.mvos-pillar {
+		padding: 28px 0;
+		border-left: 0;
+	}
+
+	/* Stacked, the divider becomes a rule between rows instead. */
+	.mvos-pillar:nth-child(2n) {
+		border-left: 0;
+	}
+
+	.mvos-pillar + .mvos-pillar {
+		border-top: 1px solid var(--mv2-line, #d6cec1);
+	}
+}
+
+
+/* ==========================================================================
+   2. THE FULL-WIDTH BAND - BOTTOM LEFT
+   --------------------------------------------------------------------------
+   Only when "Text Position" is set to "Bottom left". Left alone, the band
+   keeps the centred layout it has always had, so no other page moves.
+
+   The inner is a two-column row: the heading at the bottom left, the small
+   corner line at the bottom right.
+   ========================================================================== */
+
+/* Pin the copy to the foot of the band. Stated here rather than relied on:
+   the centred version sits in the middle, and this variant should not change
+   its mind if that base rule is ever edited. */
+.mvv-hero--left {
+	align-items: flex-end;
+}
+
+.mvv-hero--left .mvv-hero__inner {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 40px;
+	text-align: left;
+	width: 100%;
+}
+
+.mvv-hero--left .mvv-hero__copy {
+	max-width: 46ch;
+}
+
+.mvv-hero--left .mvv-hero__title {
+	text-align: left;
+	margin: 0;
+}
+
+.mvv-hero--left .mvv-hero__text {
+	text-align: left;
+	margin: 14px 0 0;
+}
+
+/* The two small lines - under the heading, and in the far corner.
+
+   Both drop the short dash the base .eyebrow draws to its left, and the 26px
+   it reserves for it: the design sets these as plain lines of type, and on the
+   right-hand one the dash would sit stranded away from the words.
+
+   They also go a soft white rather than the house gold. Gold on a photograph
+   this busy is barely legible - the heading beside them is white, and these
+   are meant to read as quieter members of the same line, not as links. */
+.mvv-hero--left .mvv-hero__kicker,
+.mvv-hero__aside {
+	color: rgba(255, 255, 255, .82);
+	padding-left: 0;
+	letter-spacing: .2em;
+}
+
+.mvv-hero--left .mvv-hero__kicker::before,
+.mvv-hero__aside::before {
+	content: none;
+}
+
+.mvv-hero--left .mvv-hero__kicker {
+	margin: 16px 0 0;
+}
+
+.mvv-hero__aside {
+	margin: 0;
+	text-align: right;
+	line-height: 1.9;
+	flex: 0 0 auto;
+	align-self: flex-end;
+}
+
+@media (max-width: 860px) {
+	/* Side by side, the two blocks fight for width on a phone. Stacked, the
+	   corner line simply follows the heading. */
+	.mvv-hero--left .mvv-hero__inner {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 22px;
+	}
+
+	.mvv-hero__aside {
+		text-align: left;
+		align-self: flex-start;
+	}
+}
+
+/* ===== OUR STORY - END ===== */
