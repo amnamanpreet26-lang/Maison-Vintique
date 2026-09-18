@@ -425,20 +425,30 @@ $mv_producers = new WP_Query( array(
 
             <?php
             /*
-             * PRICE — bottle large, case underneath, exactly as on the wine
-             * card and from the same helper (mve_price_per_bottle() in
-             * inc/woocommerce.php), so the two can never disagree.
+             * PRICE — bottle large, case underneath. Exactly the wine card's
+             * layout, from the wine card's helper (mve_price_per_bottle() in
+             * inc/woocommerce.php), so the two can never quote different
+             * figures for the same wine.
              *
-             * A price typed into spotlight_price still wins outright: that
-             * field exists so an editor can pin a figure ("POA"), and
-             * second-guessing it would defeat the point.
+             * THE CHOSEN WINE WINS, not the spotlight_price field.
+             *
+             * That is the opposite of the other fields here, and deliberate.
+             * This section used to be filled in entirely by hand, so most
+             * sites have an old figure sitting in spotlight_price — and while
+             * that field had the final say, picking a wine changed the name
+             * and the picture but left the price as whatever was typed months
+             * ago, showing as one lump sum with no per-bottle line. Choosing a
+             * wine is now enough to get its real price, in the house format.
+             *
+             * spotlight_price is still honoured when NO wine is chosen, which
+             * is the only case where it is the only price available.
              */
             $spot_price       = get_field('spotlight_price');
-            $spot_price_split = ( ! $spot_price && $spot_product && function_exists( 'mve_price_per_bottle' ) )
+            $spot_price_split = ( $spot_product && function_exists( 'mve_price_per_bottle' ) )
               ? mve_price_per_bottle( $spot_product )
               : null;
 
-            if ( ! $spot_price && ! $spot_price_split && $spot_product ) {
+            if ( ! $spot_price_split && $spot_product && ! $spot_price ) {
               // Variable wine, or no price: WooCommerce's own range.
               $spot_price = $spot_product->get_price_html();
             }

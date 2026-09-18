@@ -2161,3 +2161,210 @@ function mve_case_price_label( $price ) {
 		$price['bpc']
 	);
 }
+
+
+/* =========================================================================
+ * THE EMPTY BASKET, AND THE BASKET COUNT
+ * ---------------------------------------------------------------------
+ * Two faults, one cause: the Cart BLOCK does its own thing in the browser
+ * after the page has loaded, and nothing on the PHP side hears about it.
+ *
+ *   1. Empty the basket by removing the last line and the block swaps to
+ *      WooCommerce's own empty state - the grey sad face - instead of the
+ *      house design. Load the same page fresh and the house design is back.
+ *      So which empty basket a customer saw depended on how they got there.
+ *
+ *   2. The count on the basket button never moved. It is printed once when
+ *      the header renders and nothing ever replaced it, despite a comment in
+ *      header.php promising a fragment that was never registered.
+ *
+ * Both are fixed below: the block's empty state is replaced server-side, the
+ * page is reloaded once when the basket empties so that replacement is what
+ * the customer ends up looking at, and the count is kept live from every
+ * route WooCommerce updates a basket by.
+ * ====================================================================== */
+
+/**
+ * The house empty basket, as a string.
+ *
+ * @return string
+ */
+function mv_empty_cart_markup() {
+	ob_start();
+	get_template_part( 'template-parts/cart-empty' );
+	return trim( (string) ob_get_clean() );
+}
+
+/**
+ * Replace the Cart block's empty state with the house one.
+ *
+ * The block stores two halves in the page - a filled cart and an empty cart -
+ * and shows whichever fits. Editing the empty half in the block editor is
+ * possible but it is a trap: it looks right until somebody re-inserts the
+ * block, and it leaves the design in the page content rather than the theme.
+ * Swapping the rendered output keeps one copy, in one file.
+ *
+ * @param string $content Rendered block HTML.
+ * @param array  $block   Parsed block.
+ * @return string
+ */
+function mv_our_empty_cart_block( $content, $block ) {
+	if ( empty( $block['blockName'] ) || 'woocommerce/empty-cart-block' !== $block['blockName'] ) {
+		return $content;
+	}
+
+	$markup = mv_empty_cart_markup();
+	if ( ! $markup ) {
+		return $content;
+	}
+
+	/*
+	 * Kept inside the block's own wrapper rather than replacing it outright:
+	 * the block's JavaScript shows and hides that wrapper, so losing it would
+	 * mean the empty basket showed at the same time as a full one.
+	 */
+	if ( preg_match( '#^(\s*<div[^>]*wp-block-woocommerce-empty-cart-block[^>]*>)(.*)(</div>\s*)$#is', $content, $m ) ) {
+		return $m[1] . $markup . $m[3];
+	}
+
+	return '<div class="wp-block-woocommerce-empty-cart-block">' . $markup . '</div>';
+}
+add_filter( 'render_block', 'mv_our_empty_cart_block', 10, 2 );
+
+/**
+ * Keep the basket button's count live.
+ *
+ * WooCommerce replaces any element whose CSS selector is a key in this array
+ * whenever it refreshes fragments - which covers AJAX add-to-cart and every
+ * wc_fragment_refresh the blocks fire. header.php prints the element even at
+ * zero, hidden, precisely so there is always something here to replace.
+ *
+ * @param array $fragments Fragments.
+ * @return array
+ */
+function mv_cart_count_fragment( $fragments ) {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return $fragments;
+	}
+
+	$count = (int) WC()->cart->get_cart_contents_count();
+
+	$fragments['span.mv-header__cart-count'] = sprintf(
+		'<span class="mv-header__cart-count" data-cart-count%1$s>%2$d</span>',
+		$count ? '' : ' hidden',
+		$count
+	);
+
+	return $fragments;
+}
+add_filter( 'woocommerce_add_to_cart_fragments', 'mv_cart_count_fragment' );
+
+/**
+ * The browser half.
+ *
+ * Fragments alone are not enough. The Cart and Checkout blocks talk to the
+ * Store API and update their own React state; they do not run the legacy
+ * fragment refresh, so removing a line used to change nothing in the header.
+ *
+ * This watches the block's own data store where it exists, falls back to the
+ * classic jQuery events everywhere else, and reloads the cart page once when
+ * the basket reaches zero so the server-rendered house empty state is what
+ * ends up on screen.
+ */
+function mv_cart_count_live() {
+	if ( ! function_exists( 'is_woocommerce' ) ) {
+		return;
+	}
+	?>
+	<script id="mv-cart-count-live">
+	(function () {
+		var ON_CART  = <?php echo ( function_exists( 'is_cart' ) && is_cart() ) ? 'true' : 'false'; ?>;
+		var reloaded = false;
+
+		/* What the header says right now, which is what PHP rendered. Used as
+		   the starting point so the first reading of the basket is a
+		   comparison, not an event. */
+		var known = (function () {
+			var el = document.querySelector('.mv-header__cart-count');
+			var n  = el ? parseInt(el.textContent, 10) : 0;
+			return isNaN(n) ? 0 : n;
+		}());
+
+		function paint(count) {
+			var el = document.querySelector('.mv-header__cart-count');
+			if (!el) { return; }
+
+			el.textContent = String(count);
+			if (count > 0) {
+				el.removeAttribute('hidden');
+			} else {
+				el.setAttribute('hidden', '');
+			}
+		}
+
+		/* One entry point, so the reload rule is written once.
+
+		   THE RELOAD IS ONLY FOR A TRANSITION. It fires when the basket goes
+		   from holding something to holding nothing WHILE the customer is on
+		   the basket page - the moment the block would otherwise draw
+		   WooCommerce's own empty state. Reloading whenever the count is
+		   simply zero would mean an already-empty basket page reloaded itself
+		   forever, which is why the previous value is what decides. */
+		function update(count) {
+			count = parseInt(count, 10);
+			if (isNaN(count) || count < 0) { return; }
+			if (count === known) { return; }
+
+			var emptied = ( known > 0 && 0 === count );
+			known = count;
+			paint(count);
+
+			if (ON_CART && emptied && !reloaded) {
+				reloaded = true;
+				window.location.reload();
+			}
+		}
+
+		/* ---- the block cart ---- */
+		if (window.wp && wp.data && typeof wp.data.subscribe === 'function') {
+			wp.data.subscribe(function () {
+				var store = wp.data.select('wc/store/cart');
+				if (!store || typeof store.getCartData !== 'function') { return; }
+
+				var data = store.getCartData();
+				if (!data || typeof data.itemsCount === 'undefined' || null === data.itemsCount) { return; }
+
+				update(data.itemsCount);
+			});
+		}
+
+		/* ---- the classic cart, and anything that fires the old events ---- */
+		if (window.jQuery) {
+			jQuery(document.body).on(
+				'added_to_cart removed_from_cart updated_cart_totals wc_fragments_refreshed wc_fragments_loaded',
+				function () {
+					/* Fragments replace this element with the server's own
+					   count, so reading it back is how we learn the new
+					   number. known is updated first or update() would see no
+					   change and do nothing. */
+					var el = document.querySelector('.mv-header__cart-count');
+					if (!el) { return; }
+
+					var n = parseInt(el.textContent, 10);
+					if (isNaN(n)) { return; }
+
+					var was = known;
+					known = n;
+
+					if (ON_CART && was > 0 && 0 === n && !reloaded) {
+						reloaded = true;
+						window.location.reload();
+					}
+				}
+			);
+		}
+	}());
+	</script>
+	<?php
+}
+add_action( 'wp_footer', 'mv_cart_count_live', 99 );

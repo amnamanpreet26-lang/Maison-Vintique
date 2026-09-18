@@ -1,12 +1,14 @@
 <?php
 /**
- * Empty basket.
+ * Empty basket — the classic cart template.
  *
  * Theme override path: your-theme/woocommerce/cart/cart-empty.php
  *
- * WooCommerce loads this instead of cart.php when the basket has no lines,
- * so without it the empty state would fall back to the plugin default and
- * look nothing like the rest of the site.
+ * WooCommerce loads this instead of cart.php when the basket has no lines.
+ * The panel itself lives in template-parts/cart-empty.php because the Cart
+ * BLOCK needs the identical markup — see inc/woocommerce.php, which swaps it
+ * into the block's empty state so a customer cannot end up looking at
+ * WooCommerce's own sad-face version.
  *
  * @package maison-vintique-elementor
  */
@@ -26,18 +28,7 @@ defined( 'ABSPATH' ) || exit;
 		<h1><?php esc_html_e( 'Your Basket', 'maison-vintique-elementor' ); ?></h1>
 	</div>
 
-	<div class="cart-empty-panel">
-		<?php do_action( 'woocommerce_cart_is_empty' ); ?>
-
-		<p class="cart-empty-msg"><?php esc_html_e( 'Your basket is empty.', 'maison-vintique-elementor' ); ?></p>
-		<p class="note"><?php esc_html_e( 'Wines are sold by the case. Browse the collection to start an order request.', 'maison-vintique-elementor' ); ?></p>
-
-		<?php if ( wc_get_page_id( 'shop' ) > 0 ) : ?>
-			<a class="btn btn-p" href="<?php echo esc_url( wc_get_page_permalink( 'shop' ) ); ?>">
-				<?php esc_html_e( 'Browse the collection', 'maison-vintique-elementor' ); ?>
-			</a>
-		<?php endif; ?>
-	</div>
+	<?php get_template_part( 'template-parts/cart-empty' ); ?>
 
 </div>
 </section>

@@ -172,4 +172,62 @@
 	}
 }
 
+/* ==========================================================================
+   3. THE EMPTY BASKET
+   --------------------------------------------------------------------------
+   One design, wherever an empty basket appears - the classic cart template
+   and the Cart block's empty state, which inc/woocommerce.php now fills with
+   this same markup.
+
+   The block's own wrapper is left in place around it (its JavaScript shows
+   and hides that), so these rules style what sits inside it.
+   ========================================================================== */
+
+.mv-cart-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	padding: 60px 24px 80px;
+}
+
+.mv-cart-empty__icon {
+	color: var(--mv-gold, #a98854);
+	margin: 0 0 30px;
+	line-height: 0;
+}
+
+.mv-cart-empty__title {
+	font-family: var(--mv-serif, "Cormorant Garamond", Georgia, serif);
+	font-weight: 400;
+	font-size: clamp(26px, 3.4vw, 38px);
+	line-height: 1.2;
+	color: var(--mv-ink, #5e5a51);
+	margin: 0 0 16px;
+}
+
+.mv-cart-empty__text {
+	font-family: var(--mv-sans, "Montserrat", Arial, sans-serif);
+	font-size: 15px;
+	line-height: 1.7;
+	color: var(--mv-ink-soft, #5e5a51);
+	margin: 0 0 32px;
+	max-width: 34ch;
+}
+
+.mv-cart-empty__cta {
+	text-decoration: none;
+}
+
+.mv-cart-empty__cta span {
+	margin-left: 6px;
+}
+
+/* The block ships its own centred wrapper and a large icon of its own. Ours
+   replaces the contents, so anything of theirs still in the box is cleared. */
+.wp-block-woocommerce-empty-cart-block .wc-block-cart__empty-cart__title,
+.wp-block-woocommerce-empty-cart-block > .wc-block-cart__empty-cart__title {
+	display: none;
+}
+
 /* ===== PRICE PER BOTTLE - END ===== */
