@@ -4,85 +4,69 @@
     "fields": [
         {
             "key": "field_os_hero_tab",
-            "label": "1. Hero",
+            "label": "1. Hero Images",
             "name": "",
             "type": "tab",
             "placement": "top",
             "endpoint": 0
         },
         {
-            "key": "field_os_eyebrow",
-            "label": "Eyebrow",
-            "name": "os_eyebrow",
-            "type": "text",
-            "instructions": "The small gold line above the title. e.g. Our Story",
+            "key": "field_os_strip_centre",
+            "label": "Centre Image (main)",
+            "name": "os_strip_centre",
+            "type": "image",
+            "instructions": "The big one in the middle, with the heading over it. Landscape works best - roughly 1600 x 900.",
             "wrapper": {
-                "width": "50"
-            }
+                "width": "40"
+            },
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        },
+        {
+            "key": "field_os_strip_left",
+            "label": "Left Image",
+            "name": "os_strip_left",
+            "type": "image",
+            "instructions": "The smaller image to its left. Portrait or square - roughly 800 x 900.",
+            "wrapper": {
+                "width": "30"
+            },
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
+        },
+        {
+            "key": "field_os_strip_right",
+            "label": "Right Image",
+            "name": "os_strip_right",
+            "type": "image",
+            "instructions": "The smaller image to its right. Same shape as the left one.",
+            "wrapper": {
+                "width": "30"
+            },
+            "return_format": "array",
+            "preview_size": "medium",
+            "library": "all"
         },
         {
             "key": "field_os_title",
-            "label": "Title",
+            "label": "Heading over the centre image",
             "name": "os_title",
             "type": "text",
-            "instructions": "The big heading. Leave empty to use the page title.",
+            "instructions": "One short line. e.g. Extraordinary wines begin in extraordinary places. Leave empty to use the page title.",
             "wrapper": {
-                "width": "50"
+                "width": "60"
             }
         },
         {
-            "key": "field_os_intro",
-            "label": "Hero Intro",
-            "name": "os_intro",
-            "type": "textarea",
-            "instructions": "One or two sentences under the title. Keep it short — the three columns below carry the detail.",
-            "rows": 3
-        },
-        {
-            "key": "field_os_hero_bg_image",
-            "label": "Hero Background Image",
-            "name": "os_hero_bg_image",
-            "type": "image",
-            "instructions": "Optional photo behind the hero.",
-            "required": 0,
-            "conditional_logic": 0,
-            "return_format": "array",
-            "preview_size": "medium",
-            "library": "all",
+            "key": "field_os_eyebrow",
+            "label": "Small line under the heading",
+            "name": "os_eyebrow",
+            "type": "text",
+            "instructions": "Uppercase, small. e.g. Real people. Remarkable vineyards.",
             "wrapper": {
-                "width": "34"
-            }
-        },
-        {
-            "key": "field_os_hero_bg_video",
-            "label": "Hero Background Video",
-            "name": "os_hero_bg_video",
-            "type": "file",
-            "instructions": "Optional MP4 behind the hero. Plays muted and looped.",
-            "required": 0,
-            "conditional_logic": 0,
-            "return_format": "array",
-            "library": "all",
-            "mime_types": "mp4",
-            "wrapper": {
-                "width": "33"
-            }
-        },
-        {
-            "key": "field_os_hero_bg_overlay",
-            "label": "Background Darkness",
-            "name": "os_hero_bg_overlay",
-            "type": "number",
-            "instructions": "0-100. How dark the tint over the photo is, so white text stays readable. Blank = 55.",
-            "required": 0,
-            "conditional_logic": 0,
-            "min": 0,
-            "max": 100,
-            "step": 5,
-            "placeholder": "55",
-            "append": "%",
-            "wrapper": {
-                "width": "33"
+                "width": "40"
             }
         },
         {
@@ -148,7 +132,10 @@
                     "name": "text",
                     "type": "textarea",
                     "rows": 3,
-                    "instructions": "Two or three sentences at most."
+                    "instructions": "Two or three sentences at most.",
+                    "wrapper": {
+                        "width": "100"
+                    }
                 },
                 {
                     "key": "field_os_v_link_label",
@@ -175,168 +162,8 @@
             "max": 4
         },
         {
-            "key": "field_os_split_tab",
-            "label": "3. Text + Image",
-            "name": "",
-            "type": "tab",
-            "placement": "top",
-            "endpoint": 0
-        },
-        {
-            "key": "field_os_split_eyebrow",
-            "label": "Eyebrow",
-            "name": "os_split_eyebrow",
-            "type": "text",
-            "instructions": "Small gold line above the heading.",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_split_title",
-            "label": "Heading",
-            "name": "os_split_title",
-            "type": "text",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_split_body",
-            "label": "Text",
-            "name": "os_split_body",
-            "type": "wysiwyg",
-            "instructions": "The copy that sits beside the image or video.",
-            "required": 0,
-            "conditional_logic": 0,
-            "tabs": "all",
-            "toolbar": "basic",
-            "media_upload": 0
-        },
-        {
-            "key": "field_os_split_cta_label",
-            "label": "Button Label",
-            "name": "os_split_cta_label",
-            "type": "text",
-            "instructions": "Leave empty for no button.",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_split_cta_link",
-            "label": "Button Link",
-            "name": "os_split_cta_link",
-            "type": "url",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_split_side",
-            "label": "Media Side",
-            "name": "os_split_side",
-            "type": "select",
-            "instructions": "Which side the picture sits on.",
-            "required": 0,
-            "conditional_logic": 0,
-            "choices": {
-                "right": "Right",
-                "left": "Left"
-            },
-            "default_value": "right",
-            "return_format": "value",
-            "allow_null": 0,
-            "multiple": 0,
-            "ui": 0,
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_media_type",
-            "label": "Media Type",
-            "name": "os_media_type",
-            "type": "select",
-            "instructions": "Picture, uploaded video, or a YouTube / Vimeo link.",
-            "choices": {
-                "image": "Image",
-                "video": "Video file (uploaded)",
-                "embed": "Video embed (YouTube / Vimeo)"
-            },
-            "default_value": "image",
-            "ui": 1,
-            "return_format": "value",
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_image",
-            "label": "Image",
-            "name": "os_image",
-            "type": "image",
-            "instructions": "Used when Media Type is Image.",
-            "return_format": "array",
-            "preview_size": "medium",
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_video",
-            "label": "Video File",
-            "name": "os_video",
-            "type": "file",
-            "instructions": "An MP4 you have uploaded. Plays muted on loop.",
-            "return_format": "url",
-            "mime_types": "mp4,webm",
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_video_poster",
-            "label": "Video Poster",
-            "name": "os_video_poster",
-            "type": "image",
-            "instructions": "Still shown before the uploaded video loads.",
-            "return_format": "array",
-            "preview_size": "medium",
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_video_embed",
-            "label": "Video Embed URL",
-            "name": "os_video_embed",
-            "type": "url",
-            "instructions": "A YouTube or Vimeo link. Used when Media Type is Video embed.",
-            "wrapper": {
-                "width": "50"
-            }
-        },
-        {
-            "key": "field_os_media_caption",
-            "label": "Caption",
-            "name": "os_media_caption",
-            "type": "text",
-            "instructions": "Optional line under the image or video."
-        },
-        {
             "key": "field_mv_os_vhero_tab",
-            "label": "4. Full-width Band",
+            "label": "3. Full-width Band",
             "name": "",
             "type": "tab",
             "placement": "top",
@@ -411,12 +238,12 @@
             "label": "Text Position",
             "name": "os_vhero_align",
             "type": "select",
-            "instructions": "Where the wording sits on the band.",
+            "instructions": "Bottom left is the design. Centred is there if you ever want it.",
             "choices": {
                 "center": "Centred",
                 "left": "Bottom left"
             },
-            "default_value": "center",
+            "default_value": "left",
             "allow_null": 0,
             "ui": 0,
             "wrapper": {
@@ -502,7 +329,7 @@
         },
         {
             "key": "field_os_cta_tab",
-            "label": "5. Closing Button",
+            "label": "4. Closing Button (optional)",
             "name": "",
             "type": "tab",
             "placement": "top",
@@ -527,40 +354,6 @@
             "wrapper": {
                 "width": "50"
             }
-        },
-        {
-            "key": "field_os_long_tab",
-            "label": "6. Long Text (off)",
-            "name": "",
-            "type": "tab",
-            "placement": "top",
-            "endpoint": 0
-        },
-        {
-            "key": "field_os_show_body",
-            "label": "Show the long text",
-            "name": "os_show_body",
-            "type": "true_false",
-            "instructions": "OFF by default. The long paragraphs that used to sit near the top of this page are still saved below, but the page no longer shows them - the three columns say the same thing in a fraction of the words. Switch this on only if you want them back.",
-            "ui": 1,
-            "default_value": 0
-        },
-        {
-            "key": "field_os_lead",
-            "label": "Lead Paragraph",
-            "name": "os_lead",
-            "type": "textarea",
-            "instructions": "Shown above the long text, when the switch is on.",
-            "rows": 3
-        },
-        {
-            "key": "field_os_body",
-            "label": "Long Text",
-            "name": "os_body",
-            "type": "wysiwyg",
-            "instructions": "Your original paragraphs, kept safe. Only shown when the switch above is on.",
-            "toolbar": "basic",
-            "media_upload": 0
         }
     ],
     "location": [
@@ -579,7 +372,7 @@
     "instruction_placement": "label",
     "hide_on_screen": "",
     "active": true,
-    "description": "Content for the \"Our Story\" page template. The tabs run in the same order as the page. Every field is optional.",
+    "description": "The \"Our Story\" page: hero images, three columns, the full-width band, and an optional button. The tabs run in the same order as the page.",
     "show_in_rest": 1,
-    "modified": 1757000000
+    "modified": 1758150000
 }

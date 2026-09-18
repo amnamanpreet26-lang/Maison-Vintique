@@ -5,9 +5,14 @@
    AFTER everything that is already there. Nothing is removed and nothing is
    replaced: every rule below is new, and they only work if they come last.
 
-   Two things:
+   Three things:
      1. The three numbered columns, which replaced the long paragraphs
      2. The full-width band, when its copy is set to sit bottom left
+     3. The hero images - three photos edge to edge, no slider
+
+   Already pasted the earlier Our Story block? Delete it (its first comment
+   down to "OUR STORY - END") and paste this in its place - it is that block
+   plus the hero images. Never pasted it? Just paste this at the end.
 
    Nothing else on the site is touched. The band's centred layout - the way it
    has always looked, and the way every other page uses it - is left exactly
@@ -244,16 +249,131 @@
 
 @media (max-width: 860px) {
 	/* Side by side, the two blocks fight for width on a phone. Stacked, the
-	   corner line simply follows the heading. */
+	   corner line simply follows the heading. The gutter is stated here
+	   rather than inherited: it is the page edge the words sit against. */
 	.mvv-hero--left .mvv-hero__inner {
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 22px;
+		padding-left: 22px;
+		padding-right: 22px;
+		box-sizing: border-box;
 	}
 
 	.mvv-hero__aside {
 		text-align: left;
 		align-self: flex-start;
+	}
+}
+
+/* ==========================================================================
+   3. THE HERO IMAGES
+   --------------------------------------------------------------------------
+   Three photographs edge to edge: a large one in the centre carrying the
+   heading, a smaller one either side. It replaces the dark banner this page
+   used to open with.
+
+   It is NOT a slider. The reference has arrows and dots; the client asked for
+   them left out, so nothing here moves and there is no script behind it.
+   ========================================================================== */
+
+.mvos-strip {
+	display: grid;
+	grid-template-columns: 1fr 2fr 1fr;
+	gap: 6px;
+	height: clamp(320px, 42vw, 540px);
+	padding: 0;
+	margin: 0;
+	background: var(--mv-chalk, #faf8f3);
+}
+
+/* Both side photos left empty: the centre one simply takes the whole row. */
+.mvos-strip--solo {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.mvos-strip figure {
+	position: relative;
+	margin: 0;
+	overflow: hidden;
+	background: var(--mv2-panel, #e9e2d6);
+}
+
+.mvos-strip img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* A soft dark wash from the left, so the heading reads over whatever the
+   photo happens to be doing behind it. The right two-thirds stay clear. */
+.mvos-strip__main::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, rgba(23, 37, 31, .62) 0%, rgba(23, 37, 31, .28) 48%, rgba(23, 37, 31, 0) 78%);
+	pointer-events: none;
+}
+
+.mvos-strip__copy {
+	position: absolute;
+	left: 7%;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 1;
+	max-width: 30ch;
+	color: #fff;
+	text-align: left;
+}
+
+/* Sized so the reference's heading breaks over three lines on a desktop
+   rather than four - it is a caption on a photograph, not a page title. */
+.mvos-strip__title {
+	font-family: var(--mv2-serif, "Cormorant Garamond", Georgia, serif);
+	font-weight: 400;
+	font-size: clamp(22px, 2.6vw, 34px);
+	line-height: 1.2;
+	color: #fff;
+	margin: 0 0 14px;
+}
+
+.mvos-strip__kicker {
+	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: .24em;
+	text-transform: uppercase;
+	line-height: 1.9;
+	color: rgba(255, 255, 255, .85);
+	margin: 0;
+}
+
+@media (max-width: 760px) {
+	/* Three across on a phone is three slivers. The centre photo goes full
+	   width with the heading, the two side photos sit under it as a pair. */
+	.mvos-strip {
+		grid-template-columns: 1fr 1fr;
+		height: auto;
+	}
+
+	.mvos-strip__main {
+		grid-column: 1 / -1;
+		order: -1;
+		aspect-ratio: 16 / 10;
+	}
+
+	.mvos-strip__side {
+		aspect-ratio: 1 / 1;
+	}
+
+	.mvos-strip__copy {
+		left: 6%;
+		max-width: 88%;
+	}
+
+	.mvos-strip__title {
+		font-size: 24px;
 	}
 }
 
