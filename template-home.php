@@ -169,13 +169,14 @@ get_header();
 
 <!-- ============ ESTATE PARTNERS / FAMILIES ============ -->
 <?php
-// This MUST run before the display block below, in the SAME file/scope
+// Homepage shows a fixed set of 3 producers, alphabetically by estate name —
+// menu_order isn't a manual ordering anyone has set (every producer sits at
+// 0), so this keeps the picture stable rather than showing creation order.
+// No carousel: this is a static 3-up grid, same pattern as the Journal grid
+// below, with a "View All" link through to the full Producers archive.
 $mv_producers = new WP_Query( array(
     'post_type'      => 'producer',
-    'posts_per_page' => 8,
-    // Alphabetical by estate name. menu_order is not a manual ordering anyone
-    // has set here — every producer sits at 0 — so it left them in whatever
-    // order they happened to be created in.
+    'posts_per_page' => 3,
     'orderby'        => 'title',
     'order'          => 'ASC',
     'no_found_rows'  => true,
@@ -185,21 +186,28 @@ $mv_producers = new WP_Query( array(
 <?php if ( $mv_producers->have_posts() ) : ?>
 <section class="section partners">
   <div class="container">
-    <div class="section__head">
-      <?php if ( $val = get_field('partners_eyebrow') ) : ?>
-        <p class="eyebrow"><?php echo esc_html( $val ); ?></p>
-      <?php endif; ?>
-      <?php if ( $val = get_field('partners_title') ) : ?>
-        <h2 class="section__title"><?php echo esc_html( $val ); ?></h2>
-      <?php endif; ?>
-      <?php if ( $val = get_field('partners_subtext') ) : ?>
-        <p class="section__subtext"><?php echo esc_html( $val ); ?></p>
+    <div class="section__head section__head--split">
+      <div>
+        <?php if ( $val = get_field('partners_eyebrow') ) : ?>
+          <p class="eyebrow"><?php echo esc_html( $val ); ?></p>
+        <?php endif; ?>
+        <?php if ( $val = get_field('partners_title') ) : ?>
+          <h2 class="section__title"><?php echo esc_html( $val ); ?></h2>
+        <?php endif; ?>
+        <?php if ( $val = get_field('partners_subtext') ) : ?>
+          <p class="section__subtext"><?php echo esc_html( $val ); ?></p>
+        <?php endif; ?>
+      </div>
+      <?php
+      $partners_view_all_label = get_field('partners_view_all_label');
+      $partners_view_all_link  = get_field('partners_view_all_link') ?: get_post_type_archive_link( 'producer' );
+      ?>
+      <?php if ( $partners_view_all_label ) : ?>
+        <a href="<?php echo esc_url( $partners_view_all_link ?: '#' ); ?>" class="link-arrow"><?php echo esc_html( $partners_view_all_label ); ?></a>
       <?php endif; ?>
     </div>
-    <div class="producer-carousel" data-count="<?php echo esc_attr( $mv_producers->post_count ); ?>">
-      <button class="producer-carousel__arrow producer-carousel__arrow--prev" aria-label="Previous">&#8249;</button>
-      <div class="card-grid card-grid--3 producer-carousel__track">
-        <?php while ( $mv_producers->have_posts() ) : $mv_producers->the_post();
+    <div class="card-grid card-grid--3">
+      <?php while ( $mv_producers->have_posts() ) : $mv_producers->the_post();
           $region_terms  = get_the_terms( get_the_ID(), 'producer_region' );
           $country_terms = get_the_terms( get_the_ID(), 'producer_country' );
           $region  = ( $region_terms && ! is_wp_error( $region_terms ) ) ? $region_terms[0]->name : '';
@@ -222,7 +230,7 @@ $mv_producers = new WP_Query( array(
           $est_year = get_field( 'established_year' ); // optional ACF field, falls back below
           $back_sub = $est_year ? 'Est. ' . esc_html( $est_year ) : esc_html( $region ?: $country );
         ?>
-          <a href="<?php echo esc_url( get_permalink() ); ?>" class="estate-card producer-carousel__slide">
+          <a href="<?php echo esc_url( get_permalink() ); ?>" class="estate-card">
             <div class="estate-card__flip">
               <div class="estate-card__face estate-card__face--front">
                 <?php if ( has_post_thumbnail() ) : ?>
@@ -253,8 +261,6 @@ $mv_producers = new WP_Query( array(
             <?php endif; ?>
           </a>
         <?php endwhile; wp_reset_postdata(); ?>
-      </div>
-      <button class="producer-carousel__arrow producer-carousel__arrow--next" aria-label="Next">&#8250;</button>
     </div>
   </div>
 </section>
@@ -284,6 +290,40 @@ $mv_producers = new WP_Query( array(
   }
 
   $spot_gated = function_exists( 'mve_is_gated' ) ? mve_is_gated( $spot_product_id ) : ! is_user_logged_in();
+
+  /*
+   * Auto-fill the Details rows from the product when no manual rows are set.
+   * Mirrors the same "vital stats" shown on the product page itself
+   * (template-parts for single product): Vintage and ABV are ACF fields;
+   * Grape and Region are read from the wine_grape / wine_region taxonomies —
+   * NOT from $product->get_attribute(), which the single product template
+   * also sets but never actually uses for display.
+   */
+  $spot_auto_details = array();
+  if ( ! have_rows( 'spotlight_details' ) && $spot_product_id ) {
+    $auto_vintage = get_field( 'vintage_year', $spot_product_id );
+    $auto_abv     = get_field( 'abv', $spot_product_id );
+
+    $auto_grape_terms = wp_get_post_terms( $spot_product_id, 'wine_grape', array( 'fields' => 'names' ) );
+    $auto_grape       = ( is_array( $auto_grape_terms ) && ! is_wp_error( $auto_grape_terms ) ) ? implode( ', ', $auto_grape_terms ) : '';
+
+    $auto_region_terms = get_the_terms( $spot_product_id, 'wine_region' );
+    $auto_region        = ( $auto_region_terms && ! is_wp_error( $auto_region_terms ) ) ? $auto_region_terms[0]->name : '';
+
+    $spot_detail_candidates = array(
+      array( 'label' => __( 'Vintage', 'maison-vintique' ), 'value' => $auto_vintage ),
+      array( 'label' => __( 'Grape', 'maison-vintique' ), 'value' => $auto_grape ),
+      array( 'label' => __( 'Region', 'maison-vintique' ), 'value' => $auto_region ),
+      array( 'label' => __( 'ABV', 'maison-vintique' ), 'value' => $auto_abv ? $auto_abv . '%' : '' ),
+    );
+
+    foreach ( $spot_detail_candidates as $candidate ) {
+      if ( $candidate['value'] ) {
+        $spot_auto_details[] = $candidate;
+      }
+    }
+    $spot_auto_details = array_slice( $spot_auto_details, 0, 4 );
+  }
   ?>
   <section class="section spotlight">
     <div class="container spotlight__inner">
@@ -313,7 +353,8 @@ $mv_producers = new WP_Query( array(
 
       <div class="spotlight__content">
         <?php
-        // "Wine of the Moment" unless an editor has written something else.
+        // "Wine of the Moment" unless an editor has written something else, so
+        // the section is properly labelled from choosing a wine alone.
         $spot_eyebrow = get_field('spotlight_eyebrow');
         if ( ! $spot_eyebrow && $spot_product ) {
           $spot_eyebrow = __( 'Wine of the Moment', 'maison-vintique' );
@@ -338,69 +379,37 @@ $mv_producers = new WP_Query( array(
           </h3>
         <?php endif; ?>
 
-        <?php
-        /*
-         * COLOUR / GRAPE / REGION.
-         *
-         * Typed by hand in the spotlight_details repeater if anyone has
-         * bothered; otherwise read straight off the chosen wine's taxonomies,
-         * so picking a product fills this row in by itself. Same three labels
-         * either way — the markup and the classes are untouched.
-         */
-        $spot_details = array();
-
-        if ( have_rows('spotlight_details') ) {
-          while ( have_rows('spotlight_details') ) {
-            the_row();
-            $spot_details[] = array( get_sub_field('label'), get_sub_field('value') );
-          }
-        } elseif ( $spot_product ) {
-          $spot_taxes = array(
-            __( 'Colour', 'maison-vintique' ) => 'wine_colour',
-            __( 'Grape', 'maison-vintique' )  => 'wine_grape',
-            __( 'Region', 'maison-vintique' ) => 'wine_region',
-          );
-
-          foreach ( $spot_taxes as $spot_label => $spot_tax ) {
-            $spot_terms = get_the_terms( $spot_product_id, $spot_tax );
-            if ( ! $spot_terms || is_wp_error( $spot_terms ) ) {
-              continue;
-            }
-            $spot_names = wp_list_pluck( $spot_terms, 'name' );
-
-            // Region carries the country with it, as the design shows:
-            // "Bordeaux, France".
-            if ( 'wine_region' === $spot_tax ) {
-              $spot_countries = get_the_terms( $spot_product_id, 'wine_country' );
-              if ( $spot_countries && ! is_wp_error( $spot_countries ) ) {
-                $spot_names = array( implode( ' · ', $spot_names ) . ', ' . implode( ' · ', wp_list_pluck( $spot_countries, 'name' ) ) );
-              }
-            }
-
-            $spot_details[] = array( $spot_label, implode( ' . ', $spot_names ) );
-          }
-        }
-        ?>
-        <?php if ( $spot_details ) : ?>
+        <?php if ( have_rows('spotlight_details') ) : ?>
           <ul class="detail-row">
-            <?php foreach ( $spot_details as $spot_detail ) : ?>
+            <?php while ( have_rows('spotlight_details') ) : the_row(); ?>
               <li>
-                <span class="detail-row__label"><?php echo esc_html( $spot_detail[0] ); ?></span>
-                <span class="detail-row__value"><?php echo esc_html( $spot_detail[1] ); ?></span>
+                <span class="detail-row__label"><?php echo esc_html( get_sub_field('label') ); ?></span>
+                <span class="detail-row__value"><?php echo esc_html( get_sub_field('value') ); ?></span>
+              </li>
+            <?php endwhile; ?>
+          </ul>
+        <?php elseif ( ! empty( $spot_auto_details ) ) : ?>
+          <ul class="detail-row">
+            <?php foreach ( $spot_auto_details as $spot_detail ) : ?>
+              <li>
+                <span class="detail-row__label"><?php echo esc_html( $spot_detail['label'] ); ?></span>
+                <span class="detail-row__value"><?php echo esc_html( $spot_detail['value'] ); ?></span>
               </li>
             <?php endforeach; ?>
           </ul>
         <?php endif; ?>
 
         <?php
-        // The blurb: the manual field, else the wine's own short description.
+        // Manual Tasting Notes win; otherwise fall back to the product's
+        // short description (the teaser text, not the full "Tasting & Story"
+        // tab content on the product page).
         $spot_text = get_field('spotlight_text');
         if ( ! $spot_text && $spot_product ) {
-          $spot_text = wp_strip_all_tags( $spot_product->get_short_description() );
+          $spot_text = $spot_product->get_short_description();
         }
         ?>
         <?php if ( $spot_text ) : ?>
-          <p class="spotlight__text"><?php echo esc_html( $spot_text ); ?></p>
+          <p class="spotlight__text"><?php echo wp_kses_post( $spot_text ); ?></p>
         <?php endif; ?>
 
         <div class="spotlight__row">
@@ -416,13 +425,13 @@ $mv_producers = new WP_Query( array(
 
             <?php
             /*
-             * PRICE — bottle large, case beneath it, the same way round as the
-             * wine card, from the same helper (mve_price_per_bottle() in
-             * inc/woocommerce.php) so the two can never disagree.
+             * PRICE — bottle large, case underneath, exactly as on the wine
+             * card and from the same helper (mve_price_per_bottle() in
+             * inc/woocommerce.php), so the two can never disagree.
              *
              * A price typed into spotlight_price still wins outright: that
-             * field exists so an editor can pin a figure, and second-guessing
-             * it would defeat the point.
+             * field exists so an editor can pin a figure ("POA"), and
+             * second-guessing it would defeat the point.
              */
             $spot_price       = get_field('spotlight_price');
             $spot_price_split = ( ! $spot_price && $spot_product && function_exists( 'mve_price_per_bottle' ) )
@@ -458,7 +467,9 @@ $mv_producers = new WP_Query( array(
             <?php endif; ?>
 
             <?php
-            // Label and link both fall back, so choosing a wine is enough.
+            // Label as well as link falls back, so choosing a wine is enough
+            // to get a working button — without this the button vanished
+            // unless somebody also typed a label.
             $spot_cta_label = get_field('spotlight_cta_label');
             $spot_cta_link  = get_field('spotlight_cta_link');
             if ( ! $spot_cta_link && $spot_product ) {
@@ -475,23 +486,24 @@ $mv_producers = new WP_Query( array(
           <?php endif; ?>
         </div>
 		  <div class="spotlight__button">
-			<?php
-			/*
-			 * "Technical Details" — deep-links to the Technical tab on the
-			 * wine, the same two forms the wine cards use: ?tab=tech survives
-			 * anything that strips the fragment, the hash works without
-			 * JavaScript.
-			 */
-			$spot_link_label = get_field('spotlight_link_label');
-			$spot_link_url   = get_field('spotlight_link_url');
-
-			if ( ! $spot_link_label && $spot_product ) {
-				$spot_link_label = __( 'Technical Details', 'maison-vintique' );
-			}
-			if ( ! $spot_link_url && $spot_product ) {
-				$spot_link_url = add_query_arg( 'tab', 'tech', get_permalink( $spot_product_id ) ) . '#tab-tech';
-			}
-			?>
+			 
+		  <?php
+		  /*
+		   * "Technical Details" — the label falls back too, and the link goes
+		   * to the Technical tab rather than the top of the product page. Both
+		   * forms of the deep link, the same as the wine cards use: ?tab=tech
+		   * survives anything that strips the fragment, and the hash still
+		   * works with JavaScript off.
+		   */
+		  $spot_link_label = get_field('spotlight_link_label');
+		  $spot_link_url   = get_field('spotlight_link_url');
+		  if ( ! $spot_link_url && $spot_product ) {
+		    $spot_link_url = add_query_arg( 'tab', 'tech', get_permalink( $spot_product_id ) ) . '#tab-tech';
+		  }
+		  if ( ! $spot_link_label && $spot_product ) {
+		    $spot_link_label = __( 'Technical Details', 'maison-vintique' );
+		  }
+		  ?>
 		  <?php if ( $spot_link_label ) : ?>
             <a href="<?php echo esc_url( $spot_link_url ?: '#' ); ?>" class="link-arrow"><?php echo esc_html( $spot_link_label ); ?></a>
           <?php endif; ?>

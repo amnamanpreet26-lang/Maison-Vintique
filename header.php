@@ -79,12 +79,26 @@ $mve_cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : ho
 			 */
 			if ( is_user_logged_in() ) :
 				?>
-				<a class="mv-header__icon mv-header__cart" href="<?php echo esc_url( $mve_cart_url ); ?>" aria-label="Cart">
-					<svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+				<?php
+				/*
+				 * Basket: icon AND the word, in the same button as My Account.
+				 * A bare basket symbol sat next to a labelled account button and
+				 * read as decoration - the client asked for the two to match so
+				 * the basket is as easy to find.
+				 *
+				 * The count is always rendered, hidden when it is zero, because
+				 * WooCommerce refreshes it by replacing this exact element (see
+				 * the cart-count fragment); if it were absent there would be
+				 * nothing for the refresh to replace.
+				 */
+				?>
+				<a class="mv-header__account mv-header__basket<?php echo is_user_logged_in() ? ' is-in' : ''; ?>" href="<?php echo esc_url( $mve_cart_url ); ?>">
+					<svg class="mv-header__account-icon" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 						<path d="M5 7h12l-1 11.2a1.5 1.5 0 0 1-1.5 1.3H7.5A1.5 1.5 0 0 1 6 18.2L5 7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
 						<path d="M8 7V5.6A3 3 0 0 1 11 2.6a3 3 0 0 1 3 3V7" stroke="currentColor" stroke-width="1.4"/>
 					</svg>
-					<span class="mv-header__cart-count" data-cart-count><?php echo (int) $mve_cart_count; ?></span>
+					<span class="mv-header__account-label"><?php esc_html_e( 'Basket', 'maison-vintique' ); ?></span>
+					<span class="mv-header__cart-count" data-cart-count<?php echo $mve_cart_count ? '' : ' hidden'; ?>><?php echo (int) $mve_cart_count; ?></span>
 				</a>
 			<?php endif; ?>
 

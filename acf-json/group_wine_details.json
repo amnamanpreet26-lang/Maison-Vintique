@@ -31,16 +31,25 @@
             "rows": 4,
             "instructions": "ONE AWARD PER LINE, for example: Gold - IWC 2023 (new line) 92 pts - Decanter. Fill this in and the wine card gets the round \"Award Winning\" medallion over the bottle on hover, and the product page lists every line in full. Leave it empty and neither appears - an empty field is the usual reason the medallion does not show."
         },
-        {
-            "key": "field_mv_label_artwork",
-            "label": "Label Artwork",
-            "name": "label_artwork",
-            "type": "file",
-            "instructions": "The bottle label artwork - a JPG, PNG or PDF. Upload one and it appears on the product page in the \"Awards & Label\" block, in the same list as the awards, with a label icon. Leave it empty and only the awards show.",
-            "return_format": "array",
-            "library": "all",
-            "mime_types": "jpg,jpeg,png,pdf,svg"
-        },
+       {
+    "key": "field_mv_label_artwork",
+    "label": "Label Artwork",
+    "name": "label_artwork",
+    "type": "textarea",
+    "instructions": "Enter label names, one per line. Each line will appear as a separate label in the \"Awards & Label\" block.",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+    },
+    "default_value": "",
+    "maxlength": "",
+    "rows": 4,
+    "placeholder": "Château Label\nBack Label\nOrganic Label",
+    "new_lines": "br"
+},
         {
             "key": "field_mv_vintage_year",
             "label": "Vintage",

@@ -27,13 +27,6 @@
  *   {prefix}_vhero_title    text
  *   {prefix}_vhero_text     textarea
  *   {prefix}_vhero_height   select: tall | medium | short
- *   {prefix}_vhero_align    select: center | left — where the copy sits.
- *                           Defaults to center, which is how it has always
- *                           looked, so nothing already using this part moves.
- *   {prefix}_vhero_aside    textarea — small uppercase copy in the opposite
- *                           corner. One line per row. Only shown when the copy
- *                           is left-aligned, because centred copy has no
- *                           opposite corner to put it in.
  *
  * @package maison-vintique-elementor
  */
@@ -56,8 +49,6 @@ $mvv_eyebrow = mve_field( $mvv_prefix . '_vhero_eyebrow' );
 $mvv_title   = mve_field( $mvv_prefix . '_vhero_title' );
 $mvv_text    = mve_field( $mvv_prefix . '_vhero_text' );
 $mvv_height  = mve_field( $mvv_prefix . '_vhero_height', 'tall' );
-$mvv_align   = mve_field( $mvv_prefix . '_vhero_align', 'center' );
-$mvv_aside   = mve_field( $mvv_prefix . '_vhero_aside' );
 
 $mvv_video_url = is_array( $mvv_video ) ? ( isset( $mvv_video['url'] ) ? $mvv_video['url'] : '' ) : (string) $mvv_video;
 $mvv_image_url = mve_image_url( $mvv_image, array( 'mv-estate', 'large', 'full' ) );
@@ -79,17 +70,8 @@ if ( $mvv_colour ) {
 	$mvv_style .= '--mvv-overlay-colour:' . esc_attr( $mvv_colour ) . ';';
 }
 
-$mvv_left = ( 'left' === $mvv_align );
-
-$mvv_classes  = 'section mvv-hero mvv-hero--' . sanitize_html_class( $mvv_height );
-$mvv_classes .= $mvv_left ? ' mvv-hero--left' : '';
-
-// The corner line needs a corner, so it only rides along with left-aligned copy.
-$mvv_aside_lines = ( $mvv_left && $mvv_aside )
-	? array_filter( array_map( 'trim', preg_split( '/\R/', (string) $mvv_aside ) ) )
-	: array();
-
-$mvv_has_copy = ( $mvv_eyebrow || $mvv_title || $mvv_text || $mvv_aside_lines );
+$mvv_classes = 'section mvv-hero mvv-hero--' . sanitize_html_class( $mvv_height );
+$mvv_has_copy = ( $mvv_eyebrow || $mvv_title || $mvv_text );
 ?>
 <section class="<?php echo esc_attr( $mvv_classes ); ?>" style="<?php echo esc_attr( $mvv_style ); ?>">
 
@@ -121,44 +103,24 @@ $mvv_has_copy = ( $mvv_eyebrow || $mvv_title || $mvv_text || $mvv_aside_lines );
 
 	<?php if ( $mvv_has_copy ) : ?>
 		<div class="wrap mvv-hero__inner">
+			<?php if ( $mvv_eyebrow ) : ?>
+				<p class="eyebrow eyebrow--center eyebrow--on-dark"><?php echo esc_html( $mvv_eyebrow ); ?></p>
+			<?php endif; ?>
 
-			<?php
-			/*
-			 * The wrapping div only exists in the left-aligned layout, where the
-			 * copy and the corner line have to sit at opposite ends of a row.
-			 * Centred, the markup is exactly what it has always been — no extra
-			 * element between .mvv-hero__inner and its paragraphs, so nothing
-			 * already styling those children can be thrown off.
-			 */
-			?>
-			<?php if ( $mvv_left ) : ?><div class="mvv-hero__copy"><?php endif; ?>
+			<?php if ( $mvv_title ) : ?>
+				<?php
+				/*
+				 * A line break typed into the heading field was being escaped
+				 * and printed as the literal text "<br>" — it is on the Our
+				 * Story page now. Allow a break and nothing else; everything
+				 * else is still escaped.
+				 */
+				?>
+				<h2 class="mvv-hero__title"><?php echo wp_kses( $mvv_title, array( 'br' => array() ) ); ?></h2>
+			<?php endif; ?>
 
-				<?php // Centred: the eyebrow leads, as before. ?>
-				<?php if ( $mvv_eyebrow && ! $mvv_left ) : ?>
-					<p class="eyebrow eyebrow--center eyebrow--on-dark"><?php echo esc_html( $mvv_eyebrow ); ?></p>
-				<?php endif; ?>
-
-				<?php if ( $mvv_title ) : ?>
-					<h2 class="mvv-hero__title"><?php echo esc_html( $mvv_title ); ?></h2>
-				<?php endif; ?>
-
-				<?php // Left: the heading leads and the same field follows it. ?>
-				<?php if ( $mvv_eyebrow && $mvv_left ) : ?>
-					<p class="eyebrow eyebrow--on-dark mvv-hero__kicker"><?php echo esc_html( $mvv_eyebrow ); ?></p>
-				<?php endif; ?>
-
-				<?php if ( $mvv_text ) : ?>
-					<p class="mvv-hero__text"><?php echo esc_html( $mvv_text ); ?></p>
-				<?php endif; ?>
-
-			<?php if ( $mvv_left ) : ?></div><?php endif; ?>
-
-			<?php if ( $mvv_aside_lines ) : ?>
-				<p class="eyebrow eyebrow--on-dark mvv-hero__aside">
-					<?php foreach ( $mvv_aside_lines as $mvv_i => $mvv_line ) : ?>
-						<?php echo $mvv_i ? '<br>' : ''; ?><?php echo esc_html( $mvv_line ); ?>
-					<?php endforeach; ?>
-				</p>
+			<?php if ( $mvv_text ) : ?>
+				<p class="mvv-hero__text"><?php echo esc_html( $mvv_text ); ?></p>
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>

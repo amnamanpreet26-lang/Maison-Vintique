@@ -19,8 +19,7 @@
  *   RED · BORDEAUX                            FRANCE
  *   Title
  *   Bordeaux Supérieur 2019 · 6 × 75cl        <- producer / appellation / case
- *   £21.71  per bottle                        <- the big number
- *   £130.28 per case of 6 × 75cl · ex VAT     <- the footnote
+ *   Price  (or "Sign in to view trade pricing" when gated)
  *   [        VIEW WINE        ]  -> single product page
  *   Technical Details        Enquire   <- two inline links
  *
@@ -192,24 +191,9 @@ if ( $mvc_awards_raw ) {
  * ------------------------------------------------------------------------- */
 $mvc_price_html = $product->get_price_html();
 
-/*
- * THE PRICE, SPLIT.
- *
- * A wine is sold by the case, so the product price IS the case price — but a
- * buyer comparing two wines compares them by the bottle. So the bottle is the
- * big number and the case is the footnote under it.
- *
- * mve_price_per_bottle() (inc/woocommerce.php) does the division and owns how
- * many bottles a case holds, reading the same _mv_bottles_per_case meta that
- * single-product.php reads and defaulting to 6 the same way. It is a function
- * rather than a few lines here because the homepage "Wine of the Moment"
- * section needs the identical figures — worked out separately in each
- * template is exactly how the two end up quoting different prices for the
- * same wine.
- *
- * It returns null for a variable wine or one with no price, and then
- * $mvc_price_html renders WooCommerce's own range instead.
- */
+// Bottle price, case price and the case size, from the one helper the homepage
+// spotlight also uses. Null for a variable wine or one with no price, and then
+// $mvc_price_html renders WooCommerce's own range instead.
 $mvc_price = function_exists( 'mve_price_per_bottle' ) ? mve_price_per_bottle( $product ) : null;
 
 // "Technical Details" is only worth offering when the Technical tab actually
@@ -290,39 +274,44 @@ $mvc_tech_url    = add_query_arg( 'tab', 'tech', $mvc_permalink ) . '#tab-tech';
 		<?php endif; ?>
 
 		<?php if ( $mvc_gated ) : ?>
-			<p class="mvcard__price">
-				<span class="mvcard__trade"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique-elementor' ); ?></span>
-			</p>
+    <p class="mvcard__price">
+        <span class="mvcard__trade"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique-elementor' ); ?></span>
+    </p>
+<?php elseif ( $mvc_price ) : ?>
+    <?php
+    /*
+     * BOTTLE FIRST, LARGE. Case price underneath, small.
+     *
+     * A wine is sold by the case, but it is compared by the bottle — so the
+     * bottle is the number that should be easy to read across a grid.
+     *
+     * Both figures, and the number of bottles they are divided by, come from
+     * mve_price_per_bottle() in inc/woocommerce.php. That asks
+     * mv_case_moq_rule() for the case size, which is the same answer the
+     * quantity box uses: a wine sold in 12s can never be priced in 6s.
+     *
+     * The "ex VAT" wording is WooCommerce's own price suffix rather than a
+     * string typed in here, so it stays in step with the product page.
+     */
+    ?>
+    <div class="mvcard__price mvcard__price--split">
+        <p class="mvcard__price-bottle">
+            <span class="mvcard__price-figure"><?php echo wp_kses_post( $mvc_price['bottle'] ); ?></span>
+            <span class="mvcard__price-unit"><?php esc_html_e( 'per bottle', 'maison-vintique-elementor' ); ?></span>
+        </p>
+        <p class="mvcard__price-case">
+            <?php echo wp_kses_post( $mvc_price['case'] ); ?>
+            <?php echo esc_html( mve_case_price_label( $mvc_price ) ); ?>
+            <?php if ( $mvc_price['suffix'] ) : ?>
+                <span class="mvcard__price-vat">&middot; <?php echo wp_kses_post( $mvc_price['suffix'] ); ?></span>
+            <?php endif; ?>
+        </p>
+    </div>
 
-		<?php elseif ( $mvc_price ) : ?>
-			<?php
-			/*
-			 * Bottle price first and large; case price under it, small.
-			 *
-			 * The "ex. VAT" wording on both comes from get_price_suffix(), not
-			 * a hardcoded string, so whatever WooCommerce is set to display
-			 * with a price is what appears here — the two can never fall out
-			 * of step with each other or with the product page.
-			 */
-			?>
-			<div class="mvcard__price mvcard__price--split">
-				<p class="mvcard__price-bottle">
-					<span class="mvcard__price-figure"><?php echo wp_kses_post( $mvc_price['bottle'] ); ?></span>
-					<span class="mvcard__price-unit"><?php esc_html_e( 'per bottle', 'maison-vintique-elementor' ); ?></span>
-				</p>
-				<p class="mvcard__price-case">
-					<?php echo wp_kses_post( $mvc_price['case'] ); ?>
-					<span class="mvcard__price-case-unit"><?php echo esc_html( mve_case_price_label( $mvc_price ) ); ?></span>
-					<?php if ( $mvc_price['suffix'] ) : ?>
-						<span class="mvcard__price-vat">&middot; <?php echo wp_kses_post( $mvc_price['suffix'] ); ?></span>
-					<?php endif; ?>
-				</p>
-			</div>
-
-		<?php elseif ( $mvc_price_html ) : ?>
-			<?php // A variable wine, or one with no price: WooCommerce's own range. ?>
-			<p class="mvcard__price"><?php echo wp_kses_post( $mvc_price_html ); ?></p>
-		<?php endif; ?>
+<?php elseif ( $mvc_price_html ) : ?>
+    <?php // A variable wine, or one with no price: WooCommerce's own range. ?>
+    <p class="mvcard__price"><?php echo wp_kses_post( $mvc_price_html ); ?></p>
+<?php endif; ?>
 
 		<a class="mvcard__cta" href="<?php echo esc_url( $mvc_permalink ); ?>">
 			<?php esc_html_e( 'View Wine', 'maison-vintique-elementor' ); ?>

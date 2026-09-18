@@ -156,61 +156,79 @@ while ( have_posts() ) :
 					<p class="prod"><?php echo esc_html( $producer ); ?></p>
 				<?php endif; ?>
 
-				<?php
-				/*
-				 * Awards and label artwork, in one block.
-				 *
-				 * The card shows a single "Award Winning" medallion because there
-				 * is no room for more; here there is, so every line of the ACF
-				 * field gets its own medal and its full text. The label artwork
-				 * joins the same list as one more line, with a label icon rather
-				 * than a medal — same markup, same classes, so it inherits the
-				 * styling that is already there and needs none of its own.
-				 *
-				 * The block shows if EITHER exists, so a wine with artwork but no
-				 * awards still gets it.
-				 */
-				if ( ! empty( $awards ) || $label_artwork_url ) :
-					?>
-					<div class="mv-awards">
-						<p class="mv-awards__label"><?php esc_html_e( 'Awards & Label', 'maison-vintique' ); ?></p>
-						<ul class="mv-awards__list">
-							<?php foreach ( $awards as $award ) : ?>
-								<li class="mv-awards__item">
-									<svg class="mv-awards__medal" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-										<circle cx="12" cy="9" r="5.4" fill="none" stroke="currentColor" stroke-width="1.5"/>
-										<path d="M8.4 13.4 6.6 21l5.4-2.7 5.4 2.7-1.8-7.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-									</svg>
-									<span class="mv-awards__text"><?php echo esc_html( $award ); ?></span>
-								</li>
-							<?php endforeach; ?>
+<?php
+$label_artwork = get_field( 'label_artwork' );
 
-							<?php if ( $label_artwork_url ) : ?>
-								<li class="mv-awards__item">
-									<?php // A luggage-label tag, so it reads as "label" at a glance next to the medals. ?>
-									<svg class="mv-awards__medal" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-										<path d="M12.6 3H20a1 1 0 0 1 1 1v7.4a1 1 0 0 1-.3.7l-8.6 8.6a1 1 0 0 1-1.4 0l-7.4-7.4a1 1 0 0 1 0-1.4l8.6-8.6a1 1 0 0 1 .7-.3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-										<circle cx="16.6" cy="7.4" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/>
-									</svg>
-									<span class="mv-awards__text">
-										<?php
-										/*
-										 * The link says "Label artwork" and nothing else. The
-										 * attachment's own title is usually the file name, which
-										 * reads as noise next to award lines this short — it is
-										 * kept below only as the download's suggested name.
-										 */
-										?>
-										<a href="<?php echo esc_url( $label_artwork_url ); ?>" target="_blank" rel="noopener"
-											<?php echo $label_artwork_name ? 'download="' . esc_attr( $label_artwork_name ) . '"' : ''; ?>>
-											<?php esc_html_e( 'Label artwork', 'maison-vintique' ); ?>
-										</a>
-									</span>
-								</li>
-							<?php endif; ?>
-						</ul>
-					</div>
-				<?php endif; ?>
+$labels = array_filter(
+	array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) $label_artwork ) )
+);
+?>
+
+<?php if ( ! empty( $awards ) || ! empty( $labels ) ) : ?>
+
+	<div class="mv-awards">
+
+		<p class="mv-awards__label">
+			<?php esc_html_e( 'Awards & Label', 'maison-vintique' ); ?>
+		</p>
+
+		<ul class="mv-awards__list">
+
+			<?php foreach ( $awards as $award ) : ?>
+
+				<li class="mv-awards__item">
+
+					<svg class="mv-awards__medal" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<circle cx="12" cy="9" r="5.4"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"/>
+						<path d="M8.4 13.4 6.6 21l5.4-2.7 5.4 2.7-1.8-7.6"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linejoin="round"/>
+					</svg>
+
+					<span class="mv-awards__text">
+						<?php echo esc_html( $award ); ?>
+					</span>
+
+				</li>
+
+			<?php endforeach; ?>
+
+
+			<?php foreach ( $labels as $label ) : ?>
+
+				<li class="mv-awards__item">
+
+					<svg class="mv-awards__medal" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M10 3h4v4l1.5 2.5V21h-7V9.5L10 7V3Z"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linejoin="round"/>
+
+						<rect x="9" y="12" width="6" height="4"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"/>
+					</svg>
+
+					<span class="mv-awards__text">
+						<?php echo esc_html( $label ); ?>
+					</span>
+
+				</li>
+
+			<?php endforeach; ?>
+
+		</ul>
+
+	</div>
+
+<?php endif; ?>
 				
 								<?php if ( $product->get_short_description() ) : ?>
 					<p class="pdp-desc"><?php echo wp_kses_post( $product->get_short_description() ); ?></p>
@@ -446,6 +464,17 @@ $mve_grape_terms = implode( ', ', $mve_grape_terms );
         <b><?php echo wp_kses_post( $mve_region_terms ); ?></b>
     </div>
 <?php endif; ?>
+					<?php
+					/*
+					 * The Maison Vintique SKU. The client asked for it against
+					 * every wine in the collection — it is how the wine is
+					 * identified on the purchase order, the invoice and the
+					 * warehouse feed, so a trade customer needs to be able to
+					 * quote it.
+					 */
+					$mve_sku = $product->get_sku();
+					?>
+					<?php if ( $mve_sku ) : ?><div><span><?php esc_html_e( 'SKU', 'maison-vintique' ); ?></span><b><?php echo esc_html( $mve_sku ); ?></b></div><?php endif; ?>
 					<?php if ( $vintage ) : ?><div><span><?php esc_html_e( 'Vintage', 'maison-vintique' ); ?></span><b><?php echo esc_html( $vintage ); ?></b></div><?php endif; ?>
 					<?php if ( $abv ) : ?><div><span><?php esc_html_e( 'ABV', 'maison-vintique' ); ?></span><b><?php echo esc_html( $abv ); ?>%</b></div><?php endif; ?>
 					<div><span><?php esc_html_e( 'Bottle', 'maison-vintique' ); ?></span><b><?php echo esc_html( $bottle ); ?></b></div>

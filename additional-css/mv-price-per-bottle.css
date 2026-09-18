@@ -3,19 +3,31 @@
    --------------------------------------------------------------------------
    PASTE THIS AT THE VERY END of Appearance - Customize - Additional CSS,
    AFTER everything that is already there. Nothing is removed and nothing is
-   replaced: every rule below is new, and they only work if they come last.
+   replaced: every rule below is new, and several of them only win because
+   they come last.
 
    Two places, the same idea:
      1. The wine card
      2. "Wine of the Moment" on the homepage
 
    A wine is sold by the case, so the product price IS the case price - but a
-   buyer compares wines by the bottle. So the bottle price is the big number
-   and the case price is the footnote under it.
+   buyer compares wines by the bottle. So the bottle price is the big bold
+   number and the case price is the small line under it.
 
-   The section designs are untouched. On the homepage this changes only what
-   sits inside .spotlight__row; the layout, the spacing and the button are as
-   they were.
+   WHY SO MANY !important MARKS
+   There are already two of them in the stylesheet above, and they apply to
+   every price on the site:
+
+       .mvcard__price            { font-size: 18px !important }
+       .woocommerce-Price-amount { font-size: 24px !important;
+                                   font-family: var(--mv-serif) !important }
+
+   WooCommerce wraps every figure it prints in .woocommerce-Price-amount, so
+   that second rule pins the bottle price to 24px and the case price to 24px
+   as well - which is the one thing this change exists to stop. An !important
+   declaration outranks any ordinary one however specific, so the only way to
+   set these two sizes is to match it. They are used here for exactly that and
+   nothing else.
    ========================================================================== */
 
 
@@ -27,25 +39,25 @@
 	margin: 0 0 16px;
 }
 
+/* A flex column so the bottle block and the case line stack tightly, and so
+   nothing inherits the 18px the wrapper carries. */
 .mvcard__price-bottle {
 	display: flex;
-	align-items: baseline;
-	flex-wrap: wrap;
-	gap: 0 8px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
 	margin: 0;
 }
 
-/* The number itself. Overrides .mvcard__price's 14px, and the existing rule
-   that paints every amount in the card ink colour - WooCommerce wraps a price
-   in a bdi element, so the colour has to be set on that too, or the older
-   rule wins on specificity and the figure comes out the wrong colour. */
+/* THE BIG NUMBER. The !important is fighting .woocommerce-Price-amount's own,
+   as explained at the top - without it this stays 24px. */
 .mvcard__price-figure,
 .mvcard__price-figure .woocommerce-Price-amount,
 .mvcard__price-figure bdi {
-	font-family: var(--mv2-serif, "Cormorant Garamond", Georgia, serif);
-	font-size: clamp(30px, 3.4vw, 38px);
+	font-family: var(--mv2-serif, "Cormorant Garamond", Georgia, serif) !important;
+	font-size: clamp(30px, 3.4vw, 38px) !important;
 	font-weight: 600;
-	line-height: 1;
+	line-height: 1.05;
 	letter-spacing: -.01em;
 	color: var(--mv2-burgundy, #17251f);
 	text-decoration: none;
@@ -56,16 +68,14 @@
 	font-size: 13px;
 	font-weight: 400;
 	line-height: 1.4;
+	letter-spacing: 0;
+	text-transform: none;
 	color: var(--mv2-ink-soft, #5e5a51);
 }
 
-/* Reference has "per bottle" on its own line under the figure, not beside
-   it. flex-basis 100% forces the break without a second element. */
-.mvcard__price-unit {
-	flex: 0 0 100%;
-	margin-top: 2px;
-}
-
+/* The footnote. Same !important reasoning: the case figure inside it is a
+   .woocommerce-Price-amount too, so without this it prints at 24px and reads
+   as the headline instead of the aside. */
 .mvcard__price-case {
 	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
 	font-size: 12.5px;
@@ -76,8 +86,8 @@
 
 .mvcard__price-case .woocommerce-Price-amount,
 .mvcard__price-case bdi {
-	font-family: inherit;
-	font-size: inherit;
+	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif) !important;
+	font-size: 12.5px !important;
 	font-weight: 500;
 	color: inherit;
 	text-decoration: none;
@@ -93,17 +103,17 @@
    --------------------------------------------------------------------------
    .spotlight__row is a flex row holding the price and the button side by
    side. The price becomes a small stack inside its own cell, so the row
-   itself does not change shape.
+   itself keeps its shape and the section's design is unchanged.
    ========================================================================== */
 
 .spotlight__price {
 	display: inline-flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 2px;
+	gap: 3px;
 
-	/* .price sets 26px serif gold on the wrapper. The children below set
-	   their own, so this stops the wrapper's own size affecting the gap. */
+	/* .price sets 26px serif on the wrapper; the children below set their own,
+	   so this stops the wrapper's size opening up the gap between them. */
 	font-size: inherit;
 	line-height: 1.2;
 }
@@ -112,16 +122,16 @@
 	display: flex;
 	align-items: baseline;
 	flex-wrap: wrap;
-	gap: 0 8px;
+	gap: 0 10px;
 }
 
 .spotlight__price-figure,
 .spotlight__price-figure .woocommerce-Price-amount,
 .spotlight__price-figure bdi {
-	font-family: var(--mv-serif, "Cormorant Garamond", Georgia, serif);
-	font-size: 34px;
+	font-family: var(--mv-serif, "Cormorant Garamond", Georgia, serif) !important;
+	font-size: 34px !important;
 	font-weight: 600;
-	line-height: 1;
+	line-height: 1.05;
 	color: var(--mv-burg, #17251f);
 	text-decoration: none;
 }
@@ -147,20 +157,18 @@
 
 .spotlight__price-case .woocommerce-Price-amount,
 .spotlight__price-case bdi {
-	font-family: inherit;
-	font-size: inherit;
+	font-family: var(--mv-sans, "Montserrat", Arial, sans-serif) !important;
+	font-size: 12.5px !important;
 	font-weight: 500;
 	color: inherit;
 	text-decoration: none;
 }
 
 @media (max-width: 620px) {
-	/* The row wraps on a phone; the price keeps its own block and the button
-	   drops under it. */
 	.spotlight__price-figure,
 	.spotlight__price-figure .woocommerce-Price-amount,
 	.spotlight__price-figure bdi {
-		font-size: 30px;
+		font-size: 30px !important;
 	}
 }
 

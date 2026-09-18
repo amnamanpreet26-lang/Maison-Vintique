@@ -36,6 +36,15 @@ $mvp_appellations = function_exists( 'get_field' ) ? get_field( 'appellations', 
 $mvp_year         = function_exists( 'get_field' ) ? get_field( 'established_year', $mvp_id ) : '';
 $mvp_note         = function_exists( 'get_field' ) ? get_field( 'estate_note', $mvp_id ) : '';
 
+/*
+ * The field is documented as taking the bare year, but "Est. 1868" gets typed
+ * into it, and the template then printed "Est. Est. 1868". Take the year off
+ * whatever was entered and let the template supply the wording.
+ */
+if ( $mvp_year ) {
+	$mvp_year = trim( preg_replace( '/^\s*(est\.?|established|founded|since)\s*/i', '', (string) $mvp_year ) );
+}
+
 $mvp_est_parts = array();
 if ( $mvp_year ) {
 	/* translators: %s: the year the estate was founded, e.g. 1868 */

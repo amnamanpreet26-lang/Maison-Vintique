@@ -105,18 +105,6 @@ function mve_application_schema() {
 						'occasional'  => __( 'Occasional', 'maison-vintique' ),
 					),
 				),
-				'order_method'      => array(
-					'label'   => __( 'Preferred ordering method', 'maison-vintique' ),
-					'type'    => 'select',
-					'width'   => 'half',
-					'options' => array(
-						''        => __( 'Please choose', 'maison-vintique' ),
-						'website' => __( 'Website', 'maison-vintique' ),
-						'email'   => __( 'Email', 'maison-vintique' ),
-						'phone'   => __( 'Telephone', 'maison-vintique' ),
-						'rep'     => __( 'Through our account manager', 'maison-vintique' ),
-					),
-				),
 			),
 		),
 
@@ -156,27 +144,32 @@ function mve_application_schema() {
 			),
 		),
 
-		'licensing' => array(
-			'title'  => __( 'Alcohol licensing', 'maison-vintique' ),
-			'fields' => array(
-				'sells_to_public'   => array(
-					'label'    => __( 'Does the business sell or supply alcohol to members of the public?', 'maison-vintique' ),
-					'type'     => 'radio',
-					'required' => true,
-					'options'  => array(
-						'yes' => __( 'Yes', 'maison-vintique' ),
-						'no'  => __( 'No', 'maison-vintique' ),
-					),
-					'controls' => 'licence-details',
-				),
-				'licence_number'    => array( 'label' => __( 'Premises licence number', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details' ),
-				'licence_authority' => array( 'label' => __( 'Licensing authority', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details' ),
-				'licence_holder'    => array( 'label' => __( 'Premises licence holder', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details' ),
-				'licence_dps'       => array( 'label' => __( 'Designated premises supervisor', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details' ),
-				'licence_address'   => array( 'label' => __( 'Licensed premises address', 'maison-vintique' ), 'type' => 'textarea', 'group' => 'licence-details' ),
-				'licence_none_why'  => array( 'label' => __( 'If no premises licence is held, explain why it is not required', 'maison-vintique' ), 'type' => 'textarea', 'group' => 'licence-details', 'when' => 'no' ),
-			),
-		),
+'licensing' => array(
+    'title'  => __( 'Alcohol licensing', 'maison-vintique' ),
+    'fields' => array(
+        'sells_to_public'   => array(
+            'label'    => __( 'Does the business sell or supply alcohol under a premises licence or club premises certificate?', 'maison-vintique' ),
+            'type'     => 'radio',
+            'required' => true,
+            'options'  => array(
+                'premises' => __( 'Premises Licence', 'maison-vintique' ),
+                'club'     => __( 'Club Premises Certificate', 'maison-vintique' ),
+                'ten'      => __( 'Temporary Event Notice', 'maison-vintique' ),
+                'no'       => __( 'No', 'maison-vintique' ),
+                'other'    => __( 'Other', 'maison-vintique' ),
+            ),
+            'controls' => 'licence-details',
+        ),
+        'licence_number'                  => array( 'label' => __( 'Premises licence number', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details', 'when' => array( 'premises' ) ),
+        'licence_authority'                => array( 'label' => __( 'Licensing authority', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details', 'when' => array( 'premises' ) ),
+        'licence_holder'                   => array( 'label' => __( 'Premises licence holder', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details', 'when' => array( 'premises' ) ),
+        'licence_dps'                      => array( 'label' => __( 'Designated premises supervisor', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details', 'when' => array( 'premises' ) ),
+        'licence_dps_personal_number'      => array( 'label' => __( 'DPS personal licence number', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details', 'when' => array( 'premises' ) ),
+        'licence_dps_personal_authority'   => array( 'label' => __( 'Personal licence issuing authority', 'maison-vintique' ), 'type' => 'text', 'width' => 'half', 'group' => 'licence-details', 'when' => array( 'premises' ) ),
+        'licence_address'                  => array( 'label' => __( 'Licensed premises address', 'maison-vintique' ), 'type' => 'textarea', 'group' => 'licence-details', 'when' => array( 'premises' ) ),
+        'licence_none_why'                 => array( 'label' => __( 'If no premises licence, club premises certificate or Temporary Event Notice is held, explain why it is not required', 'maison-vintique' ), 'type' => 'textarea', 'group' => 'licence-details', 'when' => array( 'no' ) ),
+    ),
+),
 
 		'awrs' => array(
 			'title'  => __( 'AWRS status', 'maison-vintique' ),
@@ -257,25 +250,46 @@ function mve_application_schema() {
 			),
 		),
 
-		'declarations' => array(
-			'title'  => __( 'Declarations', 'maison-vintique' ),
-			'fields' => array(
-				'dec_authorised'   => array( 'label' => __( 'I am authorised to submit this application on behalf of the applicant business.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
-				'dec_accurate'     => array( 'label' => __( 'The information supplied is complete, accurate and not misleading.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
-				'dec_legitimate'   => array( 'label' => __( 'Alcohol purchased will be used only for legitimate business purposes.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
-				'dec_authorised_o' => array( 'label' => __( 'Orders will be placed only by authorised individuals and delivered only to approved business locations.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
-				'dec_notify'       => array( 'label' => __( 'We will notify you promptly of changes to ownership, company status, licensing, AWRS status, trading activity or delivery addresses.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
-				'dec_awrs'         => array( 'label' => __( 'We will not carry out wholesale alcohol activity unless appropriately registered under AWRS where that is required.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
-				'dec_verify'       => array( 'label' => __( 'You may verify this information through public records, business databases, licensing authorities and other relevant sources as part of your due diligence.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
-				'dec_terms'        => array( 'label' => __( 'I accept the Terms and Conditions of Trade.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true, 'link' => 'terms' ),
-				'dec_privacy'      => array( 'label' => __( 'I acknowledge the Privacy Notice.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true, 'link' => 'privacy' ),
-				'dec_marketing'    => array( 'label' => __( 'Optional: I would like trade news, portfolio updates and event invitations.', 'maison-vintique' ), 'type' => 'checkbox' ),
+'declarations' => array(
+    'title'  => __( 'Declarations', 'maison-vintique' ),
+    'fields' => array(
+        'dec_authorised'   => array( 'label' => __( 'I am authorised to submit this application on behalf of the applicant business.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
+        'dec_accurate'     => array( 'label' => __( 'The information supplied is complete, accurate and not misleading.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
+        'dec_legitimate'   => array( 'label' => __( 'Alcohol purchased from Maison Vintique Ltd will be used only for legitimate business purposes and in accordance with applicable licensing and regulatory requirements.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
+        'dec_authorised_o' => array( 'label' => __( 'Orders will be placed only by authorised individuals and delivered only to approved business locations.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
+        'dec_notify'       => array( 'label' => __( 'We will notify Maison Vintique Ltd promptly of changes to ownership, company status, licensing, AWRS status, trading activity or approved delivery addresses.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
 
-				'signatory_name'   => array( 'label' => __( 'Applicant full name', 'maison-vintique' ), 'type' => 'text', 'required' => true, 'width' => 'half' ),
-				'signatory_role'   => array( 'label' => __( 'Position', 'maison-vintique' ), 'type' => 'text', 'required' => true, 'width' => 'half' ),
-				'signature'        => array( 'label' => __( 'Signature — type your full name to sign', 'maison-vintique' ), 'type' => 'text', 'required' => true, 'width' => 'half' ),
-			),
-		),
+        // Conditional: only shown when sells_to_trade (AWRS section) is answered "yes".
+        // No 'when' needed — mve_application_field_applies() and the browser's
+        // own group toggle both default to "yes" when a field gives none.
+        'dec_awrs'         => array( 'label' => __( 'We will not carry out wholesale alcohol activity unless appropriately registered under AWRS where required.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true, 'group' => 'awrs-details' ),
+
+        'dec_verify'       => array( 'label' => __( 'I understand that Maison Vintique Ltd may verify information supplied in this application using public records, business databases, licensing authorities and other relevant sources as part of its customer due diligence and compliance checks.', 'maison-vintique' ), 'type' => 'checkbox', 'required' => true ),
+  'dec_terms' => array(
+	'label'    => __( 'I accept the Terms and Conditions of Trade.', 'maison-vintique' ),
+	'type'     => 'checkbox',
+	'required' => true,
+	'link'     => 'https://lightsteelblue-toad-208486.hostingersite.com/terms-conditions/',
+),
+
+'dec_privacy' => array(
+	'label'    => __( 'I acknowledge the Privacy Notice.', 'maison-vintique' ),
+	'type'     => 'checkbox',
+	'required' => true,
+	'link'     => 'https://lightsteelblue-toad-208486.hostingersite.com/privacy-policy/',
+),
+        // Kept separate from the mandatory block above, optional, unticked by default (no 'required').
+        'dec_marketing'    => array( 'label' => __( 'Optional: I would like to receive trade news, portfolio updates, offers and event invitations from Maison Vintique Ltd.', 'maison-vintique' ), 'type' => 'checkbox' ),
+
+        'signatory_name'   => array( 'label' => __( 'Applicant full name', 'maison-vintique' ), 'type' => 'text', 'required' => true, 'width' => 'half' ),
+        'signatory_role'   => array( 'label' => __( 'Position / job title', 'maison-vintique' ), 'type' => 'text', 'required' => true, 'width' => 'half' ),
+        'signature'        => array( 'label' => __( 'Signature – type your full name to sign', 'maison-vintique' ), 'type' => 'text', 'required' => true, 'width' => 'half' ),
+
+        // Auto-filled with today's date on page load; still just a normal
+        // editable date field, and still validated as required on submit.
+        'declaration_date' => array( 'label' => __( 'Date of declaration', 'maison-vintique' ), 'type' => 'date', 'required' => true, 'width' => 'half', 'default' => 'today' ),
+    ),
+),
 	);
 
 	/**
@@ -560,11 +574,11 @@ function mve_application_field( $name, $field ) {
 		// Hidden until its controlling question is answered — see main.js.
 		$attrs .= ' data-mvta-group="' . esc_attr( $field['group'] ) . '"';
 
-		// Most dependants appear on "yes"; 'when' flips that for the handful
-		// that only make sense after a "no".
-		if ( ! empty( $field['when'] ) ) {
-			$attrs .= ' data-mvta-when="' . esc_attr( $field['when'] ) . '"';
-		}
+		// Comma-separated list of the controlling answer(s) that reveal this
+		// field. A field with no 'when' at all defaults to "yes" — kept for
+		// back-compat with the original two-state (yes/no) groups.
+		$when = ! empty( $field['when'] ) ? (array) $field['when'] : array( 'yes' );
+		$attrs .= ' data-mvta-when="' . esc_attr( implode( ',', $when ) ) . '"';
 	}
 	?>
 	<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"<?php echo $attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above. ?>>
@@ -577,22 +591,33 @@ function mve_application_field( $name, $field ) {
 					<?php echo $required ? 'required' : ''; ?>>
 				<span class="mvta-check__box" aria-hidden="true"></span>
 				<span class="mvta-check__label">
-					<?php echo esc_html( $label ); ?>
-					<?php
-					// "I accept the Terms" needs the terms to be reachable.
-					if ( ! empty( $field['link'] ) ) {
-						$page = ( 'terms' === $field['link'] && function_exists( 'wc_get_page_permalink' ) )
-							? wc_get_page_permalink( 'terms' )
-							: get_privacy_policy_url();
-						if ( $page ) {
-							printf(
-								' <a href="%s" target="_blank" rel="noopener">%s</a>',
-								esc_url( $page ),
-								esc_html__( 'Read it', 'maison-vintique' )
-							);
-						}
-					}
-					?>
+<?php
+if ( ! empty( $field['link'] ) ) {
+	$link_text = '';
+
+	if ( 'dec_terms' === $name ) {
+		$link_text = 'Terms and Conditions of Trade';
+	} elseif ( 'dec_privacy' === $name ) {
+		$link_text = 'Privacy Notice';
+	}
+
+	if ( $link_text ) {
+		$label_text = str_replace( $link_text, '', $label );
+
+		echo esc_html( $label_text );
+
+		printf(
+			'<a href="%s" target="_blank" rel="noopener">%s</a>',
+			esc_url( $field['link'] ),
+			esc_html( $link_text )
+		);
+	} else {
+		echo esc_html( $label );
+	}
+} else {
+	echo esc_html( $label );
+}
+?>
 					<?php echo $required ? '<span class="mvta-req" aria-hidden="true">*</span>' : ''; ?>
 				</span>
 			</label>
@@ -1438,7 +1463,13 @@ function mve_handle_trade_application() {
 		$raw            = isset( $_POST[ $name ] ) ? $_POST[ $name ] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- cleaned by mve_application_clean().
 		$values[ $name ] = mve_application_clean( $field, $raw );
 
-		if ( ! empty( $field['required'] ) && ( '' === $values[ $name ] || array() === $values[ $name ] || 0 === $values[ $name ] ) ) {
+		// Schema order matters here: a field's controller (e.g. sells_to_public,
+		// sells_to_trade) is always defined earlier than anything it gates, so
+		// $values already holds the controller's cleaned answer by this point.
+		if ( ! empty( $field['required'] )
+			&& mve_application_field_applies( $field, $values )
+			&& ( '' === $values[ $name ] || array() === $values[ $name ] || 0 === $values[ $name ] )
+		) {
 			$errors[ $name ] = ( 'checkbox' === $field['type'] )
 				? __( 'This has to be agreed before we can accept the application.', 'maison-vintique' )
 				: __( 'This is required.', 'maison-vintique' );
@@ -1449,7 +1480,6 @@ function mve_handle_trade_application() {
 			$errors[ $name ] = __( 'That does not look like an email address.', 'maison-vintique' );
 		}
 	}
-
 	// The signature has to match the name typed above it, or it signs nothing.
 	if ( empty( $errors['signature'] ) && ! empty( $values['signature'] ) && ! empty( $values['signatory_name'] ) ) {
 		$a = strtolower( trim( preg_replace( '/\s+/', ' ', $values['signature'] ) ) );
@@ -1458,6 +1488,38 @@ function mve_handle_trade_application() {
 			$errors['signature'] = __( 'Please type the same name as above to sign.', 'maison-vintique' );
 		}
 	}
+	
+	/**
+ * Whether a conditional field's controlling question was answered in a way
+ * that reveals it — mirrors the show/hide rule the browser applies via
+ * data-mvta-group / data-mvta-controls. Used so a field the applicant cannot
+ * currently see (e.g. dec_awrs when they said "no" to wholesale activity)
+ * can never produce a silent "this is required" failure.
+ *
+ * @param array $field  Schema entry.
+ * @param array $values Cleaned values gathered so far this submission.
+ * @return bool
+ */
+function mve_application_field_applies( $field, $values ) {
+	if ( empty( $field['group'] ) ) {
+		return true;
+	}
+
+	$controller_value = null;
+	foreach ( mve_application_fields() as $name => $candidate ) {
+		if ( isset( $candidate['controls'] ) && $candidate['controls'] === $field['group'] ) {
+			$controller_value = isset( $values[ $name ] ) ? $values[ $name ] : '';
+			break;
+		}
+	}
+
+	if ( null === $controller_value ) {
+		return true; // no controller found — never block on a guess
+	}
+
+	$expected = isset( $field['when'] ) ? (array) $field['when'] : array( 'yes' );
+	return in_array( (string) $controller_value, array_map( 'strval', $expected ), true );
+}
 
 	// The sign-in address.
 	$email = isset( $values['primary_email'] ) ? $values['primary_email'] : '';

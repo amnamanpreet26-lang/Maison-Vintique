@@ -321,7 +321,27 @@
             "name": "partners_subtext",
             "type": "textarea",
             "rows": 2,
-            "instructions": "The producer cards themselves are managed under the Producers menu (custom post type), not here."
+            "instructions": "The producer cards themselves are managed under the Producers menu (custom post type), not here. The homepage always shows the 3 most recent producers (alphabetically), and no longer scrolls as a carousel."
+        },
+        {
+            "key": "field_home_partners_view_all_label",
+            "label": "View All Label",
+            "name": "partners_view_all_label",
+            "type": "text",
+            "default_value": "All Producers",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_home_partners_view_all_link",
+            "label": "View All Link",
+            "name": "partners_view_all_link",
+            "type": "url",
+            "instructions": "Optional manual override. Leave empty to link to the Producers archive automatically.",
+            "wrapper": {
+                "width": "50"
+            }
         },
         {
             "key": "field_home_tab_spotlight",
@@ -372,6 +392,7 @@
             "type": "repeater",
             "layout": "table",
             "button_label": "Add Detail",
+            "instructions": "Leave empty when a Spotlight Product is selected: Vintage, Grape, Region and ABV will be pulled from the product automatically. Add rows here only to override what shows.",
             "min": 0,
             "max": 4,
             "sub_fields": [
@@ -400,7 +421,8 @@
             "label": "Tasting Notes",
             "name": "spotlight_text",
             "type": "textarea",
-            "rows": 3
+            "rows": 3,
+            "instructions": "Leave empty when a Spotlight Product is selected to use the product's short description instead."
         },
         {
             "key": "field_home_spotlight_price",
@@ -455,6 +477,7 @@
             "label": "Secondary Link URL",
             "name": "spotlight_link_url",
             "type": "url",
+            "instructions": "Leave empty when a Spotlight Product is selected to link to that product's page automatically.",
             "wrapper": {
                 "width": "50"
             }
