@@ -199,7 +199,7 @@
    that), so these rules style what sits inside it.
    ========================================================================== */
 
-.mv-cart-empty {
+.mv-empty-basket {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -207,13 +207,15 @@
 	padding: 60px 24px 80px;
 }
 
-.mv-cart-empty__icon {
+.mv-empty-basket__art {
+	width: 120px;
+	height: auto;
 	color: var(--mv-gold, #a98854);
 	margin: 0 0 30px;
-	line-height: 0;
+	display: block;
 }
 
-.mv-cart-empty__title {
+.mv-empty-basket__title {
 	font-family: var(--mv-serif, "Cormorant Garamond", Georgia, serif);
 	font-weight: 400;
 	font-size: clamp(26px, 3.4vw, 38px);
@@ -222,27 +224,55 @@
 	margin: 0 0 16px;
 }
 
-.mv-cart-empty__text {
+.mv-empty-basket__copy {
 	font-family: var(--mv-sans, "Montserrat", Arial, sans-serif);
 	font-size: 15px;
 	line-height: 1.7;
 	color: var(--mv-ink-soft, #5e5a51);
 	margin: 0 0 32px;
-	max-width: 34ch;
 }
 
-.mv-cart-empty__cta {
+/* The house button, written out rather than borrowed from .btn: this panel is
+   moved inside a WooCommerce block, where the block's own button styling
+   would otherwise reach it. */
+.mv-empty-basket__cta {
+	display: inline-block;
+	font-family: var(--mv-sans, "Montserrat", Arial, sans-serif);
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: .09em;
+	text-transform: uppercase;
+	padding: 15px 28px;
+	border: 1px solid var(--mv-burg, #17251f);
+	border-radius: 5px;
+	background: var(--mv-burg, #17251f);
+	color: var(--mv-chalk, #faf8f3);
 	text-decoration: none;
+	transition: background .2s ease;
 }
 
-.mv-cart-empty__cta span {
-	margin-left: 6px;
+.mv-empty-basket__cta:hover,
+.mv-empty-basket__cta:focus-visible {
+	background: var(--mv-burg-bright, #26312c);
+	color: var(--mv-chalk, #faf8f3);
 }
 
-/* The block ships a large heading of its own above the area we fill. Ours
-   replaces the contents, so anything of theirs left in the box is cleared. */
-.wp-block-woocommerce-empty-cart-block .wc-block-cart__empty-cart__title {
-	display: none;
+/* The panel lives in the footer until the script moves it, and it is hidden
+   until then. Stated here because a stylesheet loaded later could otherwise
+   set a display that beats the hidden attribute. */
+#mv-empty-basket[hidden] {
+	display: none !important;
+}
+
+/* The block's own empty state, once ours is sitting next to it.
+
+   Its CHILDREN are hidden, not the element itself. The script reads whether
+   that element is visible to know if the block is still in empty mode, so
+   hiding it outright would have the script reading its own handiwork and
+   putting the panel straight back away. Emptied out it takes no height and
+   shows nothing, while still answering that question honestly. */
+.mv-empty-basket-host > * {
+	display: none !important;
 }
 
 /* ===== PRICE PER BOTTLE - END ===== */
