@@ -1,0 +1,167 @@
+/* ==========================================================================
+   MAISON VINTIQUE - PRICE PER BOTTLE
+   --------------------------------------------------------------------------
+   PASTE THIS AT THE VERY END of Appearance - Customize - Additional CSS,
+   AFTER everything that is already there. Nothing is removed and nothing is
+   replaced: every rule below is new, and they only work if they come last.
+
+   Two places, the same idea:
+     1. The wine card
+     2. "Wine of the Moment" on the homepage
+
+   A wine is sold by the case, so the product price IS the case price - but a
+   buyer compares wines by the bottle. So the bottle price is the big number
+   and the case price is the footnote under it.
+
+   The section designs are untouched. On the homepage this changes only what
+   sits inside .spotlight__row; the layout, the spacing and the button are as
+   they were.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. THE WINE CARD
+   ========================================================================== */
+
+.mvcard__price--split {
+	margin: 0 0 16px;
+}
+
+.mvcard__price-bottle {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0 8px;
+	margin: 0;
+}
+
+/* The number itself. Overrides .mvcard__price's 14px, and the existing rule
+   that paints every amount in the card ink colour - WooCommerce wraps a price
+   in a bdi element, so the colour has to be set on that too, or the older
+   rule wins on specificity and the figure comes out the wrong colour. */
+.mvcard__price-figure,
+.mvcard__price-figure .woocommerce-Price-amount,
+.mvcard__price-figure bdi {
+	font-family: var(--mv2-serif, "Cormorant Garamond", Georgia, serif);
+	font-size: clamp(30px, 3.4vw, 38px);
+	font-weight: 600;
+	line-height: 1;
+	letter-spacing: -.01em;
+	color: var(--mv2-burgundy, #17251f);
+	text-decoration: none;
+}
+
+.mvcard__price-unit {
+	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1.4;
+	color: var(--mv2-ink-soft, #5e5a51);
+}
+
+/* Reference has "per bottle" on its own line under the figure, not beside
+   it. flex-basis 100% forces the break without a second element. */
+.mvcard__price-unit {
+	flex: 0 0 100%;
+	margin-top: 2px;
+}
+
+.mvcard__price-case {
+	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
+	font-size: 12.5px;
+	line-height: 1.6;
+	color: var(--mv2-taupe, #a6a096);
+	margin: 8px 0 0;
+}
+
+.mvcard__price-case .woocommerce-Price-amount,
+.mvcard__price-case bdi {
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: 500;
+	color: inherit;
+	text-decoration: none;
+}
+
+.mvcard__price-vat {
+	white-space: nowrap;
+}
+
+
+/* ==========================================================================
+   2. WINE OF THE MOMENT
+   --------------------------------------------------------------------------
+   .spotlight__row is a flex row holding the price and the button side by
+   side. The price becomes a small stack inside its own cell, so the row
+   itself does not change shape.
+   ========================================================================== */
+
+.spotlight__price {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+
+	/* .price sets 26px serif gold on the wrapper. The children below set
+	   their own, so this stops the wrapper's own size affecting the gap. */
+	font-size: inherit;
+	line-height: 1.2;
+}
+
+.spotlight__price-bottle {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0 8px;
+}
+
+.spotlight__price-figure,
+.spotlight__price-figure .woocommerce-Price-amount,
+.spotlight__price-figure bdi {
+	font-family: var(--mv-serif, "Cormorant Garamond", Georgia, serif);
+	font-size: 34px;
+	font-weight: 600;
+	line-height: 1;
+	color: var(--mv-burg, #17251f);
+	text-decoration: none;
+}
+
+.spotlight__price-unit {
+	font-family: var(--mv-sans, "Montserrat", Arial, sans-serif);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	color: var(--mv-ink-soft, #5e5a51);
+}
+
+.spotlight__price-case {
+	font-family: var(--mv-sans, "Montserrat", Arial, sans-serif);
+	font-size: 12.5px;
+	font-weight: 400;
+	letter-spacing: 0;
+	text-transform: none;
+	line-height: 1.6;
+	color: var(--mv-taupe, #a6a096);
+}
+
+.spotlight__price-case .woocommerce-Price-amount,
+.spotlight__price-case bdi {
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: 500;
+	color: inherit;
+	text-decoration: none;
+}
+
+@media (max-width: 620px) {
+	/* The row wraps on a phone; the price keeps its own block and the button
+	   drops under it. */
+	.spotlight__price-figure,
+	.spotlight__price-figure .woocommerce-Price-amount,
+	.spotlight__price-figure bdi {
+		font-size: 30px;
+	}
+}
+
+/* ===== PRICE PER BOTTLE - END ===== */

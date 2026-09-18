@@ -576,3 +576,137 @@ function mve_rename_add_to_cart_text( $text ) {
 	return $text;
 }
 add_filter( 'woocommerce_product_add_to_cart_text', 'mve_rename_add_to_cart_text', 20 );
+
+/* =========================================================================
+ * PRICE PER BOTTLE
+ * ---------------------------------------------------------------------
+ * A wine is sold by the case, so the product price IS the case price. But a
+ * buyer comparing two wines compares them by the bottle, so the bottle price
+ * is the one that should be large and the case price the footnote.
+ *
+ * The maths is trivial; the point of doing it here is that the wine card and
+ * the homepage spotlight both need it, and the number of bottles in a case is
+ * recorded in more than one place. Working it out in each template is how the
+ * two end up disagreeing on the same wine.
+ * ====================================================================== */
+
+/**
+ * How many bottles are in a case of this wine.
+ *
+ * THE SAME SOURCE single-product.php USES: the _mv_bottles_per_case meta,
+ * defaulting to 6. Deliberately not the ACF `bottles_per_case` field on the
+ * Technical tab — that is a second, separate field, and reading it here as a
+ * fallback would make the card quote a case size the product page's own price
+ * row disagrees with. One number, from one place.
+ *
+ * (Those two fields holding different values is a real possibility on this
+ * site. It predates this function and is worth tidying, but silently picking
+ * a different winner per template is not the way to tidy it.)
+ *
+ * @param WC_Product|int $product Product or ID.
+ * @return int Always at least 1.
+ */
+function mve_bottles_per_case( $product ) {
+	$id = $product instanceof WC_Product ? $product->get_id() : (int) $product;
+	if ( ! $id ) {
+		return 6;
+	}
+
+	$bpc = (int) get_post_meta( $id, '_mv_bottles_per_case', true );
+	if ( $bpc < 1 ) {
+		$bpc = 6;
+	}
+
+	/**
+	 * Filters the bottles per case for one wine.
+	 *
+	 * @param int $bpc Bottles per case.
+	 * @param int $id  Product ID.
+	 */
+	return max( 1, (int) apply_filters( 'mve_bottles_per_case', $bpc, $id ) );
+}
+
+/**
+ * The two halves of a wine's price, ready to print.
+ *
+ * Returns null when there is no usable price — a product with an empty price,
+ * or a variable one where a single per-bottle figure would be a lie. The
+ * caller falls back to WooCommerce's own price_html in that case, so a range
+ * still renders as a range.
+ *
+ * @param WC_Product|int $product Product or ID.
+ * @return array|null {
+ *     @type string $bottle  Formatted bottle price, e.g. "£21.71".
+ *     @type string $case    Formatted case price, e.g. "£130.28".
+ *     @type string $suffix  WooCommerce's price suffix, e.g. "ex. VAT". May be ''.
+ *     @type int    $bpc     Bottles per case.
+ *     @type string $format  Case format as the editor typed it, may be ''.
+ * }
+ */
+function mve_price_per_bottle( $product ) {
+	$product = $product instanceof WC_Product ? $product : wc_get_product( $product );
+	if ( ! $product instanceof WC_Product ) {
+		return null;
+	}
+
+	// A range has no single bottle price. Let WooCommerce show the range.
+	if ( $product->is_type( 'variable' ) ) {
+		return null;
+	}
+
+	$case_price = $product->get_price();
+	if ( '' === $case_price || null === $case_price || ! is_numeric( $case_price ) || (float) $case_price <= 0 ) {
+		return null;
+	}
+
+	$case_price   = (float) $case_price;
+	$bpc          = mve_bottles_per_case( $product );
+	$bottle_price = $case_price / $bpc;
+
+	$format = function_exists( 'get_field' ) ? (string) get_field( 'case_format', $product->get_id() ) : '';
+
+	/*
+	 * "ex. VAT" and the like come from WooCommerce's own suffix setting rather
+	 * than a string typed in here, so the card, the spotlight and the product
+	 * page all say whatever the shop is configured to say — and all change
+	 * together if that setting ever does.
+	 *
+	 * Taken once, for the bottle, and shown once at the end of the case line:
+	 * repeating it on both figures reads as clutter when they sit two lines
+	 * apart, and it applies to both either way.
+	 */
+	$suffix = method_exists( $product, 'get_price_suffix' )
+		? trim( $product->get_price_suffix( $bottle_price, 1 ) )
+		: '';
+
+	return array(
+		'bottle' => wc_price( $bottle_price ),
+		'case'   => wc_price( $case_price ),
+		'suffix' => $suffix,
+		'bpc'    => $bpc,
+		'format' => trim( $format ),
+	);
+}
+
+/**
+ * The words under the case price: "per case of 6 x 75cl" — or just
+ * "per case of 6 bottles" when no case format has been typed in.
+ *
+ * @param array $price The array from mve_price_per_bottle().
+ * @return string
+ */
+function mve_case_price_label( $price ) {
+	if ( ! empty( $price['format'] ) ) {
+		return sprintf(
+			/* translators: %s: case format, e.g. "6 x 75cl" */
+			__( 'per case of %s', 'maison-vintique-elementor' ),
+			$price['format']
+		);
+	}
+
+	return sprintf(
+		/* translators: %d: number of bottles */
+		_n( 'per case of %d bottle', 'per case of %d bottles', $price['bpc'], 'maison-vintique-elementor' ),
+		$price['bpc']
+	);
+}

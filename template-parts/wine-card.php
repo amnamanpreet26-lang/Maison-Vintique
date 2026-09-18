@@ -19,7 +19,8 @@
  *   RED · BORDEAUX                            FRANCE
  *   Title
  *   Bordeaux Supérieur 2019 · 6 × 75cl        <- producer / appellation / case
- *   Price  (or "Sign in to view trade pricing" when gated)
+ *   £21.71  per bottle                        <- the big number
+ *   £130.28 per case of 6 × 75cl · ex VAT     <- the footnote
  *   [        VIEW WINE        ]  -> single product page
  *   Technical Details        Enquire   <- two inline links
  *
@@ -110,13 +111,19 @@ if ( ! $mvc_colour ) {
  * ------------------------------------------------------------------------- */
 $mvc_show_stock = ! $mvc_gated;
 
-if ( $product->is_in_stock() ) {
-	$mvc_stock_label = __( 'Available', 'maison-vintique-elementor' );
-	$mvc_stock_state = 'in';
-} else {
-	$mvc_stock_label = __( 'Out of stock', 'maison-vintique-elementor' );
-	$mvc_stock_state = 'out';
-}
+		// Maison Vintique availability: six customer-facing statuses (client spec).
+		$mvc_avail_map = array(
+			'available'          => array( __( 'Available', 'maison-vintique-elementor' ), 'in' ),
+			'limited'            => array( __( 'Limited', 'maison-vintique-elementor' ), 'low' ),
+			'incoming'           => array( __( 'Incoming', 'maison-vintique-elementor' ), 'inc' ),
+			'available_to_order' => array( __( 'Available to Order', 'maison-vintique-elementor' ), 'ato' ),
+			'preorder'           => array( __( 'Pre-Order / Allocation', 'maison-vintique-elementor' ), 'pre' ),
+			'outofstock'         => array( __( 'Out of Stock', 'maison-vintique-elementor' ), 'out' ),
+		);
+		$mvc_avail_key = function_exists( 'mv_avail' ) ? mv_avail( $mvc_id ) : ( $product->is_in_stock() ? 'available' : 'outofstock' );
+		if ( ! isset( $mvc_avail_map[ $mvc_avail_key ] ) ) { $mvc_avail_key = $product->is_in_stock() ? 'available' : 'outofstock'; }
+		$mvc_stock_label = $mvc_avail_map[ $mvc_avail_key ][0];
+		$mvc_stock_state = $mvc_avail_map[ $mvc_avail_key ][1];
 
 /* ---------------------------------------------------------------------------
  * META ROW — "Red · Bordeaux" on the left, the country on the right.
@@ -185,6 +192,26 @@ if ( $mvc_awards_raw ) {
  * ------------------------------------------------------------------------- */
 $mvc_price_html = $product->get_price_html();
 
+/*
+ * THE PRICE, SPLIT.
+ *
+ * A wine is sold by the case, so the product price IS the case price — but a
+ * buyer comparing two wines compares them by the bottle. So the bottle is the
+ * big number and the case is the footnote under it.
+ *
+ * mve_price_per_bottle() (inc/woocommerce.php) does the division and owns how
+ * many bottles a case holds, reading the same _mv_bottles_per_case meta that
+ * single-product.php reads and defaulting to 6 the same way. It is a function
+ * rather than a few lines here because the homepage "Wine of the Moment"
+ * section needs the identical figures — worked out separately in each
+ * template is exactly how the two end up quoting different prices for the
+ * same wine.
+ *
+ * It returns null for a variable wine or one with no price, and then
+ * $mvc_price_html renders WooCommerce's own range instead.
+ */
+$mvc_price = function_exists( 'mve_price_per_bottle' ) ? mve_price_per_bottle( $product ) : null;
+
 // "Technical Details" is only worth offering when the Technical tab actually
 // has something in it — otherwise the link sends the customer to a blank tab.
 $mvc_tech_fields = array( 'appellation', 'bottles_per_case', 'closure', 'sustainability', 'serving', 'abv', 'bottle_size', 'allergens', 'technical_sheet' );
@@ -212,15 +239,11 @@ $mvc_tech_url    = add_query_arg( 'tab', 'tech', $mvc_permalink ) . '#tab-tech';
 	<a class="mvcard__media" href="<?php echo esc_url( $mvc_permalink ); ?>" tabindex="-1" aria-hidden="true">
 		<img src="<?php echo esc_url( $mvc_image_url ); ?>" alt="<?php echo esc_attr( get_the_title( $mvc_id ) ); ?>" loading="lazy">
 
-		<?php if ( $mvc_colour ) : ?>
+<!-- 		<?php if ( $mvc_colour ) : ?>
 			<span class="mvcard__badge mvcard__badge--colour"><?php echo esc_html( $mvc_colour ); ?></span>
-		<?php endif; ?>
+		<?php endif; ?> -->
 
-		<?php if ( $mvc_show_stock ) : ?>
-			<span class="mvcard__badge mvcard__badge--stock is-<?php echo esc_attr( $mvc_stock_state ); ?>">
-				<?php echo esc_html( $mvc_stock_label ); ?>
-			</span>
-		<?php endif; ?>
+
 
 		<?php if ( $mvc_award ) : ?>
 			<?php // Medallion, faded in over the image on hover / keyboard focus. ?>
@@ -235,6 +258,11 @@ $mvc_tech_url    = add_query_arg( 'tab', 'tech', $mvc_permalink ) . '#tab-tech';
 	</a>
 
 	<div class="mvcard__body">
+				<?php if ( $mvc_show_stock ) : ?>
+			<span class="mvcard__badge mvcard__badge--stock is-<?php echo esc_attr( $mvc_stock_state ); ?>">
+				<?php echo esc_html( $mvc_stock_label ); ?>
+			</span>
+		<?php endif; ?>
 
 		<?php // Colour · region on the left, country on the right. ?>
 		<?php if ( $mvc_meta_left || $mvc_meta_right ) : ?>
@@ -265,7 +293,34 @@ $mvc_tech_url    = add_query_arg( 'tab', 'tech', $mvc_permalink ) . '#tab-tech';
 			<p class="mvcard__price">
 				<span class="mvcard__trade"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique-elementor' ); ?></span>
 			</p>
+
+		<?php elseif ( $mvc_price ) : ?>
+			<?php
+			/*
+			 * Bottle price first and large; case price under it, small.
+			 *
+			 * The "ex. VAT" wording on both comes from get_price_suffix(), not
+			 * a hardcoded string, so whatever WooCommerce is set to display
+			 * with a price is what appears here — the two can never fall out
+			 * of step with each other or with the product page.
+			 */
+			?>
+			<div class="mvcard__price mvcard__price--split">
+				<p class="mvcard__price-bottle">
+					<span class="mvcard__price-figure"><?php echo wp_kses_post( $mvc_price['bottle'] ); ?></span>
+					<span class="mvcard__price-unit"><?php esc_html_e( 'per bottle', 'maison-vintique-elementor' ); ?></span>
+				</p>
+				<p class="mvcard__price-case">
+					<?php echo wp_kses_post( $mvc_price['case'] ); ?>
+					<span class="mvcard__price-case-unit"><?php echo esc_html( mve_case_price_label( $mvc_price ) ); ?></span>
+					<?php if ( $mvc_price['suffix'] ) : ?>
+						<span class="mvcard__price-vat">&middot; <?php echo wp_kses_post( $mvc_price['suffix'] ); ?></span>
+					<?php endif; ?>
+				</p>
+			</div>
+
 		<?php elseif ( $mvc_price_html ) : ?>
+			<?php // A variable wine, or one with no price: WooCommerce's own range. ?>
 			<p class="mvcard__price"><?php echo wp_kses_post( $mvc_price_html ); ?></p>
 		<?php endif; ?>
 

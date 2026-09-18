@@ -312,8 +312,15 @@ $mv_producers = new WP_Query( array(
       <?php endif; ?>
 
       <div class="spotlight__content">
-        <?php if ( $val = get_field('spotlight_eyebrow') ) : ?>
-          <p class="eyebrow"><?php echo esc_html( $val ); ?></p>
+        <?php
+        // "Wine of the Moment" unless an editor has written something else.
+        $spot_eyebrow = get_field('spotlight_eyebrow');
+        if ( ! $spot_eyebrow && $spot_product ) {
+          $spot_eyebrow = __( 'Wine of the Moment', 'maison-vintique' );
+        }
+        ?>
+        <?php if ( $spot_eyebrow ) : ?>
+          <p class="eyebrow"><?php echo esc_html( $spot_eyebrow ); ?></p>
         <?php endif; ?>
         <?php
         $spot_name = get_field('spotlight_name');
@@ -331,19 +338,69 @@ $mv_producers = new WP_Query( array(
           </h3>
         <?php endif; ?>
 
-        <?php if ( have_rows('spotlight_details') ) : ?>
+        <?php
+        /*
+         * COLOUR / GRAPE / REGION.
+         *
+         * Typed by hand in the spotlight_details repeater if anyone has
+         * bothered; otherwise read straight off the chosen wine's taxonomies,
+         * so picking a product fills this row in by itself. Same three labels
+         * either way — the markup and the classes are untouched.
+         */
+        $spot_details = array();
+
+        if ( have_rows('spotlight_details') ) {
+          while ( have_rows('spotlight_details') ) {
+            the_row();
+            $spot_details[] = array( get_sub_field('label'), get_sub_field('value') );
+          }
+        } elseif ( $spot_product ) {
+          $spot_taxes = array(
+            __( 'Colour', 'maison-vintique' ) => 'wine_colour',
+            __( 'Grape', 'maison-vintique' )  => 'wine_grape',
+            __( 'Region', 'maison-vintique' ) => 'wine_region',
+          );
+
+          foreach ( $spot_taxes as $spot_label => $spot_tax ) {
+            $spot_terms = get_the_terms( $spot_product_id, $spot_tax );
+            if ( ! $spot_terms || is_wp_error( $spot_terms ) ) {
+              continue;
+            }
+            $spot_names = wp_list_pluck( $spot_terms, 'name' );
+
+            // Region carries the country with it, as the design shows:
+            // "Bordeaux, France".
+            if ( 'wine_region' === $spot_tax ) {
+              $spot_countries = get_the_terms( $spot_product_id, 'wine_country' );
+              if ( $spot_countries && ! is_wp_error( $spot_countries ) ) {
+                $spot_names = array( implode( ' · ', $spot_names ) . ', ' . implode( ' · ', wp_list_pluck( $spot_countries, 'name' ) ) );
+              }
+            }
+
+            $spot_details[] = array( $spot_label, implode( ' . ', $spot_names ) );
+          }
+        }
+        ?>
+        <?php if ( $spot_details ) : ?>
           <ul class="detail-row">
-            <?php while ( have_rows('spotlight_details') ) : the_row(); ?>
+            <?php foreach ( $spot_details as $spot_detail ) : ?>
               <li>
-                <span class="detail-row__label"><?php echo esc_html( get_sub_field('label') ); ?></span>
-                <span class="detail-row__value"><?php echo esc_html( get_sub_field('value') ); ?></span>
+                <span class="detail-row__label"><?php echo esc_html( $spot_detail[0] ); ?></span>
+                <span class="detail-row__value"><?php echo esc_html( $spot_detail[1] ); ?></span>
               </li>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
           </ul>
         <?php endif; ?>
 
-        <?php if ( $val = get_field('spotlight_text') ) : ?>
-          <p class="spotlight__text"><?php echo esc_html( $val ); ?></p>
+        <?php
+        // The blurb: the manual field, else the wine's own short description.
+        $spot_text = get_field('spotlight_text');
+        if ( ! $spot_text && $spot_product ) {
+          $spot_text = wp_strip_all_tags( $spot_product->get_short_description() );
+        }
+        ?>
+        <?php if ( $spot_text ) : ?>
+          <p class="spotlight__text"><?php echo esc_html( $spot_text ); ?></p>
         <?php endif; ?>
 
         <div class="spotlight__row">
@@ -358,25 +415,57 @@ $mv_producers = new WP_Query( array(
           <?php else : ?>
 
             <?php
-            // Manual price wins; otherwise take the product's own.
-            $spot_price = get_field('spotlight_price');
-            if ( ! $spot_price && $spot_product ) {
+            /*
+             * PRICE — bottle large, case beneath it, the same way round as the
+             * wine card, from the same helper (mve_price_per_bottle() in
+             * inc/woocommerce.php) so the two can never disagree.
+             *
+             * A price typed into spotlight_price still wins outright: that
+             * field exists so an editor can pin a figure, and second-guessing
+             * it would defeat the point.
+             */
+            $spot_price       = get_field('spotlight_price');
+            $spot_price_split = ( ! $spot_price && $spot_product && function_exists( 'mve_price_per_bottle' ) )
+              ? mve_price_per_bottle( $spot_product )
+              : null;
+
+            if ( ! $spot_price && ! $spot_price_split && $spot_product ) {
+              // Variable wine, or no price: WooCommerce's own range.
               $spot_price = $spot_product->get_price_html();
             }
             ?>
-            <?php if ( $spot_price ) : ?>
-              <span class="price"><?php echo wp_kses_post( $spot_price ); ?></span>
-            <?php endif; ?>
+            <?php if ( $spot_price_split ) : ?>
+              <span class="price spotlight__price">
+                <span class="spotlight__price-bottle">
+                  <span class="spotlight__price-figure"><?php echo wp_kses_post( $spot_price_split['bottle'] ); ?></span>
+                  <span class="spotlight__price-unit"><?php esc_html_e( 'per bottle', 'maison-vintique' ); ?></span>
+                </span>
+                <span class="spotlight__price-case">
+                  <?php echo wp_kses_post( $spot_price_split['case'] ); ?>
+                  <?php echo esc_html( mve_case_price_label( $spot_price_split ) ); ?>
+                  <?php if ( $spot_price_split['suffix'] ) : ?>
+                    &middot; <?php echo wp_kses_post( $spot_price_split['suffix'] ); ?>
+                  <?php endif; ?>
+                </span>
+              </span>
 
-            <?php if ( $val = get_field('spotlight_price_unit') ) : ?>
-              <span class="price__unit"><?php echo esc_html( $val ); ?></span>
+            <?php elseif ( $spot_price ) : ?>
+              <span class="price"><?php echo wp_kses_post( $spot_price ); ?></span>
+
+              <?php if ( $val = get_field('spotlight_price_unit') ) : ?>
+                <span class="price__unit"><?php echo esc_html( $val ); ?></span>
+              <?php endif; ?>
             <?php endif; ?>
 
             <?php
+            // Label and link both fall back, so choosing a wine is enough.
             $spot_cta_label = get_field('spotlight_cta_label');
             $spot_cta_link  = get_field('spotlight_cta_link');
             if ( ! $spot_cta_link && $spot_product ) {
               $spot_cta_link = get_permalink( $spot_product_id );
+            }
+            if ( ! $spot_cta_label && $spot_product ) {
+              $spot_cta_label = __( 'View Wine', 'maison-vintique' );
             }
             ?>
             <?php if ( $spot_cta_label ) : ?>
@@ -386,9 +475,25 @@ $mv_producers = new WP_Query( array(
           <?php endif; ?>
         </div>
 		  <div class="spotlight__button">
-			 
-		  <?php if ( $label = get_field('spotlight_link_label') ) : ?>
-            <a href="<?php echo esc_url( get_field('spotlight_link_url') ?: '#' ); ?>" class="link-arrow"><?php echo esc_html( $label ); ?></a>
+			<?php
+			/*
+			 * "Technical Details" — deep-links to the Technical tab on the
+			 * wine, the same two forms the wine cards use: ?tab=tech survives
+			 * anything that strips the fragment, the hash works without
+			 * JavaScript.
+			 */
+			$spot_link_label = get_field('spotlight_link_label');
+			$spot_link_url   = get_field('spotlight_link_url');
+
+			if ( ! $spot_link_label && $spot_product ) {
+				$spot_link_label = __( 'Technical Details', 'maison-vintique' );
+			}
+			if ( ! $spot_link_url && $spot_product ) {
+				$spot_link_url = add_query_arg( 'tab', 'tech', get_permalink( $spot_product_id ) ) . '#tab-tech';
+			}
+			?>
+		  <?php if ( $spot_link_label ) : ?>
+            <a href="<?php echo esc_url( $spot_link_url ?: '#' ); ?>" class="link-arrow"><?php echo esc_html( $spot_link_label ); ?></a>
           <?php endif; ?>
 		</div>
       </div>
