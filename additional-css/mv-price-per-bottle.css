@@ -1,69 +1,67 @@
 /* ==========================================================================
-   MAISON VINTIQUE - PRICE PER BOTTLE
+   MAISON VINTIQUE - PRICE PER BOTTLE, AND THE EMPTY BASKET
    --------------------------------------------------------------------------
    PASTE THIS AT THE VERY END of Appearance - Customize - Additional CSS,
    AFTER everything that is already there. Nothing is removed and nothing is
-   replaced: every rule below is new, and several of them only win because
-   they come last.
+   replaced: every rule below is new, and several only win because they come
+   last.
 
-   Two places, the same idea:
-     1. The wine card
-     2. "Wine of the Moment" on the homepage
-
-   A wine is sold by the case, so the product price IS the case price - but a
-   buyer compares wines by the bottle. So the bottle price is the big bold
-   number and the case price is the small line under it.
+   Three things:
+     1. The wine card price
+     2. "Wine of the Moment" price
+     3. The empty basket
 
    WHY SO MANY !important MARKS
-   There are already two of them in the stylesheet above, and they apply to
-   every price on the site:
+   Two rules already in the stylesheet above apply to every price on the site:
 
        .mvcard__price            { font-size: 18px !important }
        .woocommerce-Price-amount { font-size: 24px !important;
                                    font-family: var(--mv-serif) !important }
 
    WooCommerce wraps every figure it prints in .woocommerce-Price-amount, so
-   that second rule pins the bottle price to 24px and the case price to 24px
-   as well - which is the one thing this change exists to stop. An !important
-   declaration outranks any ordinary one however specific, so the only way to
-   set these two sizes is to match it. They are used here for exactly that and
+   that second rule pins the bottle price AND the case price to the same 24px
+   - which is the one thing this change exists to stop. An !important
+   declaration outranks any ordinary one however specific, so matching it is
+   the only way to set these sizes. They are used here for exactly that and
    nothing else.
    ========================================================================== */
 
 
 /* ==========================================================================
    1. THE WINE CARD
+   --------------------------------------------------------------------------
+   The template prints two paragraphs:
+
+       .mvcard__price.mvcard__price--bottle    the figure + "per bottle"
+       .mvcard__price.mvcard__price--case      the figure + "per case of
+                                               6 x 75cl" + the VAT suffix
+
+   Bottle big and bold; case small and quiet underneath.
    ========================================================================== */
 
-.mvcard__price--split {
-	margin: 0 0 16px;
-}
-
-/* A flex column so the bottle block and the case line stack tightly, and so
-   nothing inherits the 18px the wrapper carries. */
-.mvcard__price-bottle {
+.mvcard__price--bottle {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 2px;
-	margin: 0;
+	margin: 0 0 6px;
 }
 
 /* THE BIG NUMBER. The !important is fighting .woocommerce-Price-amount's own,
    as explained at the top - without it this stays 24px. */
-.mvcard__price-figure,
-.mvcard__price-figure .woocommerce-Price-amount,
-.mvcard__price-figure bdi {
+.mvcard__price--bottle .woocommerce-Price-amount,
+.mvcard__price--bottle bdi {
 	font-family: var(--mv2-serif, "Cormorant Garamond", Georgia, serif) !important;
 	font-size: clamp(30px, 3.4vw, 38px) !important;
 	font-weight: 600;
 	line-height: 1.05;
 	letter-spacing: -.01em;
-	color: var(--mv2-burgundy, #17251f);
+	color: var(--mv2-burgundy, #17251f) !important;
 	text-decoration: none;
 }
 
-.mvcard__price-unit {
+/* "per bottle" on its own line under the figure. */
+.mvcard__price--bottle .mvcard__price-unit {
 	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
 	font-size: 13px;
 	font-weight: 400;
@@ -73,28 +71,41 @@
 	color: var(--mv2-ink-soft, #5e5a51);
 }
 
-/* The footnote. Same !important reasoning: the case figure inside it is a
-   .woocommerce-Price-amount too, so without this it prints at 24px and reads
-   as the headline instead of the aside. */
-.mvcard__price-case {
+/* The footnote line. Same !important reasoning: the case figure inside it is
+   a .woocommerce-Price-amount too, so without this it prints at 24px and
+   reads as the headline instead of the aside. */
+.mvcard__price--case {
 	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
-	font-size: 12.5px;
+	font-size: 12.5px !important;
 	line-height: 1.6;
 	color: var(--mv2-taupe, #a6a096);
-	margin: 8px 0 0;
+	margin: 0 0 16px;
 }
 
-.mvcard__price-case .woocommerce-Price-amount,
-.mvcard__price-case bdi {
+.mvcard__price--case .woocommerce-Price-amount,
+.mvcard__price--case bdi {
 	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif) !important;
 	font-size: 12.5px !important;
 	font-weight: 500;
-	color: inherit;
+	color: inherit !important;
 	text-decoration: none;
 }
 
-.mvcard__price-vat {
-	white-space: nowrap;
+.mvcard__price--case .mvcard__price-unit,
+.mvcard__price--case .mvcard__price-suffix {
+	font-family: var(--mv2-sans, "Montserrat", Arial, sans-serif);
+	font-size: 12.5px;
+	font-weight: 400;
+	letter-spacing: 0;
+	text-transform: none;
+	color: inherit;
+}
+
+/* WooCommerce prints its suffix inside a small element, which would otherwise
+   shrink it again on top of the size set above. */
+.mvcard__price--case .mvcard__price-suffix small,
+.mvcard__price--case small {
+	font-size: inherit;
 }
 
 
@@ -102,8 +113,8 @@
    2. WINE OF THE MOMENT
    --------------------------------------------------------------------------
    .spotlight__row is a flex row holding the price and the button side by
-   side. The price becomes a small stack inside its own cell, so the row
-   itself keeps its shape and the section's design is unchanged.
+   side. The price becomes a small stack inside its own cell, so the row keeps
+   its shape and the section's design is unchanged.
    ========================================================================== */
 
 .spotlight__price {
@@ -132,7 +143,7 @@
 	font-size: 34px !important;
 	font-weight: 600;
 	line-height: 1.05;
-	color: var(--mv-burg, #17251f);
+	color: var(--mv-burg, #17251f) !important;
 	text-decoration: none;
 }
 
@@ -160,8 +171,12 @@
 	font-family: var(--mv-sans, "Montserrat", Arial, sans-serif) !important;
 	font-size: 12.5px !important;
 	font-weight: 500;
-	color: inherit;
+	color: inherit !important;
 	text-decoration: none;
+}
+
+.spotlight__price-case small {
+	font-size: inherit;
 }
 
 @media (max-width: 620px) {
@@ -172,6 +187,7 @@
 	}
 }
 
+
 /* ==========================================================================
    3. THE EMPTY BASKET
    --------------------------------------------------------------------------
@@ -179,8 +195,8 @@
    and the Cart block's empty state, which inc/woocommerce.php now fills with
    this same markup.
 
-   The block's own wrapper is left in place around it (its JavaScript shows
-   and hides that), so these rules style what sits inside it.
+   The block's own wrapper stays around it (its JavaScript shows and hides
+   that), so these rules style what sits inside it.
    ========================================================================== */
 
 .mv-cart-empty {
@@ -223,10 +239,9 @@
 	margin-left: 6px;
 }
 
-/* The block ships its own centred wrapper and a large icon of its own. Ours
-   replaces the contents, so anything of theirs still in the box is cleared. */
-.wp-block-woocommerce-empty-cart-block .wc-block-cart__empty-cart__title,
-.wp-block-woocommerce-empty-cart-block > .wc-block-cart__empty-cart__title {
+/* The block ships a large heading of its own above the area we fill. Ours
+   replaces the contents, so anything of theirs left in the box is cleared. */
+.wp-block-woocommerce-empty-cart-block .wc-block-cart__empty-cart__title {
 	display: none;
 }
 

@@ -270,8 +270,7 @@ $mv_pdp_state = $mv_pdp_states[ $mv_pdp_key ];
 						<span class="trade-note" style="margin:0"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique' ); ?></span>
 					<?php endif; ?>
 				</div>
-
-				<?php if ( $is_trade ) : ?>
+<?php if ( $is_trade ) : ?>
 				<?php
 				$mv_bpc   = (int) get_post_meta( $product->get_id(), '_mv_bottles_per_case', true );
 				if ( $mv_bpc < 1 ) { $mv_bpc = 6; }
@@ -281,11 +280,11 @@ $mv_pdp_state = $mv_pdp_states[ $mv_pdp_key ];
 				$mv_step = ( 12 === $mv_bpc ) ? 1 : 2;
 				?>
 				<div class="mv-price-row" style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:4px 0 14px">
-					<div><span style="font-size:26px;font-weight:600"><?php echo wp_kses_post( wc_price( $mv_case_price ) ); ?></span>
-					<small style="margin-left:8px;letter-spacing:.08em;text-transform:uppercase;color:#8A8072;font-size:11px"><?php printf( esc_html__( 'per case (%d x 75cl)', 'maison-vintique' ), (int) $mv_bpc ); ?></small></div>
-					<div style="width:1px;height:30px;background:#E7E1D6"></div>
-					<div><span style="font-size:20px;font-weight:600;color:#5C5450"><?php echo wp_kses_post( wc_price( $mv_btl_price ) ); ?></span>
+					<div><span style="font-size:26px;font-weight:600"><?php echo wp_kses_post( wc_price( $mv_btl_price ) ); ?></span>
 					<small style="margin-left:8px;letter-spacing:.08em;text-transform:uppercase;color:#8A8072;font-size:11px"><?php esc_html_e( 'per bottle', 'maison-vintique' ); ?></small></div>
+					<div style="width:1px;height:30px;background:#E7E1D6"></div>
+					<div><span style="font-size:20px;font-weight:600;color:#5C5450"><?php echo wp_kses_post( wc_price( $mv_case_price ) ); ?></span>
+					<small style="margin-left:8px;letter-spacing:.08em;text-transform:uppercase;color:#8A8072;font-size:11px"><?php printf( esc_html__( 'per case (%d x 75cl)', 'maison-vintique' ), (int) $mv_bpc ); ?></small></div>
 				</div>
 				<div class="mv-moq" style="display:flex;gap:12px;align-items:flex-start;border:1px solid #E7E1D6;background:#F6F4EE;border-radius:10px;padding:14px 16px;margin:0 0 16px">
 					<span style="font-size:17px;line-height:1">&#128722;</span><div>

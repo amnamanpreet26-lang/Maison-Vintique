@@ -514,3 +514,17 @@ function mv_enqueue_google_fonts() {
     );
 }
 add_action('wp_enqueue_scripts', 'mv_enqueue_google_fonts');
+
+
+
+
+
+
+
+
+add_action( 'wp', 'mve_remove_default_empty_cart_message' );
+function mve_remove_default_empty_cart_message() {
+	remove_action( 'woocommerce_cart_is_empty', 'wc_empty_cart_message', 10 );
+}
+
+

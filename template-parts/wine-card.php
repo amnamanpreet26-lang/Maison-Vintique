@@ -191,11 +191,6 @@ if ( $mvc_awards_raw ) {
  * ------------------------------------------------------------------------- */
 $mvc_price_html = $product->get_price_html();
 
-// Bottle price, case price and the case size, from the one helper the homepage
-// spotlight also uses. Null for a variable wine or one with no price, and then
-// $mvc_price_html renders WooCommerce's own range instead.
-$mvc_price = function_exists( 'mve_price_per_bottle' ) ? mve_price_per_bottle( $product ) : null;
-
 // "Technical Details" is only worth offering when the Technical tab actually
 // has something in it — otherwise the link sends the customer to a blank tab.
 $mvc_tech_fields = array( 'appellation', 'bottles_per_case', 'closure', 'sustainability', 'serving', 'abv', 'bottle_size', 'allergens', 'technical_sheet' );
@@ -277,40 +272,42 @@ $mvc_tech_url    = add_query_arg( 'tab', 'tech', $mvc_permalink ) . '#tab-tech';
     <p class="mvcard__price">
         <span class="mvcard__trade"><?php esc_html_e( 'Sign in to view trade pricing', 'maison-vintique-elementor' ); ?></span>
     </p>
-<?php elseif ( $mvc_price ) : ?>
-    <?php
-    /*
-     * BOTTLE FIRST, LARGE. Case price underneath, small.
-     *
-     * A wine is sold by the case, but it is compared by the bottle — so the
-     * bottle is the number that should be easy to read across a grid.
-     *
-     * Both figures, and the number of bottles they are divided by, come from
-     * mve_price_per_bottle() in inc/woocommerce.php. That asks
-     * mv_case_moq_rule() for the case size, which is the same answer the
-     * quantity box uses: a wine sold in 12s can never be priced in 6s.
-     *
-     * The "ex VAT" wording is WooCommerce's own price suffix rather than a
-     * string typed in here, so it stays in step with the product page.
-     */
-    ?>
-    <div class="mvcard__price mvcard__price--split">
-        <p class="mvcard__price-bottle">
-            <span class="mvcard__price-figure"><?php echo wp_kses_post( $mvc_price['bottle'] ); ?></span>
-            <span class="mvcard__price-unit"><?php esc_html_e( 'per bottle', 'maison-vintique-elementor' ); ?></span>
-        </p>
-        <p class="mvcard__price-case">
-            <?php echo wp_kses_post( $mvc_price['case'] ); ?>
-            <?php echo esc_html( mve_case_price_label( $mvc_price ) ); ?>
-            <?php if ( $mvc_price['suffix'] ) : ?>
-                <span class="mvcard__price-vat">&middot; <?php echo wp_kses_post( $mvc_price['suffix'] ); ?></span>
-            <?php endif; ?>
-        </p>
-    </div>
-
 <?php elseif ( $mvc_price_html ) : ?>
-    <?php // A variable wine, or one with no price: WooCommerce's own range. ?>
-    <p class="mvcard__price"><?php echo wp_kses_post( $mvc_price_html ); ?></p>
+	<?php
+	/*
+	 * Case + bottle split, same source of truth as single-product.php:
+	 * the _mv_bottles_per_case meta, defaulting to 6 the same way.
+	 *
+	 * The ex-VAT suffix now lives ONLY on the case line — it comes from
+	 * get_price_suffix() so it stays in sync with whatever the site's tax
+	 * display setting says, rather than a hardcoded "ex VAT" string.
+	 * The bottle line intentionally omits it — just the number.
+	 */
+	$mvc_bpc         = (int) get_post_meta( $mvc_id, '_mv_bottles_per_case', true );
+	if ( $mvc_bpc < 1 ) { $mvc_bpc = 6; }
+	$mvc_case_price  = (float) $product->get_price();
+	$mvc_btl_price   = $mvc_bpc > 0 ? $mvc_case_price / $mvc_bpc : 0;
+	$mvc_case_suffix = $product->get_price_suffix( $mvc_case_price, 1 );
+	?>
+	<p class="mvcard__price mvcard__price--bottle">
+		<?php echo wp_kses_post( wc_price( $mvc_btl_price ) ); ?>
+		<span class="mvcard__price-unit"><?php esc_html_e( 'per bottle', 'maison-vintique-elementor' ); ?></span>
+	</p>
+	<p class="mvcard__price mvcard__price--case">
+		<?php echo wp_kses_post( wc_price( $mvc_case_price ) ); ?>
+		<span class="mvcard__price-unit">
+			<?php
+			printf(
+				/* translators: %d: number of bottles per case */
+				esc_html__( 'per case of %d x 75cl', 'maison-vintique-elementor' ),
+				(int) $mvc_bpc
+			);
+			?>
+		</span>
+		<?php if ( $mvc_case_suffix ) : ?>
+			<span class="mvcard__price-suffix"><?php echo wp_kses_post( $mvc_case_suffix ); ?></span>
+		<?php endif; ?>
+	</p>
 <?php endif; ?>
 
 		<a class="mvcard__cta" href="<?php echo esc_url( $mvc_permalink ); ?>">
